@@ -1,0 +1,96 @@
+import { ReactNode } from "react";
+import { 
+  Calendar, 
+  Users, 
+  DollarSign, 
+  Package,
+  Settings,
+  LogOut,
+  Scissors
+} from "lucide-react";
+import { db } from "@/lib/db";
+import { auth } from "@/auth";
+import SidebarNav from "@/components/SidebarNav";
+
+export default async function BarberLayout({ children }: { children: ReactNode }) {
+  const session = await auth();
+  const role = session?.user?.role;
+  const isOwnerOrAdmin = role === 'OWNER' || role === 'SUPER_ADMIN';
+
+  // Buscar o Tenant (Barbearia) para pegar a logo
+  const userWithTenant = await db.user.findUnique({
+    where: { id: session?.user?.id },
+    include: {
+      units: {
+        include: {
+          unit: { include: { tenant: true } }
+        }
+      }
+    }
+  });
+  
+  const tenant = userWithTenant?.units[0]?.unit?.tenant;
+
+  if (tenant && !tenant.active) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-surface border border-secondary p-8 rounded-2xl shadow-xl max-w-md text-center animate-fade-in">
+          <div className="w-16 h-16 bg-danger/10 text-danger rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogOut size={32} />
+          </div>
+          <h1 className="text-2xl font-display font-bold text-text-primary mb-2">Acesso Suspenso</h1>
+          <p className="text-text-secondary text-sm mb-6">
+            O acesso da barbearia <strong>{tenant.name}</strong> ao sistema foi temporariamente suspenso. Por favor, entre em contato com o suporte para regularizar a assinatura.
+          </p>
+          <form action={async () => {
+            "use server";
+            const { signOut } = await import("@/auth");
+            await signOut({ redirectTo: "/" });
+          }}>
+            <button type="submit" className="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary-hover w-full transition-colors">
+              Sair da Conta
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      {/* Sidebar do Barbeiro */}
+      <div className="w-64 bg-[#0F172A] flex flex-col shadow-2xl z-20">
+        <div className="p-6 flex items-center gap-3">
+          {tenant?.logo_url ? (
+            <img src={tenant.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover bg-white p-1" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
+              <Scissors size={20} />
+            </div>
+          )}
+          <span className="text-xl font-display font-bold text-white truncate">
+            {tenant?.name || 'Painel'}
+          </span>
+        </div>
+        
+        <SidebarNav isOwnerOrAdmin={isOwnerOrAdmin} />
+
+        <div className="p-4 border-t border-slate-800">
+          <form action={async () => {
+            "use server";
+            const { signOut } = await import("@/auth");
+            await signOut({ redirectTo: "/" });
+          }}>
+            <button type="submit" className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-danger hover:bg-danger/10 transition-colors">
+              <LogOut size={20} /> Sair
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <main className="flex-1 p-8 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  );
+}

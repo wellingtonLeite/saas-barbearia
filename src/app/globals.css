@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #F8FAFC; /* Light gray background */
+  --color-surface: #FFFFFF; /* White cards */
+  --color-surface-hover: #F1F5F9;
+  
+  --color-primary: #6366F1; /* Indigo/Purple */
+  --color-primary-hover: #4F46E5;
+  --color-primary-glow: rgba(99, 102, 241, 0.3);
+  
+  --color-secondary: #E2E8F0; /* Subtle borders */
+  
+  --color-text-primary: #1E293B; /* Dark text */
+  --color-text-secondary: #64748B; /* Gray text */
+  
+  --font-display: var(--font-outfit), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+
+  /* Custom animations */
+  --animate-fade-in: fadeIn 0.4s ease-out forwards;
+  --animate-slide-up: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glassmorphism utilities - updated for light theme */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #1E293B 0%, #64748B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-primary {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
