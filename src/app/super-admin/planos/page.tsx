@@ -79,24 +79,26 @@ export default async function PlansPage() {
             </div>
 
             <div className="space-y-3 pt-2">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative flex items-center">
-                  <input type="checkbox" name="has_whatsapp" className="peer sr-only" />
-                  <div className="w-5 h-5 border-2 border-secondary rounded flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-all">
-                    <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
+              <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
+                <input type="checkbox" name="has_whatsapp" className="peer sr-only" />
+                <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+                  <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
-                <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">WhatsApp Automático</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Mensagens via WhatsApp</span>
+                  <span className="text-xs text-text-secondary mt-1">Habilita botões para envio de mensagens direto pelo WhatsApp Web</span>
+                </div>
               </label>
 
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative flex items-center">
-                  <input type="checkbox" name="has_financial_module" className="peer sr-only" />
-                  <div className="w-5 h-5 border-2 border-secondary rounded flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-all">
-                    <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
+              <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
+                <input type="checkbox" name="has_financial_module" className="peer sr-only" />
+                <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+                  <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
-                <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Módulo Financeiro Avançado</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Acesso ao Módulo Financeiro</span>
+                  <span className="text-xs text-text-secondary mt-1">Habilita as funcionalidades do menu Financeiro</span>
+                </div>
               </label>
             </div>
 
@@ -113,8 +115,14 @@ export default async function PlansPage() {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-text-primary">{plan.name}</h3>
                 <div className="flex items-end gap-1 mt-2">
-                  <span className="text-3xl font-display font-bold text-primary">R$ {Number(plan.base_price).toFixed(2)}</span>
-                  <span className="text-text-secondary text-sm mb-1">/mês</span>
+                  {Number(plan.base_price) === 0 ? (
+                    <span className="text-3xl font-display font-bold text-primary">Sob Consulta</span>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-display font-bold text-primary">R$ {Number(plan.base_price).toFixed(2)}</span>
+                      <span className="text-text-secondary text-sm mb-1">/mês</span>
+                    </>
+                  )}
                 </div>
                 
                 <ul className="mt-6 space-y-3">
@@ -129,11 +137,11 @@ export default async function PlansPage() {
                   
                   <li className={`flex items-center gap-2 text-sm ${plan.has_whatsapp ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_whatsapp ? "text-success" : "text-secondary"} />
-                    WhatsApp Automático
+                    Mensagens via WhatsApp
                   </li>
                   <li className={`flex items-center gap-2 text-sm ${plan.has_financial_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_financial_module ? "text-success" : "text-secondary"} />
-                    Módulo Financeiro Completo
+                    {plan.name === 'Plano Navalha' ? 'Módulo Financeiro (Básico)' : 'Módulo Financeiro (Completo)'}
                   </li>
                 </ul>
               </div>

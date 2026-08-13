@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { Copy, ExternalLink, Info, Link as LinkIcon, Shield, Clock } from "lucide-react";
+import { Copy, ExternalLink, Info, Link as LinkIcon, Shield, Clock, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -239,6 +239,25 @@ export default async function ConfigPage() {
             className="inline-block mt-2 px-6 py-3 bg-secondary/50 hover:bg-primary/20 text-text-primary hover:text-primary rounded-xl text-sm font-bold transition-colors w-full text-center"
           >
             Configurar Horários da Unidade
+          </Link>
+        </div>
+
+        {/* Card: WhatsApp */}
+        <div className="bg-surface border border-secondary rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-success/20 text-success rounded-lg">
+              <MessageCircle size={24} />
+            </div>
+            <h2 className="text-xl font-bold text-text-primary">WhatsApp (Mensagens)</h2>
+          </div>
+          <p className="text-sm text-text-secondary mb-4">
+            Personalize as mensagens automáticas enviadas para seus clientes, como lembretes, avaliação e cancelamentos.
+          </p>
+          <Link 
+            href="/dashboard/config/whatsapp"
+            className="inline-block mt-2 px-6 py-3 bg-secondary/50 hover:bg-success/20 text-text-primary hover:text-success rounded-xl text-sm font-bold transition-colors w-full text-center"
+          >
+            Configurar Mensagens
           </Link>
         </div>
 

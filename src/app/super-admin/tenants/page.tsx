@@ -4,12 +4,15 @@ import { Building2, Power, PowerOff } from "lucide-react";
 import { revalidatePath } from "next/cache";
 
 import Link from "next/link";
-import { SubscriptionStatus } from "@prisma/client";
+import { SubscriptionStatus } from "@/generated/prisma";
 
 export default async function TenantsPage({ searchParams }: { searchParams: Promise<{ editPlanFor?: string }> }) {
   const resolvedParams = await searchParams;
   const editPlanFor = resolvedParams.editPlanFor;
 
+  const settings = await db.systemSetting.findUnique({ where: { key: "WHATSAPP_TEMPLATES" } });
+  const b2b_billing = (settings?.value as any)?.b2b_billing || "Fala {dono}! Tudo bem? A assinatura do {plano} da {barbearia} está próxima do vencimento. Renove aqui: {link_pagamento}";
+  
   const tenants = await db.tenant.findMany({
     include: {
       subscription: {
@@ -123,6 +126,21 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <a 
+                          href={`https://wa.me/?text=${encodeURIComponent(
+                            b2b_billing
+                              .replace("{dono}", "Dono")
+                              .replace("{barbearia}", tenant.name)
+                              .replace("{plano}", sub?.plan?.name || "Sem Plano")
+                              .replace("{link_pagamento}", "Seu painel > Assinatura")
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg text-green-500 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                          title="Cobrar via WhatsApp"
+                        >
+                          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                        </a>
                         <Link 
                           href={`/super-admin/tenants?editPlanFor=${tenant.id}`}
                           className="px-3 py-1.5 rounded-lg text-sm font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"

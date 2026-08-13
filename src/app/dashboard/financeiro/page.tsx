@@ -1,12 +1,35 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { formatCurrency } from "@/lib/utils";
-import { DollarSign, TrendingUp, TrendingDown, CheckCircle2 } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, CheckCircle2, ArrowRight, Wallet } from "lucide-react";
+import Link from "next/link";
+import { getPlanFeatures } from "@/lib/plan-features";
+import { UpgradeCard } from "@/components/UpgradeCard";
+
+async function getTenantId(userId: string) {
+  const barberUnit = await db.barberUnit.findFirst({
+    where: { barberId: userId },
+    include: { unit: true }
+  });
+  if (barberUnit) return barberUnit.unit.tenantId;
+  const tenant = await db.tenant.findFirst();
+  return tenant?.id;
+}
 
 export default async function FinancePage() {
   const session = await auth();
+  const userId = session?.user?.id;
   const role = session?.user?.role;
   const isOwner = role === 'OWNER' || role === 'SUPER_ADMIN';
+
+  const tenantId = userId ? await getTenantId(userId) : undefined;
+  
+  const tenant = tenantId ? await db.tenant.findUnique({
+    where: { id: tenantId },
+    include: { subscription: { include: { plan: true } } }
+  }) : null;
+
+  const planFeatures = getPlanFeatures(tenant?.subscription?.plan);
 
   // Buscar as vendas (Sales) do PDV
   const sales = await db.sale.findMany({
@@ -30,6 +53,19 @@ export default async function FinancePage() {
   });
 
   const netProfit = totalRevenue - totalCommissions;
+
+  let totalPagar = 0;
+  let totalReceber = 0;
+
+  if (planFeatures.hasAccountsPayable && tenantId) {
+    const contas = await db.accountEntry.findMany({
+      where: { tenantId, status: { not: 'PAID' } }
+    });
+    contas.forEach(c => {
+      if (c.type === 'PAYABLE') totalPagar += Number(c.amount);
+      if (c.type === 'RECEIVABLE') totalReceber += Number(c.amount);
+    });
+  }
 
   return (
     <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
@@ -76,6 +112,39 @@ export default async function FinancePage() {
           </div>
         )}
       </div>
+
+      {/* Seção de Contas a Pagar e Receber */}
+      {isOwner && (
+        <div className="mt-12 mb-12">
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Wallet className="text-primary" /> Contas a Pagar e Receber
+          </h2>
+          
+          {planFeatures.hasAccountsPayable ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-surface border border-secondary rounded-xl p-6 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-error/5 to-transparent pointer-events-none" />
+                <h3 className="text-text-secondary font-medium mb-2">Total a Pagar (Pendente)</h3>
+                <p className="text-3xl font-display font-bold text-error mb-4">{formatCurrency(totalPagar)}</p>
+                <Link href="/dashboard/financeiro/contas?aba=pagar" className="text-primary hover:underline flex items-center gap-1 font-medium text-sm">
+                  Ver contas a pagar <ArrowRight size={16} />
+                </Link>
+              </div>
+              
+              <div className="bg-surface border border-secondary rounded-xl p-6 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent pointer-events-none" />
+                <h3 className="text-text-secondary font-medium mb-2">Total a Receber (Pendente)</h3>
+                <p className="text-3xl font-display font-bold text-success mb-4">{formatCurrency(totalReceber)}</p>
+                <Link href="/dashboard/financeiro/contas?aba=receber" className="text-primary hover:underline flex items-center gap-1 font-medium text-sm">
+                  Ver contas a receber <ArrowRight size={16} />
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <UpgradeCard requiredPlan="Máquina de Corte" featureName="Contas a Pagar e Receber" />
+          )}
+        </div>
+      )}
 
       {/* Extrato Recente */}
       <div className="bg-surface border border-secondary rounded-xl overflow-hidden mt-8">

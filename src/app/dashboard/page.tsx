@@ -9,7 +9,9 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
   const resolvedParams = await searchParams;
   const dateParam = resolvedParams.date;
   
-  // Buscar os appointments de hoje para este barbeiro ou da data selecionada
+  const settings = await db.systemSetting.findUnique({ where: { key: "WHATSAPP_TEMPLATES" } });
+  const systemTemplates = settings?.value as any;
+  
   const selectedDate = dateParam ? new Date(dateParam + "T00:00:00") : new Date();
   selectedDate.setHours(0, 0, 0, 0);
   
@@ -36,6 +38,67 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
   });
   
   const tenantId = userWithUnits?.units[0]?.unit?.tenantId;
+
+  const tenant = tenantId ? await db.tenant.findUnique({ 
+    where: { id: tenantId },
+    include: { subscription: { include: { plan: true } } }
+  }) : null;
+  
+  const plan = tenant?.subscription?.plan;
+  const isOuro = (plan?.max_barbers ?? 0) >= 50;
+  const isMaquina = (plan?.max_barbers ?? 0) >= 10;
+  const isOwner = session?.user?.role !== 'BARBER';
+
+  // [NOTIFICAÇÕES DE VENCIMENTO]
+  if (isOwner && isMaquina && tenantId) {
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    
+    const upcomingAccounts = await db.accountEntry.findMany({
+      where: {
+        tenantId,
+        type: 'PAYABLE',
+        status: 'PENDING',
+        due_date: { lte: threeDaysFromNow }
+      }
+    });
+
+    if (upcomingAccounts.length > 0) {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      const recentNotif = await db.notification.findFirst({
+        where: {
+          tenantId,
+          type: 'SYSTEM_ALERT',
+          title: { contains: 'Vencimento' },
+          createdAt: { gte: startOfToday }
+        }
+      });
+
+      if (!recentNotif && session?.user?.id) {
+        await db.notification.create({
+          data: {
+            userId: session.user.id,
+            tenantId,
+            type: 'SYSTEM_ALERT',
+            title: 'Vencimento Próximo',
+            message: `Atenção: Você tem ${upcomingAccounts.length} conta(s) a pagar vencendo nos próximos dias.`
+          }
+        });
+      }
+    }
+  }
+
+  const tenantTemplates = tenant?.whatsapp_templates as any;
+  
+  const finalTemplates = {
+    reminder: tenantTemplates?.reminder || systemTemplates?.reminder || "Olá {cliente}, passando para confirmar seu horário amanhã às {hora} na {barbearia} com {barbeiro}.",
+    review: tenantTemplates?.review || systemTemplates?.review || "Olá {cliente}, muito obrigado pela preferência! Que tal avaliar o corte do {barbeiro}? Acesse: {link}",
+    cancellation: tenantTemplates?.cancellation || systemTemplates?.cancellation || "Olá {cliente}, informamos que seu agendamento na {barbearia} foi cancelado. Acesse nosso link para remarcar!"
+  };
+
+
 
   // Se for OWNER ou SUPER_ADMIN, buscar todos os agendamentos da unidade
   // Se for BARBER, buscar apenas os seus.
@@ -117,12 +180,15 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
         </div>
       </div>
 
+
+
       {/* O componente Timeline recebe os horários, os agendamentos e agora os produtos para o checkout */}
       <Timeline 
         hours={hours} 
         appointments={appointments} 
         products={products}
         isOwner={session?.user?.role !== 'BARBER'} 
+        whatsappTemplates={finalTemplates}
       />
     </div>
   );

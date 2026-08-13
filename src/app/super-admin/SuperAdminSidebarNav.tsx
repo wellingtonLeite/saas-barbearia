@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { 
   BarChart, 
   Building,
-  Settings
+  Settings,
+  CreditCard,
+  Server
 } from "lucide-react";
 
 export default function SuperAdminSidebarNav() {
@@ -13,8 +15,11 @@ export default function SuperAdminSidebarNav() {
 
   const navItems = [
     { href: "/super-admin", label: "Visão Geral", icon: BarChart },
+    { href: "/super-admin/infraestrutura", label: "Infraestrutura", icon: Server },
     { href: "/super-admin/tenants", label: "Barbearias", icon: Building },
     { href: "/super-admin/planos", label: "Planos", icon: Settings },
+    { href: "/super-admin/pagamentos", label: "Pagamentos", icon: CreditCard },
+    { href: "/super-admin/configuracoes", label: "Configurações", icon: Settings },
   ];
 
   return (

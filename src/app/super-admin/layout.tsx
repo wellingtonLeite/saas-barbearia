@@ -49,8 +49,9 @@ export default async function SuperAdminLayout({ children }: { children: ReactNo
 
       {/* Conteúdo Principal */}
       <div className="flex-1 flex flex-col overflow-hidden bg-background">
-        <main className="flex-1 overflow-y-auto p-8 relative">
-          <div className="absolute top-0 right-0 p-8 flex items-center gap-4">
+        {/* Header Superior */}
+        <header className="flex justify-end items-center p-6 border-b border-secondary/20">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-bold text-text-primary">{session?.user?.name}</p>
               <p className="text-xs text-text-secondary uppercase">Super Admin</p>
@@ -59,6 +60,9 @@ export default async function SuperAdminLayout({ children }: { children: ReactNo
               {session?.user?.name?.charAt(0)}
             </div>
           </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-8 relative">
           {children}
         </main>
       </div>

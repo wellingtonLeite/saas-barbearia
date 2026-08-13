@@ -68,13 +68,29 @@ export async function createBooking(data: {
       }
     });
 
+    // Notificar o barbeiro (fail-safe: não bloqueia o agendamento se falhar)
+    try {
+      await db.notification.create({
+        data: {
+          userId: data.barberId,
+          tenantId: data.tenantId,
+          type: "APPOINTMENT_REMINDER",
+          title: "Novo Agendamento",
+          message: `${client.name} agendou para ${start_time.toLocaleDateString('pt-BR')} às ${start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+        }
+      });
+    } catch (notifError) {
+      console.warn("Notification creation failed (non-critical):", notifError);
+    }
+
     // Revalidar rotas
     revalidatePath("/dashboard");
     revalidatePath(`/[slug]`, 'layout');
     
     return { success: true, appointmentId: appointment.id };
   } catch (error) {
-    console.error("Booking Error:", error);
-    return { error: "Erro ao criar agendamento. Tente novamente." };
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Booking Error:", msg);
+    return { error: `Erro ao criar agendamento: ${msg}` };
   }
 }

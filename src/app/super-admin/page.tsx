@@ -198,10 +198,16 @@ export default async function SuperAdminDashboard() {
                   <p className="text-xs text-text-secondary mt-1">{plan.max_barbers >= 999 ? 'Ilimitado' : `Até ${plan.max_barbers} prof.`} • {plan.max_units} unidade(s)</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-gradient-gold">
-                    R$ {Number(plan.base_price).toFixed(2)}
-                  </p>
-                  <p className="text-[10px] uppercase text-text-secondary font-bold">/ mês</p>
+                  {Number(plan.base_price) === 0 ? (
+                    <p className="text-sm font-bold text-gradient-gold">Sob Consulta</p>
+                  ) : (
+                    <>
+                      <p className="text-lg font-bold text-gradient-gold">
+                        R$ {Number(plan.base_price).toFixed(2)}
+                      </p>
+                      <p className="text-[10px] uppercase text-text-secondary font-bold">/ mês</p>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

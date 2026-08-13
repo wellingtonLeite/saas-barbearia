@@ -25,11 +25,37 @@ export async function addTeamMember(formData: FormData) {
     });
 
     const unitId = userWithTenants?.units[0]?.unitId;
-    if (!unitId) return { error: "Unidade não encontrada" };
+    const tenantId = userWithTenants?.units[0]?.unit?.tenantId;
+    if (!unitId || !tenantId) return { error: "Unidade não encontrada" };
 
     // Verificar se email já existe
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) return { error: "Email já cadastrado" };
+
+    // Validar limites do plano
+    const tenant = await db.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        subscription: {
+          include: {
+            plan: true
+          }
+        },
+        units: {
+          include: {
+            barbers: true
+          }
+        }
+      }
+    });
+
+    if (tenant?.subscription?.plan) {
+      const plan = tenant.subscription.plan;
+      const totalBarbers = tenant.units.reduce((acc, unit) => acc + unit.barbers.length, 0);
+      if (totalBarbers >= plan.max_barbers) {
+        return { error: `Limite atingido: O seu plano (${plan.name}) permite no máximo ${plan.max_barbers} barbeiros. Faça um upgrade para adicionar mais profissionais.` };
+      }
+    }
 
     const password_hash = await bcrypt.hash(password, 10);
 

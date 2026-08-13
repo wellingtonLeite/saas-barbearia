@@ -27,12 +27,14 @@ export default function Timeline({
   appointments,
   hours,
   products,
-  isOwner
+  isOwner,
+  whatsappTemplates
 }: {
   appointments: Appointment[];
   hours: number[];
   products: Product[];
   isOwner: boolean;
+  whatsappTemplates?: any;
 }) {
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
@@ -40,6 +42,22 @@ export default function Timeline({
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
   
+  const getWhatsappLink = (type: 'reminder' | 'review' | 'cancellation', appt: Appointment) => {
+    if (!whatsappTemplates) return "#";
+    let text = whatsappTemplates[type] || "";
+    text = text.replace(/{cliente}/g, appt.client);
+    text = text.replace(/{barbearia}/g, "nossa barbearia");
+    text = text.replace(/{hora}/g, appt.time);
+    text = text.replace(/{barbeiro}/g, appt.barberName);
+    
+    // Base URL is available on client
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://app.com';
+    text = text.replace(/{link}/g, `${origin}/avaliar`); // Example link
+    
+    const phone = appt.clientPhone ? appt.clientPhone.replace(/\D/g, '') : '';
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  };
+
   // Otimização visual para o card de fundo atualizar instantaneamente
   const [localAppointments, setLocalAppointments] = useState(appointments);
 
@@ -150,27 +168,47 @@ export default function Timeline({
                   >
                     {isPending ? <Loader2 size={20} className="animate-spin" /> : <X size={20} />} Cancelar Atendimento
                   </button>
+                  <a 
+                    href={getWhatsappLink('reminder', selectedAppt)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-4 px-4 bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-4 border border-green-500/30"
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                    Lembrar via WhatsApp
+                  </a>
                 </>
               )}
 
               {selectedAppt.status === 'CONFIRMED' && (
-                <button 
-                  disabled={isPending}
-                  onClick={() => {
-                    startTransition(async () => {
-                      const { updateAppointmentStatus } = await import("@/app/actions/appointment");
-                      
-                      const newStatus = 'IN_PROGRESS';
-                      setSelectedAppt({...selectedAppt, status: newStatus});
-                      setLocalAppointments(prev => prev.map(a => a.id === selectedAppt.id ? { ...a, status: newStatus } : a));
-                      
-                      await updateAppointmentStatus(selectedAppt.id, newStatus);
-                    });
-                  }}
-                  className="w-full py-4 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-purple-500/20 disabled:opacity-50"
-                >
-                  {isPending ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} />} Iniciar Corte
-                </button>
+                <>
+                  <button 
+                    disabled={isPending}
+                    onClick={() => {
+                      startTransition(async () => {
+                        const { updateAppointmentStatus } = await import("@/app/actions/appointment");
+                        
+                        const newStatus = 'IN_PROGRESS';
+                        setSelectedAppt({...selectedAppt, status: newStatus});
+                        setLocalAppointments(prev => prev.map(a => a.id === selectedAppt.id ? { ...a, status: newStatus } : a));
+                        
+                        await updateAppointmentStatus(selectedAppt.id, newStatus);
+                      });
+                    }}
+                    className="w-full py-4 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-purple-500/20 disabled:opacity-50"
+                  >
+                    {isPending ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} />} Iniciar Corte
+                  </button>
+                  <a 
+                    href={getWhatsappLink('reminder', selectedAppt)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-4 px-4 bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-4 border border-green-500/30"
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                    Avisar no WhatsApp
+                  </a>
+                </>
               )}
 
               {selectedAppt.status === 'IN_PROGRESS' && !isCheckoutMode && (
@@ -252,22 +290,35 @@ export default function Timeline({
                         disabled={isPending}
                         onClick={() => {
                           startTransition(async () => {
-                            const { processCheckout } = await import("@/app/actions/appointment");
+                            const { updateAppointmentStatus } = await import("@/app/actions/appointment");
                             
                             const newStatus = 'COMPLETED';
                             setSelectedAppt({...selectedAppt, status: newStatus});
                             setLocalAppointments(prev => prev.map(a => a.id === selectedAppt.id ? { ...a, status: newStatus } : a));
                             
-                            await processCheckout(selectedAppt.id, selectedProductIds);
+                            await updateAppointmentStatus(selectedAppt.id, newStatus);
+                            setIsCheckoutMode(false);
                           });
                         }}
-                        className="flex-[2] py-3 px-2 bg-success hover:bg-success/90 text-black rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-success/20 disabled:opacity-50"
+                        className="flex-1 py-3 px-2 bg-success hover:bg-success/90 text-black rounded-xl font-bold flex items-center justify-center transition-colors disabled:opacity-50"
                       >
-                        {isPending ? <Loader2 size={20} className="animate-spin" /> : <DollarSign size={20} />} Receber
+                        Confirmar
                       </button>
                     </div>
                   </div>
                 </div>
+              )}
+
+              {selectedAppt.status === 'COMPLETED' && (
+                <a 
+                  href={getWhatsappLink('review', selectedAppt)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 px-4 bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-4 border border-green-500/30"
+                >
+                  <Star size={20} />
+                  Pedir Avaliação no WhatsApp
+                </a>
               )}
 
               {selectedAppt.status === 'COMPLETED' && (

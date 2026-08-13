@@ -11,25 +11,38 @@ import {
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import SidebarNav from "@/components/SidebarNav";
+import { NotificationProvider } from "@/components/NotificationProvider";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default async function BarberLayout({ children }: { children: ReactNode }) {
   const session = await auth();
   const role = session?.user?.role;
   const isOwnerOrAdmin = role === 'OWNER' || role === 'SUPER_ADMIN';
 
-  // Buscar o Tenant (Barbearia) para pegar a logo
+  // Buscar o Tenant (Barbearia) para pegar a logo e plano
   const userWithTenant = await db.user.findUnique({
     where: { id: session?.user?.id },
     include: {
       units: {
         include: {
-          unit: { include: { tenant: true } }
+          unit: { 
+            include: { 
+              tenant: {
+                include: {
+                  subscription: { include: { plan: true } }
+                }
+              } 
+            }
+          }
         }
       }
     }
   });
   
   const tenant = userWithTenant?.units[0]?.unit?.tenant;
+  const plan = tenant?.subscription?.plan;
+  const hasAccountsPayable = (plan?.max_barbers ?? 0) >= 10;
+  const hasGrowthDashboard = (plan?.max_barbers ?? 0) >= 50;
 
   if (tenant && !tenant.active) {
     return (
@@ -57,23 +70,29 @@ export default async function BarberLayout({ children }: { children: ReactNode }
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar do Barbeiro */}
-      <div className="w-64 bg-[#0F172A] flex flex-col shadow-2xl z-20">
-        <div className="p-6 flex items-center gap-3">
+    <NotificationProvider>
+      <div className="min-h-screen bg-background flex">
+        {/* Sidebar do Barbeiro */}
+        <div className="w-64 bg-[#0F172A] flex flex-col shadow-2xl z-20">
+          <div className="p-6 flex items-center gap-3 justify-between">
+            <div className="flex items-center gap-3 overflow-hidden">
+
           {tenant?.logo_url ? (
             <img src={tenant.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover bg-white p-1" />
           ) : (
             <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
               <Scissors size={20} />
             </div>
-          )}
-          <span className="text-xl font-display font-bold text-white truncate">
-            {tenant?.name || 'Painel'}
-          </span>
-        </div>
-        
-        <SidebarNav isOwnerOrAdmin={isOwnerOrAdmin} />
+            )}
+            <span className="text-xl font-display font-bold text-white truncate">
+              {tenant?.name || 'Painel'}
+            </span>
+            </div>
+            <NotificationBell />
+          </div>
+          
+          <SidebarNav isOwnerOrAdmin={isOwnerOrAdmin} hasAccountsPayable={hasAccountsPayable} hasGrowthDashboard={hasGrowthDashboard} />
+
 
         <div className="p-4 border-t border-slate-800">
           <form action={async () => {
@@ -92,5 +111,6 @@ export default async function BarberLayout({ children }: { children: ReactNode }
         {children}
       </main>
     </div>
+    </NotificationProvider>
   );
 }

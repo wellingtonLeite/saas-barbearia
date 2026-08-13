@@ -14,6 +14,30 @@ datasource db {
 // ENUMS
 // ------------------------------------------------------
 
+enum PaymentGateway {
+  MERCADO_PAGO
+  ASAAS
+  PAGSEGURO
+}
+
+model GatewayConfig {
+  id             String         @id @default(uuid())
+  gateway        PaymentGateway @unique
+  is_active      Boolean        @default(false)
+  access_token   String
+  webhook_secret String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum Role {
   SUPER_ADMIN
   OWNER
@@ -70,6 +94,18 @@ enum NotificationType {
   SYSTEM_ALERT
 }
 
+enum AccountEntryType {
+  PAYABLE   // Conta a pagar
+  RECEIVABLE // Conta a receber
+}
+
+enum AccountEntryStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
 // ------------------------------------------------------
 // MODELS
 // ------------------------------------------------------
@@ -102,13 +138,14 @@ model Subscription {
 }
 
 model Tenant {
-  id         String   @id @default(uuid())
-  name       String
-  slug       String   @unique
-  logo_url   String?
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  name               String
+  slug               String   @unique
+  logo_url           String?
+  whatsapp_templates Json?
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   subscription  Subscription?
   units         Unit[]
@@ -120,6 +157,7 @@ model Tenant {
   notifications Notification[]
   reviews       Review[]
   schedule_blocks ScheduleBlock[]
+  account_entries AccountEntry[]
 }
 
 model Unit {
@@ -318,4 +356,19 @@ model Review {
   rating        Int         // 1 a 5
   comment       String?
   createdAt     DateTime    @default(now())
+}
+
+model AccountEntry {
+  id          String             @id @default(uuid())
+  tenantId    String
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type        AccountEntryType
+  status      AccountEntryStatus @default(PENDING)
+  description String
+  amount      Decimal
+  due_date    DateTime
+  paid_at     DateTime?
+  category    String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
