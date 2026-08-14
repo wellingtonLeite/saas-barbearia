@@ -7,6 +7,21 @@ import { saveLoyaltyProgram } from "@/app/actions/loyalty";
 import { createClientPlan, deleteClientPlan } from "@/app/actions/vip";
 import { getUserTenant } from "@/lib/tenant";
 
+async function onCreateClientPlan(formData: FormData) {
+  "use server";
+  await createClientPlan(formData);
+}
+
+async function onDeleteClientPlan(id: string) {
+  "use server";
+  await deleteClientPlan(id);
+}
+
+async function onSaveLoyaltyProgram(formData: FormData) {
+  "use server";
+  await saveLoyaltyProgram(formData);
+}
+
 export const metadata = {
   title: "Fidelidade e VIP | SaaS Barbearia",
 };
@@ -76,7 +91,7 @@ export default async function FidelidadePage({ searchParams }: { searchParams: P
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-              <form action={async (formData) => { await createClientPlan(formData); }} className="bg-surface border border-secondary p-6 rounded-2xl shadow-xl sticky top-6">
+              <form action={onCreateClientPlan} className="bg-surface border border-secondary p-6 rounded-2xl shadow-xl sticky top-6">
                 <h3 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
                   <Plus size={18} className="text-primary" /> Criar Novo Plano
                 </h3>
@@ -138,7 +153,7 @@ export default async function FidelidadePage({ searchParams }: { searchParams: P
                       </div>
                     </div>
                     
-                    <form action={async () => { await deleteClientPlan(cp.id); }}>
+                    <form action={onDeleteClientPlan.bind(null, cp.id)}>
                       <button type="submit" className="text-text-secondary hover:text-danger hover:bg-danger/10 p-3 rounded-xl transition-colors flex items-center justify-center">
                         <Trash2 size={20} />
                       </button>
@@ -156,7 +171,7 @@ export default async function FidelidadePage({ searchParams }: { searchParams: P
           <h2 className="text-2xl font-bold text-text-primary mb-2">Programa de Fidelidade</h2>
           <p className="text-text-secondary text-sm mb-8">Recompense seus clientes que retornam sempre à barbearia.</p>
 
-          <form action={async (formData) => { await saveLoyaltyProgram(formData); }} className="bg-surface border border-secondary p-8 rounded-2xl shadow-xl">
+          <form action={onSaveLoyaltyProgram} className="bg-surface border border-secondary p-8 rounded-2xl shadow-xl">
             <div className="space-y-6">
               <div className="p-4 bg-background/50 border border-secondary rounded-xl flex items-center gap-4">
                 <Gift className="text-primary w-10 h-10" />

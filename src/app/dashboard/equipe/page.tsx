@@ -2,6 +2,12 @@ import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
 import { Users, UserPlus, Briefcase, Percent, Star } from "lucide-react";
 import { addTeamMember } from "@/app/actions/team";
+
+async function onAddTeamMember(formData: FormData) {
+  "use server";
+  await addTeamMember(formData);
+}
+
 import { auth } from "@/auth";
 import Link from "next/link";
 
@@ -114,7 +120,7 @@ export default async function TeamPage() {
               </p>
             </div>
             
-            <form action={async (formData) => { await addTeamMember(formData); }} className="space-y-4">
+            <form action={onAddTeamMember} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
                 <input 

@@ -7,6 +7,26 @@ import { getUserTenant } from "@/lib/tenant";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
+async function onCreateCategory(formData: FormData) {
+  "use server";
+  await createCategory(formData);
+}
+
+async function onDeleteCategory(id: string) {
+  "use server";
+  await deleteCategory(id);
+}
+
+async function onCreateService(formData: FormData) {
+  "use server";
+  await createService(formData);
+}
+
+async function onDeleteService(id: string) {
+  "use server";
+  await deleteService(id);
+}
+
 export default async function ServicesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -50,10 +70,7 @@ export default async function ServicesPage() {
                 <h2 className="text-lg font-bold flex items-center gap-2 text-white">
                   <Folder className="text-primary" size={20} /> {cat.name}
                 </h2>
-                <form action={async () => {
-                  "use server";
-                  await deleteCategory(cat.id);
-                }}>
+                <form action={onDeleteCategory.bind(null, cat.id)}>
                   <button className="text-text-secondary hover:text-danger p-1 rounded transition-colors" title="Deletar Categoria">
                     <Trash2 size={16} />
                   </button>
@@ -80,10 +97,7 @@ export default async function ServicesPage() {
                         <Pencil size={16} />
                       </Link>
 
-                      <form action={async () => {
-                        "use server";
-                        await deleteService(service.id);
-                      }}>
+                      <form action={onDeleteService.bind(null, service.id)}>
                         <button className="text-text-secondary hover:text-danger p-2 rounded transition-colors">
                           <Trash2 size={16} />
                         </button>
@@ -117,10 +131,7 @@ export default async function ServicesPage() {
                       <Link href={`/dashboard/servicos/${service.id}`} className="text-text-secondary hover:text-primary p-2 rounded transition-colors" title="Editar Serviço">
                         <Pencil size={16} />
                       </Link>
-                      <form action={async () => {
-                        "use server";
-                        await deleteService(service.id);
-                      }}>
+                      <form action={onDeleteService.bind(null, service.id)}>
                         <button className="text-text-secondary hover:text-danger p-2 rounded transition-colors">
                           <Trash2 size={16} />
                         </button>
@@ -141,7 +152,7 @@ export default async function ServicesPage() {
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Plus className="text-primary" /> Nova Categoria
             </h2>
-            <form action={async (formData) => { await createCategory(formData); }} className="space-y-4">
+            <form action={onCreateCategory} className="space-y-4">
               <div>
                 <input 
                   type="text" 
@@ -165,7 +176,7 @@ export default async function ServicesPage() {
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Scissors className="text-primary" /> Novo Serviço
             </h2>
-            <form action={async (formData) => { await createService(formData); }} className="space-y-4">
+            <form action={onCreateService} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Nome</label>
                 <input 

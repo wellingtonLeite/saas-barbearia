@@ -40,7 +40,7 @@ export default function Home() {
               Entrar
             </Link>
             <Link href="/register" className="bg-primary hover:bg-primary-hover text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold transition-all shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:scale-105 text-sm sm:text-base whitespace-nowrap">
-              Teste Grátis
+              Assinar Sistema
             </Link>
           </div>
         </div>
@@ -70,7 +70,7 @@ export default function Home() {
             {/* Signup Form */}
             <div className="w-full max-w-md bg-surface p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-secondary shadow-2xl relative">
               <div className="absolute -top-3 left-5 sm:left-6 bg-primary text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
-                15 DIAS GRÁTIS
+                FALE COM O COMERCIAL
               </div>
               <LandingForm />
               <p className="text-center text-xs text-text-secondary mt-3 font-medium">Sem cartão de crédito • Cancele quando quiser</p>
@@ -137,7 +137,7 @@ export default function Home() {
               <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center flex-shrink-0">
                 <Star size={20} />
               </div>
-              <span className="font-bold text-white">15 dias 100% grátis</span>
+              <span className="font-bold text-white">agora mesmo. Sistema completo com mensalidade que cabe no bolso.</span>
             </div>
             <div className="w-px h-8 bg-secondary hidden sm:block" />
             <div className="flex items-center gap-3">
@@ -256,9 +256,9 @@ export default function Home() {
 
             {/* FREE Plan */}
             <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-background border-2 border-green-500/40 flex flex-col hover:border-green-500/80 transition-colors relative overflow-hidden">
-              <div className="absolute top-3 right-3 bg-green-500/20 text-green-400 text-xs font-black px-2.5 py-1 rounded-full">GRÁTIS</div>
-              <h3 className="text-xl font-black text-white mb-1.5">Teste</h3>
-              <p className="text-text-secondary mb-6 font-medium text-sm">Experimente sem compromisso.</p>
+              <div className="absolute top-3 right-3 bg-primary/20 text-primary text-xs font-black px-2.5 py-1 rounded-full">POPULAR</div>
+              <h3 className="text-xl font-black text-white mb-1.5">Profissional</h3>
+              <p className="text-text-secondary text-sm">Ideal para barbearias em crescimento</p>
               <div className="mb-6">
                 <span className="text-4xl font-black text-green-400">R$ 0</span>
                 <span className="text-text-secondary font-bold text-sm"> / 15 dias</span>
@@ -271,7 +271,7 @@ export default function Home() {
                 <li className="flex items-start gap-2.5 text-text-secondary/40 font-medium text-sm line-through"><CheckCircle2 size={16} className="shrink-0 mt-0.5" />Financeiro</li>
               </ul>
               <Link href="/register?plan=free" className="w-full py-3 rounded-xl font-black text-center text-green-400 border-2 border-green-500/40 hover:border-green-500 hover:bg-green-500/5 transition-colors text-sm active:scale-95">
-                COMEÇAR GRÁTIS
+                FALAR COM VENDAS
               </Link>
             </div>
 
@@ -338,9 +338,9 @@ export default function Home() {
 
           {/* Trial CTA */}
           <div className="mt-10 sm:mt-14 text-center">
-            <p className="text-text-secondary font-medium mb-4">Ainda em dúvida? Comece com o plano gratuito de 15 dias. Sem cartão. Sem surpresas.</p>
+            <p className="text-text-secondary font-medium mb-4">Ainda em dúvida? Entre em contato agora mesmo. Sem compromisso.</p>
             <Link href="/register?plan=free" className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-black px-8 py-3 rounded-full transition-colors active:scale-95">
-              <Star size={16} /> Criar conta grátis agora
+              <Star size={16} /> Entrar em Contato
             </Link>
           </div>
         </div>

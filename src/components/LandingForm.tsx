@@ -54,7 +54,7 @@ export function LandingForm() {
         </div>
         <h3 className="text-xl font-bold text-white mb-2">Reserva Confirmada!</h3>
         <p className="text-text-secondary text-sm">
-          Seus dados foram enviados com sucesso. Nossa equipe entrará em contato com você pelo WhatsApp em breve para liberar o seu acesso de 15 dias grátis.
+          Seus dados foram enviados com sucesso. Nossa equipe entrará em contato com você pelo WhatsApp em breve para liberar o seu acesso.
         </p>
       </div>
     );
@@ -129,7 +129,7 @@ export function LandingForm() {
             ENVIANDO...
           </>
         ) : (
-          "COMEÇAR AGORA — DE GRAÇA!"
+          "FALAR COM COMERCIAL"
         )}
       </button>
     </form>

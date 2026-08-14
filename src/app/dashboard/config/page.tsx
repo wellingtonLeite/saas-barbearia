@@ -3,6 +3,30 @@ import { auth } from "@/auth";
 import { Copy, ExternalLink, Info, Link as LinkIcon, Shield, Clock, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+
+async function updateContactAction(formData: FormData) {
+  "use server";
+  const unitId = formData.get('unitId') as string;
+  const address = formData.get('address') as string;
+  const phone = formData.get('phone') as string;
+  
+  const { db } = await import("@/lib/db");
+  await db.unit.update({
+    where: { id: unitId },
+    data: { address, phone }
+  });
+  
+  revalidatePath("/dashboard/config");
+  // Not possible to know slug here easily without querying, but we can revalidate everything or just the layout
+  revalidatePath("/", "layout");
+}
+
+async function updateLogoAction(formData: FormData) {
+  "use server";
+  const { updateTenantLogo } = await import("@/app/actions/tenant");
+  await updateTenantLogo(formData);
+}
 
 export default async function ConfigPage() {
   const session = await auth();
@@ -32,11 +56,12 @@ export default async function ConfigPage() {
     return <div>Barbearia não encontrada.</div>;
   }
 
+  const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
   // URL pública da barbearia
-  const publicUrl = `http://localhost:3000/${tenant.slug}`;
+  const publicUrl = `${baseUrl}/${tenant.slug}`;
   
   // URL de login do sistema (mesma para dono e funcionário)
-  const loginUrl = `http://localhost:3000/login`;
+  const loginUrl = `${baseUrl}/login`;
 
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
@@ -136,22 +161,7 @@ export default async function ConfigPage() {
             </div>
           </div>
 
-          <form action={async (formData) => {
-            "use server";
-            const unitId = formData.get('unitId') as string;
-            const address = formData.get('address') as string;
-            const phone = formData.get('phone') as string;
-            
-            const { db } = await import("@/lib/db");
-            await db.unit.update({
-              where: { id: unitId },
-              data: { address, phone }
-            });
-            
-            const { revalidatePath } = await import("next/cache");
-            revalidatePath("/dashboard/config");
-            revalidatePath(`/${tenant.slug}`);
-          }} className="border-t border-secondary pt-6">
+          <form action={updateContactAction} className="border-t border-secondary pt-6">
             <h3 className="text-lg font-bold text-text-primary mb-4">Contato e Localização</h3>
             <input type="hidden" name="unitId" value={userWithTenant?.units[0]?.unitId || ''} />
             
@@ -199,11 +209,7 @@ export default async function ConfigPage() {
                   <span className="text-xs text-text-secondary text-center px-2">Sem<br/>Logo</span>
                 )}
               </div>
-              <form action={async (formData) => {
-                "use server";
-                const { updateTenantLogo } = await import("@/app/actions/tenant");
-                await updateTenantLogo(formData);
-              }} className="flex-1 space-y-4">
+              <form action={updateLogoAction} className="flex-1 space-y-4">
                 <input type="hidden" name="tenantId" value={tenant.id} />
                 <div>
                   <label className="text-sm text-text-secondary block mb-2">Envie uma imagem do seu computador (PNG, JPG)</label>

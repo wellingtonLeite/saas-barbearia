@@ -5,6 +5,14 @@ import { Plus, Search, Receipt, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getUserTenant } from "@/lib/tenant";
 
+async function createNewComandaAction() {
+  "use server";
+  const { createComanda } = await import("@/app/actions/comanda");
+  const { redirect } = await import("next/navigation");
+  const comandaId = await createComanda();
+  redirect(`/dashboard/comandas/${comandaId}`);
+}
+
 export default async function ComandasPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -40,13 +48,7 @@ export default async function ComandasPage() {
           </p>
         </div>
         
-        <form action={async () => {
-          "use server";
-          const { createComanda } = await import("@/app/actions/comanda");
-          const { redirect } = await import("next/navigation");
-          const comandaId = await createComanda();
-          redirect(`/dashboard/comandas/${comandaId}`);
-        }}>
+        <form action={createNewComandaAction}>
           <button type="submit" className="bg-primary text-black font-bold px-6 py-3 rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
             <Plus size={20} /> Nova Comanda
           </button>

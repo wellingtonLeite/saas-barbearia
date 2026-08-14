@@ -3,6 +3,21 @@ import { formatCurrency } from "@/lib/utils";
 import { Plus, Package, TrendingUp, TrendingDown } from "lucide-react";
 import { createProduct, addStock, removeStock } from "@/app/actions/product";
 
+async function onCreateProduct(formData: FormData) {
+  "use server";
+  await createProduct(formData);
+}
+
+async function onAddStock(productId: string, quantity: number, reason: string) {
+  "use server";
+  await addStock(productId, quantity, reason);
+}
+
+async function onRemoveStock(productId: string, quantity: number, reason: string) {
+  "use server";
+  await removeStock(productId, quantity, reason);
+}
+
 export default async function ProductsPage() {
   const products = await db.product.findMany({
     orderBy: { createdAt: 'desc' }
@@ -51,13 +66,13 @@ export default async function ProductsPage() {
                     </div>
                     
                     <div className="flex flex-col gap-2">
-                      <form action={async () => { await addStock(product.id, 1); }}>
+                      <form action={onAddStock.bind(null, product.id, 1, "Entrada Manual")}>
                         <button className="p-2 bg-success/10 text-success hover:bg-success/20 rounded border border-success/20 transition-colors" title="Adicionar 1 unidade">
                           <TrendingUp size={16} />
                         </button>
                       </form>
                       
-                      <form action={async () => { await removeStock(product.id, 1); }}>
+                      <form action={onRemoveStock.bind(null, product.id, 1, "Saída Manual / Ajuste")}>
                         <button className="p-2 bg-danger/10 text-danger hover:bg-danger/20 rounded border border-danger/20 transition-colors" title="Remover 1 unidade">
                           <TrendingDown size={16} />
                         </button>
@@ -77,7 +92,7 @@ export default async function ProductsPage() {
               <Plus className="text-primary" /> Novo Produto
             </h2>
             
-            <form action={async (formData) => { await createProduct(formData); }} className="space-y-4">
+            <form action={onCreateProduct} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Produto</label>
                 <input 
