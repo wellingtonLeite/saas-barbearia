@@ -225,11 +225,11 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {[
               { icon: CalendarDays, color: "bg-primary/20 text-primary", title: "Agenda Inteligente", desc: "Seus clientes agendam pelo link próprio 24h por dia. A agenda organiza automaticamente, sem conflitos." },
-              { icon: MessageCircle, color: "bg-green-500/20 text-green-400", title: "Avisos no WhatsApp", desc: "Reduza faltas a quase zero com lembretes automáticos enviados para o WhatsApp do cliente horas antes." },
+              { icon: MessageCircle, color: "bg-green-500/20 text-green-400", title: "Lembretes Automáticos", desc: "Reduza faltas a quase zero com lembretes automáticos para que o cliente não esqueça do horário." },
               { icon: TrendingUp, color: "bg-pink-500/20 text-pink-400", title: "Comissões Automáticas", desc: "Configure a % de cada barbeiro. O sistema calcula tudo no fechamento — sem planilha, sem erro." },
               { icon: Globe, color: "bg-blue-500/20 text-blue-400", title: "Site e App Exclusivos", desc: "Sua barbearia ganha um site moderno. O cliente pode instalar como App direto no celular." },
-              { icon: CreditCard, color: "bg-orange-500/20 text-orange-400", title: "Gestão Financeira", desc: "Contas a pagar, a receber, histórico de caixa e integração com PIX e cartão no agendamento." },
-              { icon: Globe, color: "bg-indigo-500/20 text-indigo-400", title: "Franquias e Redes", desc: "Controle múltiplas unidades em uma única conta com relatórios centralizados por filial." },
+              { icon: CreditCard, color: "bg-orange-500/20 text-orange-400", title: "Gestão Financeira", desc: "Controle total de contas a pagar, contas a receber e histórico detalhado do seu fluxo de caixa." },
+              { icon: Globe, color: "bg-indigo-500/20 text-indigo-400", title: "Gestão Centralizada", desc: "Acompanhe de perto o desempenho da sua barbearia com relatórios completos na palma da mão." },
             ].map(({ icon: Icon, color, title, desc }) => (
               <div key={title} className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface border border-secondary hover:border-primary transition-colors group active:scale-95 cursor-pointer">
                 <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${color} flex items-center justify-center mb-5 sm:mb-8 rotate-3 group-hover:rotate-0 transition-transform`}>

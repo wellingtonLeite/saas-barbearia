@@ -15,6 +15,11 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Navalha88",
   description: "Plataforma premium para gestão de barbearias.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    title: "Navalha88",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({

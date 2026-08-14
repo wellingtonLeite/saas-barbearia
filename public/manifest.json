@@ -1,0 +1,23 @@
+{
+  "name": "Navalha88 - Gestão Premium",
+  "short_name": "Navalha88",
+  "description": "Sistema de gestão e agendamentos para barbearias de alto nível.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo_navalha88.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo_navalha88.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
