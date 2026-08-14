@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
-import type { Notification } from "@/generated/prisma/models";
+import type { Notification } from "@/generated/prisma/client";
 
 type NotificationContextType = {
   notifications: Notification[];

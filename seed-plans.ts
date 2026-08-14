@@ -1,6 +1,4 @@
-import { PrismaClient } from './src/generated/prisma';
-
-const prisma = new PrismaClient();
+import { db as prisma } from './src/lib/db';
 
 async function main() {
   // Remover planos antigos se houver (opcional, mas como pode haver lixo, vamos criar novos e deixar os antigos)

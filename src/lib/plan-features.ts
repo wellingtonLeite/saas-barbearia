@@ -1,4 +1,4 @@
-import type { Plan } from '@/generated/prisma/models';
+import type { Plan } from '@/generated/prisma/client';
 
 export type PlanFeatures = {
   hasBasicFinancial: boolean; // Extrato simples (todos com has_financial_module)

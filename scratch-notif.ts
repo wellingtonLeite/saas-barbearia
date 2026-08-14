@@ -1,5 +1,4 @@
-import { PrismaClient } from './src/generated/prisma/client/index.js';
-const prisma = new PrismaClient();
+import { db as prisma } from './src/lib/db';
 
 async function run() {
   const tenant = await prisma.tenant.findUnique({
@@ -29,7 +28,7 @@ async function run() {
     data: {
       userId: user.id,
       tenantId: tenant.id,
-      type: 'APPOINTMENT_REMINDER',
+      type: 'NEW_APPOINTMENT',
       title: 'Teste: Novo Agendamento',
       message: 'Um cliente teste acabou de agendar um Corte de Cabelo para amanhã às 15:00.'
     }
