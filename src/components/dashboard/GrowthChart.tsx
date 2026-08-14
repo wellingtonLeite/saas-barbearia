@@ -37,9 +37,9 @@ export function GrowthChart({ data }: { data: { date: string; total: number }[] 
           <Tooltip 
             contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#333', borderRadius: '8px', color: '#fff' }}
             itemStyle={{ color: 'var(--color-primary)' }}
-            formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Faturamento']}
-            labelFormatter={(label) => {
-              if(!label) return '';
+            formatter={(value: any) => [`R$ ${Number(value || 0).toFixed(2)}`, 'Faturamento']}
+            labelFormatter={(label: any) => {
+              if(!label || typeof label !== 'string') return label || '';
               const parts = label.split('-');
               if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
               return label;

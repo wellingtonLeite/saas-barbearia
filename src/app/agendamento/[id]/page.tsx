@@ -117,7 +117,7 @@ export default async function ClientAppointmentPage({ params }: { params: Promis
                 </Link>
                 
                 {canCancelWithoutPenalty ? (
-                  <form action={cancelAppointment}>
+                  <form action={async (formData) => { await cancelAppointment(formData); }}>
                     <input type="hidden" name="appointmentId" value={appointment.id} />
                     <button 
                       type="submit"

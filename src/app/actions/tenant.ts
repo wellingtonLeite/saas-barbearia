@@ -5,12 +5,21 @@ import { revalidatePath } from "next/cache";
 import fs from "fs/promises";
 import path from "path";
 
+import { auth } from "@/auth";
+
 export async function updateTenantLogo(formData: FormData) {
-  const tenantId = formData.get("tenantId") as string;
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autorizado" };
+
+  const { getUserTenant } = await import("@/lib/tenant");
+  const tenant = await getUserTenant(session.user.id);
+  if (!tenant) return { error: "Não autorizado" };
+
+  const tenantId = tenant.id;
   const logoFile = formData.get("logoFile") as File;
 
-  if (!tenantId || !logoFile || logoFile.size === 0) {
-    return { error: "ID e Arquivo da logo são obrigatórios" };
+  if (!logoFile || logoFile.size === 0) {
+    return { error: "Arquivo da logo é obrigatório" };
   }
 
   try {

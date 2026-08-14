@@ -24,6 +24,7 @@ export default async function BarberManagementPage({ params }: { params: Promise
 
   async function addBlock(formData: FormData) {
     "use server";
+    if (!barber) return;
     const date = formData.get("date") as string;
     const startTime = formData.get("start_time") as string;
     const endTime = formData.get("end_time") as string;
@@ -51,6 +52,7 @@ export default async function BarberManagementPage({ params }: { params: Promise
 
   async function deleteBlock(formData: FormData) {
     "use server";
+    if (!barber) return;
     const blockId = formData.get("blockId") as string;
     const { db } = await import("@/lib/db");
     await db.scheduleBlock.delete({ where: { id: blockId } });

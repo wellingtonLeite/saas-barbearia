@@ -51,19 +51,13 @@ export default async function ProductsPage() {
                     </div>
                     
                     <div className="flex flex-col gap-2">
-                      <form action={async () => {
-                        "use server";
-                        await addStock(product.id, 1);
-                      }}>
+                      <form action={async () => { await addStock(product.id, 1); }}>
                         <button className="p-2 bg-success/10 text-success hover:bg-success/20 rounded border border-success/20 transition-colors" title="Adicionar 1 unidade">
                           <TrendingUp size={16} />
                         </button>
                       </form>
                       
-                      <form action={async () => {
-                        "use server";
-                        await removeStock(product.id, 1);
-                      }}>
+                      <form action={async () => { await removeStock(product.id, 1); }}>
                         <button className="p-2 bg-danger/10 text-danger hover:bg-danger/20 rounded border border-danger/20 transition-colors" title="Remover 1 unidade">
                           <TrendingDown size={16} />
                         </button>
@@ -83,7 +77,7 @@ export default async function ProductsPage() {
               <Plus className="text-primary" /> Novo Produto
             </h2>
             
-            <form action={createProduct} className="space-y-4">
+            <form action={async (formData) => { await createProduct(formData); }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Produto</label>
                 <input 

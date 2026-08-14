@@ -59,7 +59,7 @@ export default async function ReportsPage() {
                 <input type="date" name="start" required className="bg-background border border-secondary rounded-lg px-3 py-2 text-text-primary w-full outline-none focus:border-primary text-sm" />
                 <input type="date" name="end" required className="bg-background border border-secondary rounded-lg px-3 py-2 text-text-primary w-full outline-none focus:border-primary text-sm" />
               </div>
-              <button type="submit" className="flex items-center justify-center gap-2 bg-primary/10 text-primary border border-primary/20 font-bold px-4 py-2 rounded-xl hover:bg-primary hover:text-background transition-all">
+              <button type="submit" className="flex items-center justify-center gap-2 bg-primary/10 text-primary border border-primary/20 font-bold px-4 py-2 rounded-xl hover:bg-primary hover:text-white transition-all">
                 <Download size={18} />
                 Baixar CSV
               </button>

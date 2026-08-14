@@ -93,7 +93,7 @@ export default async function DREPage({ searchParams }: { searchParams: Promise<
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
-          <button type="submit" className="bg-primary text-background font-bold px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors">
+          <button type="submit" className="bg-primary text-white font-bold px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors">
             Filtrar
           </button>
         </form>

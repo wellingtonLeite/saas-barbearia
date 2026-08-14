@@ -49,8 +49,8 @@ export async function createBooking(data: {
       where: { barberId: data.barberId, unitId: data.unitId }
     });
     
-    // MVP: Se não houver taxa definida, assume 50% de comissão
-    const commissionRate = barberUnit?.commission_rate || 50; 
+    // MVP: Assume 50% de comissão
+    const commissionRate = 50; 
     const barber_commission = (Number(service.price) * commissionRate) / 100;
 
     // 3. Criar o agendamento
@@ -68,17 +68,40 @@ export async function createBooking(data: {
       }
     });
 
-    // Notificar o barbeiro (fail-safe: não bloqueia o agendamento se falhar)
+    // Buscar o Tenant para pegar o dono
+    const tenant = await db.tenant.findUnique({ where: { id: data.tenantId } });
+    
+    // Notificar o barbeiro e os donos
     try {
-      await db.notification.create({
-        data: {
-          userId: data.barberId,
-          tenantId: data.tenantId,
-          type: "APPOINTMENT_REMINDER",
-          title: "Novo Agendamento",
-          message: `${client.name} agendou para ${start_time.toLocaleDateString('pt-BR')} às ${start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+      const usersToNotify = new Set<string>();
+      usersToNotify.add(data.barberId);
+
+      // Buscar donos da barbearia para notificar
+      const owners = await db.user.findMany({
+        where: {
+          role: "OWNER",
+          units: {
+            some: {
+              unit: {
+                tenantId: data.tenantId
+              }
+            }
+          }
         }
       });
+      owners.forEach(owner => usersToNotify.add(owner.id));
+
+      for (const userId of Array.from(usersToNotify)) {
+        await db.notification.create({
+          data: {
+            userId: userId,
+            tenantId: data.tenantId,
+            type: "NEW_APPOINTMENT",
+            title: "Novo Agendamento",
+            message: `${client.name} agendou para ${start_time.toLocaleDateString('pt-BR')} às ${start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+          }
+        });
+      }
     } catch (notifError) {
       console.warn("Notification creation failed (non-critical):", notifError);
     }

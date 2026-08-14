@@ -114,6 +114,33 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
     whereClause.barberId = session.user.id;
   }
 
+  // Resumo Financeiro do Dia
+  const todayStart = new Date(selectedDate);
+  const todayEnd = new Date(tomorrow);
+
+  let totalRevenue = 0;
+  let totalCommissions = 0;
+
+  if (isOwner) {
+    const transactions = await db.transaction.findMany({
+      where: {
+        tenantId,
+        type: 'INCOME',
+        createdAt: { gte: todayStart, lt: todayEnd }
+      }
+    });
+    totalRevenue = transactions.reduce((acc, t) => acc + Number(t.amount), 0);
+  } else {
+    const sales = await db.sale.findMany({
+      where: {
+        tenantId,
+        barberId: session?.user?.id,
+        createdAt: { gte: todayStart, lt: todayEnd }
+      }
+    });
+    totalCommissions = sales.reduce((acc, s) => acc + Number(s.barber_commission), 0);
+  }
+
   const dbAppointments = await db.appointment.findMany({
     where: whereClause,
     include: {
@@ -173,8 +200,31 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
           </div>
         </div>
         
-        <div className="flex gap-4">
-          <Link href="/dashboard/encaixe" className="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary-hover hover:scale-105 transition-all shadow-lg shadow-primary/30">
+        <div className="flex flex-wrap gap-4 items-center">
+          {!isOwner && (
+            <div className="bg-surface border border-secondary px-6 py-3 rounded-xl flex items-center gap-3">
+              <div className="p-2 bg-success/10 rounded-lg">
+                <DollarSign className="text-success" size={20} />
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary uppercase font-bold">Minha Comissão Hoje</p>
+                <p className="text-lg font-bold text-success">R$ {totalCommissions.toFixed(2)}</p>
+              </div>
+            </div>
+          )}
+          {isOwner && (
+            <div className="bg-surface border border-secondary px-6 py-3 rounded-xl flex items-center gap-3">
+              <div className="p-2 bg-success/10 rounded-lg">
+                <DollarSign className="text-success" size={20} />
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary uppercase font-bold">Caixa Hoje</p>
+                <p className="text-lg font-bold text-success">R$ {totalRevenue.toFixed(2)}</p>
+              </div>
+            </div>
+          )}
+
+          <Link href="/dashboard/encaixe" className="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary-hover hover:scale-105 transition-all shadow-lg shadow-primary/30 flex items-center justify-center">
             + Encaixe
           </Link>
         </div>

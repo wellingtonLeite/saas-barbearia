@@ -30,7 +30,7 @@ export function MetaCard({ currentRevenue, targetRevenue }: { currentRevenue: nu
           />
           <button 
             onClick={handleSave}
-            className="bg-primary text-background px-3 py-1 rounded-lg text-sm font-bold hover:bg-primary-hover transition-colors"
+            className="bg-primary text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-primary-hover transition-colors"
           >
             Definir
           </button>

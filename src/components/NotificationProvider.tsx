@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
-import { Notification } from "@prisma/client";
+import type { Notification } from "@/generated/prisma/models";
 
 type NotificationContextType = {
   notifications: Notification[];
@@ -39,7 +39,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Se o número de não lidas for maior que o anterior, significa que chegou mensagem nova
         if (newUnreadCount > previousUnreadRef.current) {
           const latestUnread = data.find((n: Notification) => !n.is_read);
-          const isAppt = latestUnread?.type === 'APPOINTMENT_REMINDER';
+          const isAppt = latestUnread?.type === 'APPOINTMENT_REMINDER' || latestUnread?.type === 'NEW_APPOINTMENT';
           playNotificationSound(isAppt);
         }
         previousUnreadRef.current = newUnreadCount;

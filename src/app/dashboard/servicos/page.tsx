@@ -1,10 +1,27 @@
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
-import { Scissors, Clock, Plus, Trash2 } from "lucide-react";
-import { createService, deleteService } from "@/app/actions/service";
+import { Scissors, Clock, Plus, Trash2, Folder, Pencil } from "lucide-react";
+import { createService, deleteService, createCategory, deleteCategory } from "@/app/actions/service";
+import { auth } from "@/auth";
+import { getUserTenant } from "@/lib/tenant";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function ServicesPage() {
-  const services = await db.service.findMany({
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const tenant = await getUserTenant(session.user.id);
+  if (!tenant) return <div className="p-8">Barbearia não encontrada.</div>;
+
+  const categories = await db.serviceCategory.findMany({
+    where: { tenantId: tenant.id },
+    include: { services: true },
+    orderBy: { order: 'asc' }
+  });
+
+  const uncategorizedServices = await db.service.findMany({
+    where: { tenantId: tenant.id, categoryId: null },
     orderBy: { createdAt: 'desc' }
   });
 
@@ -12,8 +29,8 @@ export default async function ServicesPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-display font-bold text-text-primary">Serviços</h1>
-          <p className="text-text-secondary mt-2">Gerencie os cortes e serviços oferecidos pela sua barbearia.</p>
+          <h1 className="text-3xl font-display font-bold text-text-primary">Serviços e Categorias</h1>
+          <p className="text-text-secondary mt-2">Gerencie os cortes e serviços e agrupe-os por categorias (ex: Cabelo, Barba).</p>
         </div>
       </div>
 
@@ -21,52 +38,136 @@ export default async function ServicesPage() {
         
         {/* Lista de Serviços */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-surface border border-secondary rounded-xl overflow-hidden">
-            <div className="p-6 border-b border-secondary flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Scissors className="text-primary" /> Catálogo Ativo
-              </h2>
-            </div>
-            <div className="divide-y divide-secondary">
-              {services.length === 0 && (
-                 <div className="p-8 text-center text-text-secondary">Nenhum serviço cadastrado ainda.</div>
-              )}
-              {services.map(service => (
-                <div key={service.id} className="p-6 flex items-center justify-between hover:bg-surface-hover transition-colors">
-                  <div>
-                    <h3 className="font-bold text-lg text-text-primary">{service.name}</h3>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-text-secondary">
-                      <span className="flex items-center gap-1"><Clock size={14} /> {service.duration_minutes} min</span>
+          {categories.length === 0 && uncategorizedServices.length === 0 && (
+             <div className="bg-surface border border-secondary rounded-xl p-8 text-center text-text-secondary">
+               Nenhum serviço ou categoria cadastrado ainda.
+             </div>
+          )}
+
+          {categories.map(cat => (
+            <div key={cat.id} className="bg-surface border border-secondary rounded-xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-secondary flex justify-between items-center bg-background/50">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-white">
+                  <Folder className="text-primary" size={20} /> {cat.name}
+                </h2>
+                <form action={async () => {
+                  "use server";
+                  await deleteCategory(cat.id);
+                }}>
+                  <button className="text-text-secondary hover:text-danger p-1 rounded transition-colors" title="Deletar Categoria">
+                    <Trash2 size={16} />
+                  </button>
+                </form>
+              </div>
+              
+              <div className="divide-y divide-secondary">
+                {cat.services.length === 0 && (
+                  <div className="p-4 text-center text-sm text-text-secondary">Nenhum serviço nesta categoria.</div>
+                )}
+                {cat.services.map(service => (
+                  <div key={service.id} className="p-4 flex items-center justify-between hover:bg-surface-hover transition-colors">
+                    <div>
+                      <h3 className="font-bold text-text-primary">{service.name}</h3>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary">
+                        <span className="flex items-center gap-1"><Clock size={12} /> {service.duration_minutes} min</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <p className="font-display font-bold text-primary">{formatCurrency(Number(service.price))}</p>
+                      
+                      <Link href={`/dashboard/servicos/${service.id}`} className="text-text-secondary hover:text-primary p-2 rounded transition-colors" title="Editar Serviço">
+                        <Pencil size={16} />
+                      </Link>
+
+                      <form action={async () => {
+                        "use server";
+                        await deleteService(service.id);
+                      }}>
+                        <button className="text-text-secondary hover:text-danger p-2 rounded transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </form>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-6">
-                    <p className="text-xl font-display font-bold text-primary">{formatCurrency(service.price)}</p>
-                    <form action={async () => {
-                      "use server";
-                      await deleteService(service.id);
-                    }}>
-                      <button className="text-text-secondary hover:text-danger p-2 rounded transition-colors" title="Deletar serviço">
-                        <Trash2 size={18} />
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
+
+          {uncategorizedServices.length > 0 && (
+            <div className="bg-surface border border-secondary rounded-xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-secondary flex justify-between items-center bg-background/50">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-text-secondary">
+                  Sem Categoria
+                </h2>
+              </div>
+              <div className="divide-y divide-secondary">
+                {uncategorizedServices.map(service => (
+                  <div key={service.id} className="p-4 flex items-center justify-between hover:bg-surface-hover transition-colors">
+                    <div>
+                      <h3 className="font-bold text-text-primary">{service.name}</h3>
+                      <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary">
+                        <span className="flex items-center gap-1"><Clock size={12} /> {service.duration_minutes} min</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <p className="font-display font-bold text-primary">{formatCurrency(Number(service.price))}</p>
+                      <Link href={`/dashboard/servicos/${service.id}`} className="text-text-secondary hover:text-primary p-2 rounded transition-colors" title="Editar Serviço">
+                        <Pencil size={16} />
+                      </Link>
+                      <form action={async () => {
+                        "use server";
+                        await deleteService(service.id);
+                      }}>
+                        <button className="text-text-secondary hover:text-danger p-2 rounded transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Formulário Novo Serviço */}
-        <div>
-          <div className="bg-surface border border-secondary rounded-xl p-6 sticky top-6">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Plus className="text-primary" /> Novo Serviço
+        {/* Formulários na lateral */}
+        <div className="space-y-6">
+          
+          {/* Nova Categoria */}
+          <div className="bg-surface border border-secondary rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Plus className="text-primary" /> Nova Categoria
             </h2>
-            
-            <form action={createService} className="space-y-4">
+            <form action={async (formData) => { await createCategory(formData); }} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Serviço</label>
+                <input 
+                  type="text" 
+                  name="name"
+                  required
+                  placeholder="Ex: Combos Promocionais"
+                  className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-surface-hover border border-secondary hover:bg-secondary text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                Criar Categoria
+              </button>
+            </form>
+          </div>
+
+          {/* Novo Serviço */}
+          <div className="bg-surface border border-secondary rounded-xl p-6 shadow-sm sticky top-6">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Scissors className="text-primary" /> Novo Serviço
+            </h2>
+            <form action={async (formData) => { await createService(formData); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Nome</label>
                 <input 
                   type="text" 
                   name="name"
@@ -74,6 +175,19 @@ export default async function ServicesPage() {
                   placeholder="Ex: Corte Degradê"
                   className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Categoria</label>
+                <select 
+                  name="categoryId"
+                  className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+                >
+                  <option value="">Sem Categoria</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -104,10 +218,11 @@ export default async function ServicesPage() {
                 type="submit"
                 className="w-full bg-primary hover:bg-primary-hover text-black font-bold py-3 px-4 rounded-lg transition-colors mt-2"
               >
-                Cadastrar
+                Cadastrar Serviço
               </button>
             </form>
           </div>
+
         </div>
 
       </div>

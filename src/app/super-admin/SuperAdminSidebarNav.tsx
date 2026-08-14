@@ -9,8 +9,10 @@ import {
   CreditCard,
   Server
 } from "lucide-react";
+import { useMobileSidebar } from "@/components/layouts/MobileSidebarWrapper";
 
 export default function SuperAdminSidebarNav() {
+  const { closeSidebar } = useMobileSidebar();
   const pathname = usePathname();
 
   const navItems = [
@@ -30,7 +32,8 @@ export default function SuperAdminSidebarNav() {
         return (
           <Link 
             key={item.href}
-            href={item.href} 
+            href={item.href}
+            onClick={closeSidebar}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
               isActive 
                 ? "text-white bg-red-600 shadow-lg shadow-red-600/20 hover:scale-[1.02]" 

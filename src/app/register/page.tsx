@@ -14,7 +14,7 @@ export default function RegisterPage() {
           Comece a gerenciar seus agendamentos hoje mesmo.
         </p>
         
-        <form action={registerTenant} className="space-y-4">
+        <form action={async (formData) => { await registerTenant(formData); }} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1">Nome da Barbearia (Marca)</label>
             <input 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
 
           <button 
             type="submit"
-            className="w-full bg-primary text-background font-bold py-3 rounded-lg hover:bg-primary-hover transition-colors mt-4"
+            className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-hover transition-colors mt-4"
           >
             Criar Conta e Barbearia
           </button>

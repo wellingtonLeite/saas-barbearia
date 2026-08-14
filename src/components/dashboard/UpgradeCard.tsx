@@ -11,7 +11,7 @@ export function UpgradeCard({ requiredPlan, featureName }: { requiredPlan: strin
       <p className="text-text-secondary mb-8 max-w-md mx-auto text-lg leading-relaxed">
         {featureName} está disponível a partir do <strong>{requiredPlan}</strong>. Faça upgrade para desbloquear esta e outras funcionalidades exclusivas.
       </p>
-      <Link href="/dashboard/assinatura" className="bg-primary text-background font-bold px-8 py-4 rounded-xl hover:bg-primary-hover hover:scale-105 transition-all shadow-lg shadow-primary/20">
+      <Link href="/dashboard/assinatura" className="bg-primary text-white font-bold px-8 py-4 rounded-xl hover:bg-primary-hover hover:scale-105 transition-all shadow-lg shadow-primary/20">
         Ver Planos e Fazer Upgrade
       </Link>
     </div>

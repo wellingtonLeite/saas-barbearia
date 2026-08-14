@@ -186,13 +186,13 @@ export default function Timeline({
                     disabled={isPending}
                     onClick={() => {
                       startTransition(async () => {
-                        const { updateAppointmentStatus } = await import("@/app/actions/appointment");
+                        const { startAppointmentAndOpenComanda } = await import("@/app/actions/appointment");
                         
                         const newStatus = 'IN_PROGRESS';
                         setSelectedAppt({...selectedAppt, status: newStatus});
                         setLocalAppointments(prev => prev.map(a => a.id === selectedAppt.id ? { ...a, status: newStatus } : a));
                         
-                        await updateAppointmentStatus(selectedAppt.id, newStatus);
+                        await startAppointmentAndOpenComanda(selectedAppt.id);
                       });
                     }}
                     className="w-full py-4 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-purple-500/20 disabled:opacity-50"
@@ -211,102 +211,22 @@ export default function Timeline({
                 </>
               )}
 
-              {selectedAppt.status === 'IN_PROGRESS' && !isCheckoutMode && (
+              {selectedAppt.status === 'IN_PROGRESS' && (
                 <button 
                   disabled={isPending}
-                  onClick={() => setIsCheckoutMode(true)}
-                  className="w-full py-4 px-4 bg-success hover:bg-success/90 text-black rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-success/20 disabled:opacity-50"
+                  onClick={() => {
+                    startTransition(async () => {
+                      const { updateAppointmentStatus } = await import("@/app/actions/appointment");
+                      const newStatus = 'COMPLETED';
+                      setSelectedAppt({...selectedAppt, status: newStatus});
+                      setLocalAppointments(prev => prev.map(a => a.id === selectedAppt.id ? { ...a, status: newStatus } : a));
+                      await updateAppointmentStatus(selectedAppt.id, newStatus);
+                    });
+                  }}
+                  className="w-full py-4 px-4 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-500/20 disabled:opacity-50"
                 >
-                  <Check size={20} /> Finalizar e Fechar Conta
+                  <Check size={20} /> Finalizar Atendimento
                 </button>
-              )}
-
-              {selectedAppt.status === 'IN_PROGRESS' && isCheckoutMode && (
-                <div className="bg-slate-50 border border-secondary p-4 rounded-xl space-y-4">
-                  <h3 className="font-bold text-text-primary border-b border-secondary pb-2">Checkout (PDV)</h3>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm font-medium">
-                      <span>{selectedAppt.service}</span>
-                      <span>R$ {Number(selectedAppt.servicePrice).toFixed(2)}</span>
-                    </div>
-                    
-                    {products && products.length > 0 && (
-                      <div className="pt-2">
-                        <p className="text-xs text-text-secondary font-bold uppercase mb-2">Adicionar Produtos (Opcional)</p>
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                          {products.map(p => {
-                            const pPrice = Number(p.price);
-                            const isSelected = selectedProductIds.includes(p.id);
-                            return (
-                              <label key={p.id} className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-secondary hover:bg-white'}`}>
-                                <div className="flex items-center gap-2">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={isSelected}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedProductIds([...selectedProductIds, p.id]);
-                                      } else {
-                                        setSelectedProductIds(selectedProductIds.filter(id => id !== p.id));
-                                      }
-                                    }}
-                                    className="rounded border-secondary text-primary focus:ring-primary w-4 h-4"
-                                  />
-                                  <span className="text-sm font-medium">{p.name}</span>
-                                </div>
-                                <span className="text-sm font-bold text-primary">+ R$ {pPrice.toFixed(2)}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-secondary pt-3 mt-3">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="font-bold text-text-secondary uppercase text-xs tracking-wider">Total</span>
-                      <span className="text-2xl font-display font-bold text-success">
-                        R$ {(
-                          Number(selectedAppt.servicePrice) + 
-                          selectedProductIds.reduce((acc, id) => {
-                            const p = products.find(prod => prod.id === id);
-                            return acc + (p ? Number(p.price) : 0);
-                          }, 0)
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button 
-                        disabled={isPending}
-                        onClick={() => setIsCheckoutMode(false)}
-                        className="flex-1 py-3 px-2 bg-transparent border-2 border-secondary text-text-secondary hover:text-text-primary rounded-xl font-bold flex items-center justify-center transition-colors disabled:opacity-50"
-                      >
-                        Voltar
-                      </button>
-                      <button 
-                        disabled={isPending}
-                        onClick={() => {
-                          startTransition(async () => {
-                            const { updateAppointmentStatus } = await import("@/app/actions/appointment");
-                            
-                            const newStatus = 'COMPLETED';
-                            setSelectedAppt({...selectedAppt, status: newStatus});
-                            setLocalAppointments(prev => prev.map(a => a.id === selectedAppt.id ? { ...a, status: newStatus } : a));
-                            
-                            await updateAppointmentStatus(selectedAppt.id, newStatus);
-                            setIsCheckoutMode(false);
-                          });
-                        }}
-                        className="flex-1 py-3 px-2 bg-success hover:bg-success/90 text-black rounded-xl font-bold flex items-center justify-center transition-colors disabled:opacity-50"
-                      >
-                        Confirmar
-                      </button>
-                    </div>
-                  </div>
-                </div>
               )}
 
               {selectedAppt.status === 'COMPLETED' && (
@@ -335,7 +255,7 @@ export default function Timeline({
                         onClick={() => {
                           const url = `${window.location.origin}/avaliar/${selectedAppt.id}`;
                           const msg = encodeURIComponent(`Olá ${selectedAppt.client}! Muito obrigado por cortar na nossa barbearia com o barbeiro ${selectedAppt.barberName}. O que achou do atendimento? Deixe sua avaliação aqui: ${url}`);
-                          const phoneNum = selectedAppt.clientPhone.replace(/\D/g, '');
+                          const phoneNum = (selectedAppt.clientPhone || '').replace(/\D/g, '');
                           window.open(`https://wa.me/55${phoneNum}?text=${msg}`, '_blank');
                         }}
                         className="w-full py-3 bg-[#25D366] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#128C7E] transition-colors shadow-lg shadow-[#25D366]/20"
@@ -373,10 +293,10 @@ export default function Timeline({
 
   return (
     <>
-      <div className="bg-surface border border-secondary rounded-2xl overflow-hidden shadow-xl shadow-gray-200/50 relative">
-        <div className="p-6 border-b border-secondary bg-slate-50 flex justify-between items-center">
+      <div className="bg-surface border border-secondary rounded-2xl overflow-hidden shadow-xl shadow-black/20 relative">
+        <div className="p-6 border-b border-secondary bg-surface-hover flex justify-between items-center">
           <h2 className="font-bold text-text-primary text-xl">Timeline Diária</h2>
-          <div className="flex flex-wrap gap-4 text-sm font-medium">
+          <div className="flex flex-wrap gap-4 text-sm font-medium text-text-secondary">
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-warning"></span> Pendente</div>
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Confirmado</div>
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-purple-500"></span> Em Progresso</div>
@@ -393,8 +313,8 @@ export default function Timeline({
               const hourStr = `${hour.toString().padStart(2, '0')}:00`;
               const halfHourStr = `${hour.toString().padStart(2, '0')}:30`;
               
-              const apptOnHour = localAppointments.find(a => a.time === hourStr);
-              const apptOnHalf = localAppointments.find(a => a.time === halfHourStr);
+              const apptsOnHour = localAppointments.filter(a => a.time === hourStr);
+              const apptsOnHalf = localAppointments.filter(a => a.time === halfHourStr);
 
               const getStatusStyles = (status: string) => {
                 switch(status) {
@@ -451,7 +371,11 @@ export default function Timeline({
                       {/* Bolinha no eixo */}
                       <div className="absolute left-[-5px] top-[-5px] w-2.5 h-2.5 rounded-full bg-background border-2 border-primary shadow-[0_0_8px_rgba(99,102,241,0.5)] z-10"></div>
                       
-                      {apptOnHour && renderAppointmentCard(apptOnHour)}
+                      <div className="flex flex-col gap-2">
+                        {apptsOnHour.map(appt => (
+                          <div key={appt.id}>{renderAppointmentCard(appt)}</div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -462,7 +386,11 @@ export default function Timeline({
                     </div>
                     
                     <div className="flex-1 pl-6 sm:pl-8 relative border-t border-secondary/10 border-dashed group-hover:bg-primary/[0.01] transition-colors pb-1">
-                      {apptOnHalf && renderAppointmentCard(apptOnHalf)}
+                      <div className="flex flex-col gap-2">
+                        {apptsOnHalf.map(appt => (
+                          <div key={appt.id}>{renderAppointmentCard(appt)}</div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

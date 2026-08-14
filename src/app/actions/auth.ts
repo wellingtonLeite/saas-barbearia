@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
@@ -81,7 +81,7 @@ export async function registerTenant(formData: FormData) {
             tenantId: tenant.id,
             planId: trialPlan.id,
             status: "TRIAL",
-            current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 dias de Trial
+            current_period_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias de Trial
           }
         });
       }
@@ -98,7 +98,7 @@ export async function registerTenant(formData: FormData) {
 }
 
 // Server action para Login
-export async function authenticate(formData: FormData) {
+export async function authenticate(prevState: string | undefined, formData: FormData) {
   try {
     const email = formData.get("email") as string;
     const user = await db.user.findUnique({ where: { email } });
@@ -119,4 +119,8 @@ export async function authenticate(formData: FormData) {
     }
     throw error;
   }
+}
+
+export async function doLogout() {
+  await signOut({ redirectTo: "/" });
 }

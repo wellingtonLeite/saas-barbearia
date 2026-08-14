@@ -95,7 +95,7 @@ enum NotificationType {
 }
 
 enum AccountEntryType {
-  PAYABLE   // Conta a pagar
+  PAYABLE // Conta a pagar
   RECEIVABLE // Conta a receber
 }
 
@@ -111,24 +111,24 @@ enum AccountEntryStatus {
 // ------------------------------------------------------
 
 model Plan {
-  id                   String         @id @default(uuid())
+  id                   String   @id @default(uuid())
   name                 String
   base_price           Decimal
   max_units            Int
-  max_barbers          Int            @default(999)
-  has_whatsapp         Boolean        @default(false)
-  has_financial_module Boolean        @default(false)
-  extra_unit_price     Decimal        @default(0)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  max_barbers          Int      @default(999)
+  has_whatsapp         Boolean  @default(false)
+  has_financial_module Boolean  @default(false)
+  extra_unit_price     Decimal  @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  subscriptions    Subscription[]
+  subscriptions Subscription[]
 }
 
 model Subscription {
   id                 String             @id @default(uuid())
   tenantId           String             @unique
-  tenant             Tenant             @relation(fields: [tenantId], references: [id])
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   planId             String
   plan               Plan               @relation(fields: [planId], references: [id])
   status             SubscriptionStatus @default(TRIAL)
@@ -142,22 +142,29 @@ model Tenant {
   name               String
   slug               String   @unique
   logo_url           String?
+  about_text         String?
+  amenities          Json?
+  gallery_urls       Json?
   whatsapp_templates Json?
   active             Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  subscription  Subscription?
-  units         Unit[]
-  services      Service[]
-  appointments  Appointment[]
-  products      Product[]
-  sales         Sale[]
-  transactions  Transaction[]
-  notifications Notification[]
-  reviews       Review[]
-  schedule_blocks ScheduleBlock[]
-  account_entries AccountEntry[]
+  subscription      Subscription?
+  units             Unit[]
+  services          Service[]
+  appointments      Appointment[]
+  products          Product[]
+  sales             Sale[]
+  transactions      Transaction[]
+  notifications     Notification[]
+  reviews           Review[]
+  schedule_blocks   ScheduleBlock[]
+  account_entries   AccountEntry[]
+  serviceCategories ServiceCategory[]
+  comandas          Comanda[]
+  loyaltyPrograms   LoyaltyProgram[]
+  clientPlans       ClientPlan[]
 }
 
 model Unit {
@@ -171,11 +178,11 @@ model Unit {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  barbers       BarberUnit[]
-  contracts     BarberContract[]
-  appointments  Appointment[]
-  products      Product[]
-  transactions  Transaction[]
+  barbers         BarberUnit[]
+  contracts       BarberContract[]
+  appointments    Appointment[]
+  products        Product[]
+  transactions    Transaction[]
   schedule_blocks ScheduleBlock[]
 }
 
@@ -186,19 +193,25 @@ model User {
   role          Role     @default(CLIENT)
   name          String
   phone         String?
+  avatar_url    String?
+  bio           String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  units                BarberUnit[]
-  contracts            BarberContract[]
-  barber_appointments  Appointment[] @relation("BarberAppointments")
-  client_appointments  Appointment[] @relation("ClientAppointments")
-  barber_sales         Sale[]        @relation("BarberSales")
-  client_sales         Sale[]        @relation("ClientSales")
-  notifications        Notification[]
-  barber_reviews       Review[]      @relation("BarberReviews")
-  client_reviews       Review[]      @relation("ClientReviews")
-  schedule_blocks      ScheduleBlock[]
+  units               BarberUnit[]
+  contracts           BarberContract[]
+  barber_appointments Appointment[]        @relation("BarberAppointments")
+  client_appointments Appointment[]        @relation("ClientAppointments")
+  barber_sales        Sale[]               @relation("BarberSales")
+  client_sales        Sale[]               @relation("ClientSales")
+  notifications       Notification[]
+  barber_reviews      Review[]             @relation("BarberReviews")
+  client_reviews      Review[]             @relation("ClientReviews")
+  schedule_blocks     ScheduleBlock[]
+  loyalty_points      ClientLoyalty[]
+  subscriptions       ClientSubscription[]
+  comandas_client     Comanda[]            @relation("ClientComandas")
+  comandas_barber     Comanda[]            @relation("BarberComandas")
 }
 
 model BarberUnit {
@@ -222,7 +235,7 @@ model BarberContract {
   fixed_salary            Decimal        @default(0)
   service_commission_rate Decimal        @default(0) // percentage
   product_commission_rate Decimal        @default(0) // percentage
-  working_hours           Json?          // Barber's availability schedule
+  working_hours           Json? // Barber's availability schedule
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
 
@@ -230,30 +243,33 @@ model BarberContract {
 }
 
 model ScheduleBlock {
-  id        String   @id @default(uuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  unitId    String
-  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  barberId  String
-  barber    User     @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  unitId     String
+  unit       Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  barberId   String
+  barber     User     @relation(fields: [barberId], references: [id], onDelete: Cascade)
   start_time DateTime
   end_time   DateTime
-  reason    String?
-  createdAt DateTime @default(now())
+  reason     String?
+  createdAt  DateTime @default(now())
 }
 
 model Service {
-  id               String   @id @default(uuid())
+  id               String           @id @default(uuid())
   tenantId         String
-  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name             String
+  description      String?
   price            Decimal
   duration_minutes Int
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  appointments Appointment[]
+  categoryId       String?
+  category         ServiceCategory? @relation(fields: [categoryId], references: [id])
+  appointments     Appointment[]
+  comandaItems     ComandaItem[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 }
 
 model Appointment {
@@ -278,18 +294,21 @@ model Appointment {
 }
 
 model Product {
-  id             String   @id @default(uuid())
+  id             String          @id @default(uuid())
   tenantId       String
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  unitId         String?
-  unit           Unit?    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  unitId         String? // Optional: if product belongs to a specific unit
+  unit           Unit?           @relation(fields: [unitId], references: [id])
   name           String
+  description    String?
   price          Decimal
-  stock_quantity Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  movements StockMovement[]
+  stock_quantity Int             @default(0)
+  barcode        String?
+  sku            String?
+  movements      StockMovement[]
+  comandaItems   ComandaItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model StockMovement {
@@ -353,7 +372,7 @@ model Review {
   barber        User        @relation("BarberReviews", fields: [barberId], references: [id], onDelete: Cascade)
   clientId      String
   client        User        @relation("ClientReviews", fields: [clientId], references: [id], onDelete: Cascade)
-  rating        Int         // 1 a 5
+  rating        Int // 1 a 5
   comment       String?
   createdAt     DateTime    @default(now())
 }
@@ -371,4 +390,107 @@ model AccountEntry {
   category    String?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+}
+
+// ------------------------------------------------------
+// NOVOS MÓDULOS (COMANDAS, FIDELIDADE, ASSINATURAS, CATEGORIAS)
+// ------------------------------------------------------
+
+enum ComandaStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+model ServiceCategory {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services Service[]
+}
+
+model LoyaltyProgram {
+  id             String   @id @default(uuid())
+  tenantId       String   @unique
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  points_per_brl Decimal  @default(1)
+  reward_points  Int      @default(100)
+  reward_value   Decimal  @default(10) // example: 100 points = R$ 10 discount
+  is_active      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ClientLoyalty {
+  id        String   @id @default(uuid())
+  tenantId  String
+  clientId  String
+  client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, clientId])
+}
+
+model ClientPlan {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  price       Decimal
+  description String?
+  interval    String   @default("MONTHLY") // MONTHLY, YEARLY
+  is_active   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions ClientSubscription[]
+}
+
+model ClientSubscription {
+  id                 String             @id @default(uuid())
+  clientId           String
+  client             User               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  planId             String
+  plan               ClientPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  status             SubscriptionStatus @default(ACTIVE)
+  current_period_end DateTime
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Comanda {
+  id           String        @id @default(uuid())
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientId     String?
+  client       User?         @relation("ClientComandas", fields: [clientId], references: [id])
+  barberId     String?
+  barber       User?         @relation("BarberComandas", fields: [barberId], references: [id])
+  status       ComandaStatus @default(OPEN)
+  total_amount Decimal       @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  items ComandaItem[]
+}
+
+model ComandaItem {
+  id        String   @id @default(uuid())
+  comandaId String
+  comanda   Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id])
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  name      String
+  price     Decimal
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
 }

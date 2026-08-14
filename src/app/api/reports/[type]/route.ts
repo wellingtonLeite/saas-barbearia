@@ -52,9 +52,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
       include: { barber: true }
     });
 
-    csvContent = "ID,Data,Barbeiro,Total,Comissao,Metodo Pagamento\n";
+    csvContent = "ID,Data,Barbeiro,Total,Comissao\n";
     sales.forEach(sale => {
-      csvContent += `"${sale.id}","${sale.createdAt.toISOString()}","${sale.barber.name}","${sale.total_amount}","${sale.barber_commission}","${sale.payment_method}"\n`;
+      csvContent += `"${sale.id}","${sale.createdAt.toISOString()}","${sale.barber?.name || 'N/A'}","${sale.total_amount}","${sale.barber_commission}"\n`;
     });
   } 
   else if (type === "comissoes") {

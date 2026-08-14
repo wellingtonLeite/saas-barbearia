@@ -1,15 +1,17 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { CreditCard, CheckCircle2, AlertTriangle, MessageCircle, CalendarDays, Users, Zap } from "lucide-react";
+import { CreditCard, CheckCircle2, AlertTriangle, MessageCircle, CalendarDays, Users, Zap, Crown, Gift, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { createCheckoutSession } from "@/app/actions/checkout";
+import { saveLoyaltyProgram } from "@/app/actions/loyalty";
+import { createClientPlan, deleteClientPlan } from "@/app/actions/vip";
 
 export const metadata = {
   title: "Minha Assinatura | SaaS Barbearia",
 };
 
-export default async function AssinaturaPage() {
+export default async function AssinaturaPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -18,7 +20,7 @@ export default async function AssinaturaPage() {
     redirect("/dashboard");
   }
 
-  // Buscar o Tenant do usuário logado
+  // Buscar o Tenant do usuário logado e dados de loyalty/vip
   const userWithTenant = await db.user.findUnique({
     where: { id: session.user.id },
     include: {
@@ -30,7 +32,9 @@ export default async function AssinaturaPage() {
                 include: {
                   subscription: {
                     include: { plan: true }
-                  }
+                  },
+                  loyaltyPrograms: true,
+                  clientPlans: true
                 }
               } 
             } 
@@ -50,8 +54,12 @@ export default async function AssinaturaPage() {
     );
   }
 
+  const { tab = "saas" } = await searchParams;
+
   const subscription = tenant.subscription;
   const plan = subscription?.plan;
+  const loyaltyProgram = tenant.loyaltyPrograms?.[0] || null;
+  const clientPlans = tenant.clientPlans || [];
 
   // Função para mapear status da assinatura para cores
   const getStatusDisplay = (status: string | undefined) => {
@@ -72,25 +80,19 @@ export default async function AssinaturaPage() {
     return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
   };
 
-  // Número do WhatsApp de suporte (configurável pelo Super Admin)
-  const suporteWhatsApp = "5511999999999"; 
-  const mensagemWhatsApp = `Olá, suporte! Gostaria de falar sobre a assinatura da barbearia: ${tenant.name}.`;
-  const linkWhatsApp = `https://wa.me/${suporteWhatsApp}?text=${encodeURIComponent(mensagemWhatsApp)}`;
-
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in p-6">
+    <div className="max-w-5xl mx-auto animate-fade-in p-6">
       
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold text-text-primary flex items-center gap-3">
           <CreditCard className="text-primary" /> Minha Assinatura
         </h1>
         <p className="text-text-secondary mt-2">
-          Gerencie seu plano, confira seus limites e renove sua assinatura.
+          Gerencie seu plano no SaaS Navalha88.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
         {/* Card Principal: Status da Assinatura */}
         <div className="md:col-span-2 bg-surface border border-secondary rounded-2xl p-8 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary-glow rounded-full blur-3xl opacity-20 pointer-events-none" />
@@ -135,7 +137,7 @@ export default async function AssinaturaPage() {
                 rel="noopener noreferrer"
                 className="flex-1 bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
               >
-                Falar com Consultor (Sob Consulta)
+                <MessageCircle size={20} /> Falar com Consultor (Sob Consulta)
               </a>
             ) : (
               <form action={createCheckoutSession} className="flex flex-col sm:flex-row gap-4">
@@ -144,7 +146,7 @@ export default async function AssinaturaPage() {
                 <button 
                   type="submit"
                   disabled={!plan}
-                  className="flex-1 bg-primary text-background font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                  className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
                 >
                   <CreditCard size={20} />
                   Pagar com Mercado Pago
@@ -161,7 +163,6 @@ export default async function AssinaturaPage() {
           </h3>
           
           <div className="space-y-6 flex-1">
-            
             <div>
               <div className="flex justify-between items-end mb-2">
                 <span className="text-text-secondary text-sm">Barbeiros</span>
@@ -204,11 +205,10 @@ export default async function AssinaturaPage() {
                 </span>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );
 }
+

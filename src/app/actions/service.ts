@@ -6,11 +6,12 @@ import { revalidatePath } from "next/cache";
 
 export async function createService(formData: FormData) {
   const session = await auth();
-  if (!session?.user) return { error: "Não autorizado" };
+  if (!session?.user?.id) return { error: "Não autorizado" };
 
   const name = formData.get("name") as string;
   const priceStr = formData.get("price") as string;
   const durationStr = formData.get("duration") as string;
+  const categoryId = formData.get("categoryId") as string | null;
 
   if (!name || !priceStr || !durationStr) return { error: "Preencha todos os campos" };
 
@@ -18,52 +19,99 @@ export async function createService(formData: FormData) {
   const duration = parseInt(durationStr);
 
   try {
-    const userWithTenants = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { units: { include: { unit: true } } }
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    await db.service.create({
+      data: {
+        tenantId: tenant.id,
+        name,
+        price,
+        duration_minutes: duration,
+        categoryId: categoryId || null
+      }
     });
 
-    const tenantId = userWithTenants?.units[0]?.unit.tenantId;
-
-    if (!tenantId) {
-      const fallbackTenant = await db.tenant.findFirst();
-      if (!fallbackTenant) return { error: "Barbearia não encontrada" };
-      await saveService(fallbackTenant.id, name, price, duration);
-      return { success: true };
-    }
-
-    await saveService(tenantId, name, price, duration);
+    revalidatePath("/dashboard/servicos");
     return { success: true };
-
   } catch (error) {
     console.error(error);
     return { error: "Erro ao criar serviço" };
   }
 }
 
-async function saveService(tenantId: string, name: string, price: number, duration: number) {
-  await db.service.create({
-    data: {
-      tenantId,
-      name,
-      price,
-      duration_minutes: duration
-    }
-  });
-  revalidatePath("/dashboard/servicos");
-}
-
 export async function deleteService(serviceId: string) {
   const session = await auth();
-  if (!session?.user) return { error: "Não autorizado" };
+  if (!session?.user?.id) return { error: "Não autorizado" };
 
   try {
-    await db.service.delete({
-      where: { id: serviceId }
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    const result = await db.service.deleteMany({
+      where: { id: serviceId, tenantId: tenant.id }
     });
+
+    if (result.count === 0) {
+      return { error: "Serviço não encontrado ou não autorizado" };
+    }
+
     revalidatePath("/dashboard/servicos");
     return { success: true };
   } catch (error) {
     return { error: "Erro ao deletar serviço" };
+  }
+}
+
+export async function createCategory(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autorizado" };
+
+  const name = formData.get("name") as string;
+  if (!name) return { error: "Nome obrigatório" };
+
+  try {
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    await db.serviceCategory.create({
+      data: {
+        tenantId: tenant.id,
+        name
+      }
+    });
+
+    revalidatePath("/dashboard/servicos");
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { error: "Erro ao criar categoria" };
+  }
+}
+
+export async function deleteCategory(categoryId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autorizado" };
+
+  try {
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    const result = await db.serviceCategory.deleteMany({
+      where: { id: categoryId, tenantId: tenant.id }
+    });
+
+    if (result.count === 0) {
+      return { error: "Categoria não encontrada ou não autorizada" };
+    }
+
+    revalidatePath("/dashboard/servicos");
+    return { success: true };
+  } catch (error) {
+    return { error: "Erro ao deletar categoria" };
   }
 }

@@ -6,28 +6,13 @@ import { revalidatePath } from "next/cache";
 
 export async function createProduct(formData: FormData) {
   const session = await auth();
-  if (!session?.user) return { error: "Não autorizado" };
+  if (!session?.user?.id) return { error: "Não autorizado" };
 
-  // O tenant logado (como ainda não guardamos o tenantId na sessão, vamos buscar o primeiro do usuário se ele for OWNER)
-  // Como simplificação para o MVP, vamos pegar a barbearia pelo tenant que o usuário é dono ou pelo tenantId passado
-  const userWithTenants = await db.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      units: { include: { unit: { include: { tenant: true } } } },
-    }
-  });
+  const { getUserTenant } = await import("@/lib/tenant");
+  const tenant = await getUserTenant(session.user.id);
+  if (!tenant) return { error: "Não autorizado" };
 
-  // Hack do MVP: Pega o primeiro tenant que ele tem acesso
-  const tenantId = userWithTenants?.units[0]?.unit.tenantId;
-
-  if (!tenantId) {
-    // Se ele não tiver tenant na BarberUnit, vamos checar se ele tem um Tenant direto
-    const tenant = await db.tenant.findFirst(); // Fallback extremo para MVP
-    if (!tenant) return { error: "Nenhuma barbearia encontrada" };
-    return await createProductWithTenant(formData, tenant.id);
-  }
-
-  return await createProductWithTenant(formData, tenantId);
+  return await createProductWithTenant(formData, tenant.id);
 }
 
 async function createProductWithTenant(formData: FormData, tenantId: string) {
@@ -72,9 +57,16 @@ async function createProductWithTenant(formData: FormData, tenantId: string) {
 
 export async function addStock(productId: string, quantity: number, reason: string = "Entrada Manual") {
   const session = await auth();
-  if (!session?.user) return { error: "Não autorizado" };
+  if (!session?.user?.id) return { error: "Não autorizado" };
 
   try {
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    const product = await db.product.findFirst({ where: { id: productId, tenantId: tenant.id } });
+    if (!product) return { error: "Não autorizado" };
+
     await db.$transaction(async (tx) => {
       await tx.product.update({
         where: { id: productId },
@@ -100,12 +92,16 @@ export async function addStock(productId: string, quantity: number, reason: stri
 
 export async function removeStock(productId: string, quantity: number, reason: string = "Saída Manual / Ajuste") {
   const session = await auth();
-  if (!session?.user) return { error: "Não autorizado" };
+  if (!session?.user?.id) return { error: "Não autorizado" };
 
   try {
-    const product = await db.product.findUnique({ where: { id: productId }});
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    const product = await db.product.findFirst({ where: { id: productId, tenantId: tenant.id } });
     if (!product || product.stock_quantity < quantity) {
-      return { error: "Estoque insuficiente" };
+      return { error: "Estoque insuficiente ou não autorizado" };
     }
 
     await db.$transaction(async (tx) => {

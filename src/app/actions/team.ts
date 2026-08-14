@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 
 export async function addTeamMember(formData: FormData) {
   const session = await auth();
-  if (!session?.user) return { error: "Não autorizado" };
+  if (!session?.user?.id) return { error: "Não autorizado" };
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -19,6 +19,10 @@ export async function addTeamMember(formData: FormData) {
   if (!name || !email || !password) return { error: "Preencha os campos obrigatórios" };
 
   try {
+    const { getUserTenant } = await import("@/lib/tenant");
+    const currentTenant = await getUserTenant(session.user.id);
+    if (!currentTenant) return { error: "Não autorizado" };
+
     const userWithTenants = await db.user.findUnique({
       where: { id: session.user.id },
       include: { units: { include: { unit: true } } }
@@ -26,7 +30,7 @@ export async function addTeamMember(formData: FormData) {
 
     const unitId = userWithTenants?.units[0]?.unitId;
     const tenantId = userWithTenants?.units[0]?.unit?.tenantId;
-    if (!unitId || !tenantId) return { error: "Unidade não encontrada" };
+    if (!unitId || !tenantId || tenantId !== currentTenant.id) return { error: "Unidade não encontrada ou acesso negado" };
 
     // Verificar se email já existe
     const existing = await db.user.findUnique({ where: { email } });

@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #F8FAFC; /* Light gray background */
-  --color-surface: #FFFFFF; /* White cards */
-  --color-surface-hover: #F1F5F9;
+  --color-background: #0f1115; /* Very dark gray, almost black */
+  --color-surface: #1a1d24; /* Slightly lighter for cards */
+  --color-surface-hover: #232730;
   
-  --color-primary: #6366F1; /* Indigo/Purple */
-  --color-primary-hover: #4F46E5;
-  --color-primary-glow: rgba(99, 102, 241, 0.3);
+  --color-primary: #8b5cf6; /* Vibrant Purple / Violet */
+  --color-primary-hover: #7c3aed;
+  --color-primary-glow: rgba(139, 92, 246, 0.25);
   
-  --color-secondary: #E2E8F0; /* Subtle borders */
+  --color-secondary: #2c313c; /* Borders */
   
-  --color-text-primary: #1E293B; /* Dark text */
-  --color-text-secondary: #64748B; /* Gray text */
+  --color-text-primary: #ffffff; /* White text */
+  --color-text-secondary: #a0aec0; /* Light gray text */
+  --color-text-dark: #ffffff; /* White text for purple buttons is better than dark text */
   
   --font-display: var(--font-outfit), sans-serif;
   --font-body: var(--font-inter), sans-serif;
@@ -20,10 +21,11 @@
   /* Custom animations */
   --animate-fade-in: fadeIn 0.4s ease-out forwards;
   --animate-slide-up: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-float: float 6s ease-in-out infinite;
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
@@ -45,24 +47,29 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Glassmorphism utilities - updated for light theme */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Glassmorphism utilities for Dark theme */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  background: rgba(26, 29, 36, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #1E293B 0%, #64748B 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #a0aec0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-primary {
-  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #a78bfa 0%, #db2777 100%); /* Purple to Pink/Red gradient */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

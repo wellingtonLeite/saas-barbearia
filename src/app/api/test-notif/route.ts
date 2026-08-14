@@ -24,7 +24,7 @@ export async function GET() {
     data: {
       userId: user.id,
       tenantId: tenant.id,
-      type: 'APPOINTMENT_REMINDER',
+      type: 'NEW_APPOINTMENT',
       title: 'Teste: Novo Agendamento (Sons)',
       message: 'Este é um teste. Você deve ouvir o som da caixa registradora!'
     }

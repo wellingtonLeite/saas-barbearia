@@ -13,7 +13,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "SaaS Barbearia",
+  title: "Navalha88",
   description: "Plataforma premium para gestão de barbearias.",
 };
 

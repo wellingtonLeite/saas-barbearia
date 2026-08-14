@@ -116,3 +116,86 @@ export async function processCheckout(appointmentId: string, productIds: string[
     return { error: "Falha ao processar checkout." };
   }
 }
+
+export async function startAppointmentAndOpenComanda(appointmentId: string) {
+  try {
+    const appointment = await db.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        service: true,
+      }
+    });
+
+    if (!appointment) throw new Error("Agendamento não encontrado");
+
+    // 1. Atualizar status para IN_PROGRESS
+    await db.appointment.update({
+      where: { id: appointmentId },
+      data: { status: 'IN_PROGRESS' }
+    });
+
+    // 2. Buscar ou criar Comanda para o cliente
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let comanda = await db.comanda.findFirst({
+      where: {
+        tenantId: appointment.tenantId,
+        clientId: appointment.clientId,
+        barberId: appointment.barberId,
+        status: 'OPEN',
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+
+    if (!comanda) {
+      comanda = await db.comanda.create({
+        data: {
+          tenantId: appointment.tenantId,
+          clientId: appointment.clientId,
+          barberId: appointment.barberId,
+          status: 'OPEN',
+          total_amount: 0
+        }
+      });
+    }
+
+    // 3. Adicionar o Serviço do Agendamento à Comanda
+    const existingItem = await db.comandaItem.findFirst({
+      where: {
+        comandaId: comanda.id,
+        serviceId: appointment.serviceId
+      }
+    });
+
+    if (!existingItem) {
+      await db.comandaItem.create({
+        data: {
+          comandaId: comanda.id,
+          serviceId: appointment.serviceId,
+          name: appointment.service.name,
+          price: appointment.service.price,
+          quantity: 1
+        }
+      });
+
+      // Atualizar total da comanda
+      await db.comanda.update({
+        where: { id: comanda.id },
+        data: { total_amount: { increment: appointment.service.price } }
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/comandas");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao iniciar corte e criar comanda:", error);
+    return { error: "Falha ao iniciar corte." };
+  }
+}

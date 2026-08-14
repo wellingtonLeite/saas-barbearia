@@ -54,6 +54,7 @@ export default async function UnitWorkingHoursPage() {
     }
 
     const { db } = await import("@/lib/db");
+    if (!unit) return;
     await db.unit.update({
       where: { id: unit.id },
       data: { working_hours: newHours }

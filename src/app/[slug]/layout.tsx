@@ -20,31 +20,13 @@ export default async function PublicTenantLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Public Header */}
-      <header className="bg-surface border-b border-secondary">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="w-12 h-12 rounded-full object-cover" />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                <Scissors size={24} />
-              </div>
-            )}
-            <h1 className="text-2xl font-display font-bold text-primary">{tenant.name}</h1>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#0a0a0c] text-white">
+      {/* Background decorativo */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-[#0a0a0c] to-[#0a0a0c] pointer-events-none -z-10" />
       
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="w-full">
         {children}
       </main>
-      
-      {/* Public Footer */}
-      <footer className="py-8 text-center text-text-secondary text-sm border-t border-secondary mt-12">
-        <p>Powered by BarberSaaS &copy; 2026</p>
-      </footer>
     </div>
   );
 }

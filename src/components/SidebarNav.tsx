@@ -15,8 +15,11 @@ import {
   TrendingDown,
   TrendingUp,
   BarChart2,
-  Lock
+  Lock,
+  ShoppingBag,
+  Gift
 } from "lucide-react";
+import { useMobileSidebar } from "./layouts/MobileSidebarWrapper";
 
 type Props = {
   isOwnerOrAdmin: boolean;
@@ -25,6 +28,7 @@ type Props = {
 };
 
 export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false, hasGrowthDashboard = false }: Props) {
+  const { closeSidebar } = useMobileSidebar();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const abaParam = searchParams.get("aba");
@@ -37,8 +41,10 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
   ];
 
   const adminItems = [
+    { href: "/dashboard/comandas", label: "Comandas / PDV", icon: ShoppingBag },
     { href: "/dashboard/servicos", label: "Serviços", icon: Scissors },
     { href: "/dashboard/produtos", label: "Produtos", icon: Package },
+    { href: "/dashboard/fidelidade", label: "Fidelidade e VIP", icon: Gift },
     { href: "/dashboard/equipe", label: "Equipe", icon: Users },
     { href: "/dashboard/assinatura", label: "Minha Assinatura", icon: CreditCard },
     { href: "/dashboard/config", label: "Configurações", icon: Settings },
@@ -55,6 +61,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
           <Link
             key={item.href}
             href={item.href}
+            onClick={closeSidebar}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
               isActive
                 ? "text-white bg-primary shadow-lg shadow-primary/20"
@@ -70,6 +77,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
       <div>
         <Link
           href="/dashboard/financeiro"
+          onClick={closeSidebar}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full ${
             isFinanceiroActive
               ? "text-white bg-primary shadow-lg shadow-primary/20"
@@ -91,6 +99,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
           <div className="ml-4 mt-1 space-y-1 border-l border-slate-700 pl-3">
             <Link
               href="/dashboard/financeiro"
+              onClick={closeSidebar}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                 pathname === "/dashboard/financeiro"
                   ? "text-white font-medium"
@@ -104,6 +113,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
               <>
                 <Link
                   href="/dashboard/financeiro/contas?aba=pagar"
+                  onClick={closeSidebar}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                     pathname === "/dashboard/financeiro/contas" && abaParam !== "receber"
                       ? "text-red-400 font-medium bg-slate-800"
@@ -114,6 +124,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
                 </Link>
                 <Link
                   href="/dashboard/financeiro/contas?aba=receber"
+                  onClick={closeSidebar}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                     pathname === "/dashboard/financeiro/contas" && abaParam === "receber"
                       ? "text-green-400 font-medium bg-slate-800"
@@ -138,6 +149,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
         hasGrowthDashboard ? (
           <Link
             href="/dashboard/visao-negocio"
+            onClick={closeSidebar}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
               pathname === "/dashboard/visao-negocio"
                 ? "text-white bg-primary shadow-lg shadow-primary/20"
@@ -165,6 +177,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
             <Link
               key={item.href}
               href={item.href}
+              onClick={closeSidebar}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 isActive
                   ? "text-white bg-primary shadow-lg shadow-primary/20"

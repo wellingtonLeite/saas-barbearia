@@ -1,14 +1,15 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { Building2, Power, PowerOff } from "lucide-react";
+import { Building2, Power, PowerOff, Trash2, AlertTriangle } from "lucide-react";
 import { revalidatePath } from "next/cache";
 
 import Link from "next/link";
-import { SubscriptionStatus } from "@/generated/prisma";
+import { SubscriptionStatus } from "@/generated/prisma/enums";
 
-export default async function TenantsPage({ searchParams }: { searchParams: Promise<{ editPlanFor?: string }> }) {
+export default async function TenantsPage({ searchParams }: { searchParams: Promise<{ editPlanFor?: string, deleteTenantFor?: string }> }) {
   const resolvedParams = await searchParams;
   const editPlanFor = resolvedParams.editPlanFor;
+  const deleteTenantFor = resolvedParams.deleteTenantFor;
 
   const settings = await db.systemSetting.findUnique({ where: { key: "WHATSAPP_TEMPLATES" } });
   const b2b_billing = (settings?.value as any)?.b2b_billing || "Fala {dono}! Tudo bem? A assinatura do {plano} da {barbearia} está próxima do vencimento. Renove aqui: {link_pagamento}";
@@ -61,6 +62,40 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
       create: { tenantId, planId, status, current_period_end },
       update: { planId, status, current_period_end }
     });
+
+    const { revalidatePath } = await import("next/cache");
+    const { redirect } = await import("next/navigation");
+    revalidatePath("/super-admin");
+    redirect("/super-admin/tenants");
+  }
+
+  async function deleteTenant(formData: FormData) {
+    "use server";
+    const session = await auth();
+    if (session?.user?.role !== 'SUPER_ADMIN') return;
+
+    const tenantId = formData.get("tenantId") as string;
+    const { db } = await import("@/lib/db");
+
+    // 1. Encontrar todos os barbeiros/donos associados para limpá-los também se não estiverem em outro tenant
+    const units = await db.unit.findMany({ where: { tenantId } });
+    const unitIds = units.map(u => u.id);
+    const barberUnits = await db.barberUnit.findMany({ where: { unitId: { in: unitIds } } });
+    const barberIds = [...new Set(barberUnits.map(b => b.barberId))];
+
+    // 2. Deletar a barbearia (Prisma Cascade cuidará de agendamentos, comandas, assinaturas, unidades, serviços)
+    await db.tenant.delete({ where: { id: tenantId } });
+
+    // 3. Deletar usuários (donos/barbeiros) que ficaram órfãos
+    for (const bId of barberIds) {
+       const stillAttached = await db.barberUnit.findFirst({ where: { barberId: bId } });
+       if (!stillAttached) {
+         const u = await db.user.findUnique({ where: { id: bId } });
+         if (u && u.role !== 'SUPER_ADMIN') {
+           await db.user.delete({ where: { id: bId } });
+         }
+       }
+    }
 
     const { revalidatePath } = await import("next/cache");
     const { redirect } = await import("next/navigation");
@@ -166,6 +201,13 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
                             )}
                           </button>
                         </form>
+                        <Link 
+                          href={`/super-admin/tenants?deleteTenantFor=${tenant.id}`}
+                          className="px-3 py-1.5 rounded-lg text-sm font-bold bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                          title="Deletar Tudo"
+                        >
+                          <Trash2 size={16} />
+                        </Link>
                       </div>
                     </td>
                   </tr>
@@ -219,6 +261,39 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
                 </Link>
                 <button type="submit" className="bg-primary text-white font-bold px-6 py-2 rounded-xl hover:bg-primary-hover transition-colors">
                   Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deleteTenantFor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-surface border border-red-500/50 p-6 rounded-2xl shadow-xl max-w-md w-full relative">
+            <div className="flex items-center gap-3 text-red-500 mb-4">
+              <AlertTriangle size={32} />
+              <h2 className="text-xl font-bold">Atenção! Ação Irreversível</h2>
+            </div>
+            
+            <p className="text-text-secondary mb-6">
+              Você está prestes a deletar uma barbearia. Isso irá <strong>APAGAR PERMANENTEMENTE</strong> do banco de dados:
+              <br/><br/>
+              - O cadastro da barbearia<br/>
+              - Todos os serviços e categorias<br/>
+              - Todo o histórico de agendamentos<br/>
+              - Todas as comandas e dados financeiros<br/>
+              - Os usuários (donos e barbeiros) se não estiverem em outra unidade
+            </p>
+            
+            <form action={deleteTenant} className="space-y-4">
+              <input type="hidden" name="tenantId" value={deleteTenantFor} />
+              <div className="pt-2 flex justify-end gap-2">
+                <Link href="/super-admin/tenants" className="px-4 py-2 rounded-lg font-bold text-text-secondary hover:bg-secondary transition-colors">
+                  Cancelar
+                </Link>
+                <button type="submit" className="bg-red-600 text-white font-bold px-6 py-2 rounded-xl hover:bg-red-700 transition-colors">
+                  Sim, Deletar Tudo
                 </button>
               </div>
             </form>
