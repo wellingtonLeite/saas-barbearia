@@ -20,7 +20,7 @@ export function LandingForm() {
     };
 
     try {
-      const response = await fetch("https://formsubmit.co/ajax/wellington.leite@criativamarketing.com", {
+      const response = await fetch("https://formsubmit.co/ajax/0c36913fd446b9c42ee0b01ec36813de", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
