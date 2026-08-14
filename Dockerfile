@@ -16,6 +16,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma Client
+# Receive Build Variables from Coolify
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+ARG DIRECT_URL
+ENV DIRECT_URL=${DIRECT_URL}
+ARG AUTH_SECRET
+ENV AUTH_SECRET=${AUTH_SECRET}
+
 RUN npx prisma generate
 
 # Next.js telemetry is disabled
