@@ -71,23 +71,39 @@ export default function Home() {
               <div className="absolute -top-3 left-5 sm:left-6 bg-primary text-white text-xs font-black px-3 py-1 rounded-full shadow-lg">
                 15 DIAS GRÁTIS
               </div>
-              <form className="flex flex-col gap-3 sm:gap-4 mt-2" suppressHydrationWarning>
+              <form 
+                action="https://formsubmit.co/wellington.leite@criativamarketing.com" 
+                method="POST"
+                className="flex flex-col gap-3 sm:gap-4 mt-2" 
+                suppressHydrationWarning
+              >
+                {/* Desativa o Captcha chato do FormSubmit */}
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="_subject" value="Novo Lead - Landing Page Navalha88!" />
+                <input type="hidden" name="_template" value="table" />
+                
                 <input 
                   type="text" 
+                  name="barbearia"
+                  required
                   placeholder="Nome da sua barbearia"
                   className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-white placeholder:text-text-secondary focus:outline-none focus:border-primary transition-colors text-base"
                 />
                 <input 
                   type="tel" 
+                  name="whatsapp"
+                  required
                   placeholder="WhatsApp (com DDD)"
                   className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-white placeholder:text-text-secondary focus:outline-none focus:border-primary transition-colors text-base"
                 />
                 <input 
                   type="email" 
+                  name="email"
+                  required
                   placeholder="Seu melhor e-mail"
                   className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-white placeholder:text-text-secondary focus:outline-none focus:border-primary transition-colors text-base"
                 />
-                <button type="button" className="w-full bg-primary hover:bg-primary-hover text-white font-black py-4 rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 mt-1 shadow-lg shadow-primary/20 text-base sm:text-lg">
+                <button type="submit" className="w-full bg-primary hover:bg-primary-hover text-white font-black py-4 rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 mt-1 shadow-lg shadow-primary/20 text-base sm:text-lg">
                   COMEÇAR AGORA — DE GRAÇA!
                 </button>
               </form>
