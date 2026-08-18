@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
     },
   },
   output: 'standalone',
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/oauth-authorization-server',
+        destination: '/api/well-known-oauth',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
