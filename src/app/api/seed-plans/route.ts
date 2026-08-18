@@ -11,7 +11,9 @@ export async function GET() {
         max_barbers: 1,
         has_whatsapp: false,
         has_financial_module: false,
-        has_loyalty_module: false
+        has_loyalty_module: false,
+        has_clients_module: false,
+        has_products_module: false
       },
       {
         name: "Plano Inicial",
@@ -20,7 +22,9 @@ export async function GET() {
         max_barbers: 2,
         has_whatsapp: false,
         has_financial_module: false,
-        has_loyalty_module: true
+        has_loyalty_module: true,
+        has_clients_module: true,
+        has_products_module: true
       },
       {
         name: "Plano Intermediário",
@@ -29,7 +33,9 @@ export async function GET() {
         max_barbers: 5,
         has_whatsapp: true,
         has_financial_module: false,
-        has_loyalty_module: true
+        has_loyalty_module: true,
+        has_clients_module: true,
+        has_products_module: true
       },
       {
         name: "Plano VIP",
@@ -38,7 +44,9 @@ export async function GET() {
         max_barbers: 999, // Ilimitado
         has_whatsapp: true,
         has_financial_module: true,
-        has_loyalty_module: true
+        has_loyalty_module: true,
+        has_clients_module: true,
+        has_products_module: true
       }
     ];
 

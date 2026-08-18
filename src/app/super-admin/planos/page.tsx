@@ -21,17 +21,19 @@ export default async function PlansPage() {
     const has_whatsapp = formData.get("has_whatsapp") === "on";
     const has_financial_module = formData.get("has_financial_module") === "on";
     const has_loyalty_module = formData.get("has_loyalty_module") === "on";
+    const has_clients_module = formData.get("has_clients_module") === "on";
+    const has_products_module = formData.get("has_products_module") === "on";
 
     const { db } = await import("@/lib/db");
 
     if (id) {
       await db.plan.update({
         where: { id },
-        data: { name, base_price, max_units, max_barbers, has_whatsapp, has_financial_module, has_loyalty_module }
+        data: { name, base_price, max_units, max_barbers, has_whatsapp, has_financial_module, has_loyalty_module, has_clients_module, has_products_module }
       });
     } else {
       await db.plan.create({
-        data: { name, base_price, max_units, max_barbers, has_whatsapp, has_financial_module, has_loyalty_module }
+        data: { name, base_price, max_units, max_barbers, has_whatsapp, has_financial_module, has_loyalty_module, has_clients_module, has_products_module }
       });
     }
 
@@ -112,6 +114,27 @@ export default async function PlansPage() {
                   <span className="text-xs text-text-secondary mt-1">Habilita as funcionalidades de reter clientes</span>
                 </div>
               </label>
+              <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
+                <input type="checkbox" name="has_clients_module" className="peer sr-only" defaultChecked={true} />
+                <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+                  <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Módulo de Clientes</span>
+                  <span className="text-xs text-text-secondary mt-1">Habilita gestão de carteira de clientes</span>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
+                <input type="checkbox" name="has_products_module" className="peer sr-only" defaultChecked={true} />
+                <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+                  <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Módulo de Produtos</span>
+                  <span className="text-xs text-text-secondary mt-1">Habilita gestão de estoque de produtos</span>
+                </div>
+              </label>
             </div>
 
             <button type="submit" className="w-full bg-primary text-white font-bold py-3 rounded-xl mt-4 flex items-center justify-center gap-2 hover:bg-primary-hover transition-all">
@@ -158,6 +181,14 @@ export default async function PlansPage() {
                   <li className={`flex items-center gap-2 text-sm ${plan.has_loyalty_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_loyalty_module ? "text-success" : "text-secondary"} />
                     Fidelidade e VIP
+                  </li>
+                  <li className={`flex items-center gap-2 text-sm ${plan.has_clients_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                    <Check size={16} className={plan.has_clients_module ? "text-success" : "text-secondary"} />
+                    Gestão de Clientes
+                  </li>
+                  <li className={`flex items-center gap-2 text-sm ${plan.has_products_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                    <Check size={16} className={plan.has_products_module ? "text-success" : "text-secondary"} />
+                    Estoque de Produtos
                   </li>
                 </ul>
               </div>

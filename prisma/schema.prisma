@@ -119,6 +119,8 @@ model Plan {
   has_whatsapp         Boolean  @default(false)
   has_financial_module Boolean  @default(false)
   has_loyalty_module   Boolean  @default(true)
+  has_clients_module   Boolean  @default(true)
+  has_products_module  Boolean  @default(true)
   extra_unit_price     Decimal  @default(0)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

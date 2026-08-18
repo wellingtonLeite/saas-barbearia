@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { auth } from "@/auth";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Package, TrendingUp, TrendingDown } from "lucide-react";
 import { createProduct, addStock, removeStock } from "@/app/actions/product";
@@ -19,7 +20,39 @@ async function onRemoveStock(productId: string, quantity: number, reason: string
 }
 
 export default async function ProductsPage() {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  const userWithUnits = await db.user.findUnique({
+    where: { id: userId },
+    include: {
+      units: {
+        include: { unit: { include: { tenant: { include: { subscription: { include: { plan: true } } } } } } }
+      }
+    }
+  });
+
+  const tenant = userWithUnits?.units[0]?.unit?.tenant;
+  const plan = tenant?.subscription?.plan;
+  const hasProductsModule = plan?.has_products_module ?? true;
+
+  if (!hasProductsModule) {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 p-6 text-center">
+        <div className="bg-surface border border-secondary p-8 rounded-2xl shadow-xl flex flex-col items-center">
+          <Package className="text-secondary w-16 h-16 mb-4" />
+          <h2 className="text-2xl font-bold text-text-primary mb-2">Estoque e Produtos</h2>
+          <p className="text-text-secondary mb-6">A gestão de estoque e venda de produtos não está disponível no plano {plan?.name || 'Atual'}.</p>
+          <a href="/dashboard/assinatura" className="bg-primary text-white font-bold px-6 py-3 rounded-lg hover:bg-primary-hover transition-colors">
+            Fazer Upgrade do Plano
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const products = await db.product.findMany({
+    where: { tenantId: tenant?.id },
     orderBy: { createdAt: 'desc' }
   });
 

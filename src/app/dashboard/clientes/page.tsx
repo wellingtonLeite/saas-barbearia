@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { Users, Phone, Calendar, History, Scissors } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function ClientesPage() {
   const session = await auth();
@@ -23,6 +24,35 @@ export default async function ClientesPage() {
 
   if (!tenant) {
     return <div>Barbearia não encontrada.</div>;
+  }
+
+  const tenantData = await db.tenant.findUnique({
+    where: { id: tenant.id },
+    include: {
+      subscription: {
+        include: {
+          plan: true
+        }
+      }
+    }
+  });
+
+  const plan = tenantData?.subscription?.plan;
+  const hasClientsModule = plan?.has_clients_module ?? true; // Defaults to true for backward compat
+
+  if (!hasClientsModule) {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 p-6 text-center">
+        <div className="bg-surface border border-secondary p-8 rounded-2xl shadow-xl flex flex-col items-center">
+          <Users className="text-secondary w-16 h-16 mb-4" />
+          <h2 className="text-2xl font-bold text-text-primary mb-2">Gestão de Clientes</h2>
+          <p className="text-text-secondary mb-6">A gestão de carteira de clientes não está disponível no plano {plan?.name || 'Atual'}.</p>
+          <Link href="/dashboard/assinatura" className="bg-primary text-white font-bold px-6 py-3 rounded-lg hover:bg-primary-hover transition-colors">
+            Fazer Upgrade do Plano
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   // Buscar Clientes (Usuários que têm agendamento nesta barbearia)
