@@ -1,6 +1,6 @@
 {
-  "name": "Navalha88 - Gestão Premium",
-  "short_name": "Navalha88",
+  "name": "88barber - Gestão Premium",
+  "short_name": "88barber",
   "description": "Sistema de gestão e agendamentos para barbearias de alto nível.",
   "start_url": "/",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/logo_navalha88.jpg",
+      "src": "/logo_88barber.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo_navalha88.jpg",
+      "src": "/logo_88barber.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }

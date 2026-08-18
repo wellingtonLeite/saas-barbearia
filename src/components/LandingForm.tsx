@@ -15,7 +15,7 @@ export function LandingForm() {
       barbearia: formData.get("barbearia"),
       whatsapp: formData.get("whatsapp"),
       email: formData.get("email"),
-      _subject: "Novo Lead - Landing Page Navalha88!",
+      _subject: "Novo Lead - Landing Page 88barber!",
       _template: "table"
     };
 

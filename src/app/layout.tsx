@@ -13,11 +13,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Navalha88",
+  title: "88barber",
   description: "Plataforma premium para gestão de barbearias.",
   manifest: "/manifest.json",
   appleWebApp: {
-    title: "Navalha88",
+    title: "88barber",
     statusBarStyle: "black-translucent",
   },
 };

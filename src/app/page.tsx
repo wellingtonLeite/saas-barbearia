@@ -24,7 +24,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <Image src="/logo_navalha88.jpg" alt="Navalha88" width={220} height={70} className="h-14 sm:h-16 w-auto object-contain mix-blend-lighten" />
+            <Image src="/logo_88barber.jpg" alt="88barber" width={220} height={70} className="h-14 sm:h-16 w-auto object-contain mix-blend-lighten" />
           </Link>
 
           {/* Desktop menu */}
@@ -36,7 +36,7 @@ export default function Home() {
 
           {/* CTA buttons */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link href="/login" className="text-text-secondary hover:text-primary font-bold transition-colors text-sm sm:text-base hidden sm:block">
+            <Link href="/login" className="text-text-secondary hover:text-primary font-bold transition-colors text-sm sm:text-base">
               Entrar
             </Link>
             <Link href="/register" className="bg-primary hover:bg-primary-hover text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold transition-all shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:scale-105 text-sm sm:text-base whitespace-nowrap">
@@ -83,7 +83,7 @@ export default function Home() {
             <div className="relative w-64 sm:w-80 md:w-auto animate-float">
               <Image 
                 src="/barber_hero_purple.jpg" 
-                alt="Barbeiro utilizando Navalha88 no celular" 
+                alt="Barbeiro utilizando 88barber no celular" 
                 width={500} 
                 height={500} 
                 priority
@@ -158,7 +158,7 @@ export default function Home() {
               Feito para ser usado no seu <span className="text-gradient-primary">celular.</span>
             </h2>
             <p className="text-text-secondary text-base sm:text-lg leading-relaxed mb-6">
-              Sabemos que nem todo barbeiro tem um computador na barbearia. Por isso o Navalha88 foi construído com foco em <strong className="text-white">mobile first</strong> — tudo que você precisa cabe na tela do seu smartphone.
+              Sabemos que nem todo barbeiro tem um computador na barbearia. Por isso o 88barber foi construído com foco em <strong className="text-white">mobile first</strong> — tudo que você precisa cabe na tela do seu smartphone.
             </p>
             <ul className="space-y-4">
               {[
@@ -350,10 +350,10 @@ export default function Home() {
       <footer className="bg-background border-t border-secondary py-10 sm:py-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8">
           <Link href="/" className="flex items-center">
-            <Image src="/logo_navalha88.jpg" alt="Navalha88" width={180} height={50} className="h-12 sm:h-14 w-auto object-contain grayscale hover:grayscale-0 transition-all opacity-80 hover:opacity-100 mix-blend-lighten" />
+            <Image src="/logo_88barber.jpg" alt="88barber" width={180} height={50} className="h-12 sm:h-14 w-auto object-contain grayscale hover:grayscale-0 transition-all opacity-80 hover:opacity-100 mix-blend-lighten" />
           </Link>
           <p className="text-text-secondary font-medium text-center text-sm sm:text-base">
-            © {new Date().getFullYear()} Navalha88 SaaS. Feito para barbeiros que buscam o topo.
+            © {new Date().getFullYear()} 88barber SaaS. Feito para barbeiros que buscam o topo.
           </p>
           <div className="flex gap-4 sm:gap-6 font-bold text-sm sm:text-base">
             <a href="#" className="text-text-secondary hover:text-primary transition-colors">Termos</a>

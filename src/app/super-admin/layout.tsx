@@ -27,7 +27,7 @@ export default async function SuperAdminLayout({ children }: { children: ReactNo
       <MobileSidebarWrapper
         headerChildren={
           <div className="flex items-center gap-3">
-            <Image src="/logo_navalha88.jpg" alt="Navalha88" width={140} height={40} className="w-auto h-10 object-contain mix-blend-lighten" />
+            <Image src="/logo_88barber.jpg" alt="88barber" width={140} height={40} className="w-auto h-10 object-contain mix-blend-lighten" />
             <span className="text-xs font-display font-bold text-white uppercase tracking-wider text-primary">
               Admin
             </span>
@@ -37,7 +37,7 @@ export default async function SuperAdminLayout({ children }: { children: ReactNo
         {/* Sidebar do Super Admin */}
         <div className="w-full h-full bg-black flex flex-col shadow-2xl md:border-r md:border-secondary/20">
           <div className="p-6 hidden md:flex flex-col items-start gap-2">
-            <Image src="/logo_navalha88.jpg" alt="Navalha88" width={180} height={50} className="w-auto h-14 object-contain mix-blend-lighten" />
+            <Image src="/logo_88barber.jpg" alt="88barber" width={180} height={50} className="w-auto h-14 object-contain mix-blend-lighten" />
             <span className="text-xs font-display font-bold text-primary uppercase tracking-wider mt-1 ml-1">
               Painel Admin
             </span>

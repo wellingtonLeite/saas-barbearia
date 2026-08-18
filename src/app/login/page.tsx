@@ -42,7 +42,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md animate-fade-in mt-12 lg:mt-0">
           <div className="flex flex-col items-center mb-10">
             <div className="mb-4">
-              <Image src="/logo_navalha88.jpg" alt="Navalha88" width={300} height={90} className="w-auto h-20 object-contain mix-blend-lighten drop-shadow-2xl" />
+              <Image src="/logo_88barber.jpg" alt="88barber" width={300} height={90} className="w-auto h-20 object-contain mix-blend-lighten drop-shadow-2xl" />
             </div>
             <p className="text-text-secondary">Acesse o seu painel de controle</p>
           </div>

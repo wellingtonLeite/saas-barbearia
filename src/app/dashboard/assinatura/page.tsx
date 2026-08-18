@@ -88,7 +88,7 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
           <CreditCard className="text-primary" /> Minha Assinatura
         </h1>
         <p className="text-text-secondary mt-2">
-          Gerencie seu plano no SaaS Navalha88.
+          Gerencie seu plano no SaaS 88barber.
         </p>
       </div>
 
