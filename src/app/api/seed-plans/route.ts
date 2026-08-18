@@ -5,12 +5,22 @@ export async function GET() {
   try {
     const plans = [
       {
+        name: "Plano Gratuito",
+        base_price: 0,
+        max_units: 1,
+        max_barbers: 1,
+        has_whatsapp: false,
+        has_financial_module: false,
+        has_loyalty_module: false
+      },
+      {
         name: "Plano Inicial",
         base_price: 49.90,
         max_units: 1,
         max_barbers: 2,
         has_whatsapp: false,
-        has_financial_module: false
+        has_financial_module: false,
+        has_loyalty_module: true
       },
       {
         name: "Plano Intermediário",
@@ -18,7 +28,8 @@ export async function GET() {
         max_units: 1,
         max_barbers: 5,
         has_whatsapp: true,
-        has_financial_module: false
+        has_financial_module: false,
+        has_loyalty_module: true
       },
       {
         name: "Plano VIP",
@@ -26,7 +37,8 @@ export async function GET() {
         max_units: 3,
         max_barbers: 999, // Ilimitado
         has_whatsapp: true,
-        has_financial_module: true
+        has_financial_module: true,
+        has_loyalty_module: true
       }
     ];
 

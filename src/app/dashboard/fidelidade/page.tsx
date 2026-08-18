@@ -46,9 +46,32 @@ export default async function FidelidadePage({ searchParams }: { searchParams: P
     where: { id: tenant.id },
     include: {
       loyaltyPrograms: true,
-      clientPlans: true
+      clientPlans: true,
+      subscription: {
+        include: {
+          plan: true
+        }
+      }
     }
   });
+
+  const plan = tenantData?.subscription?.plan;
+  const hasLoyalty = plan?.has_loyalty_module ?? false;
+
+  if (!hasLoyalty) {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 p-6 text-center">
+        <div className="bg-surface border border-secondary p-8 rounded-2xl shadow-xl flex flex-col items-center">
+          <Gift className="text-secondary w-16 h-16 mb-4" />
+          <h2 className="text-2xl font-bold text-text-primary mb-2">Clube VIP e Fidelidade</h2>
+          <p className="text-text-secondary mb-6">Esta funcionalidade de retenção de clientes não está disponível no plano {plan?.name || 'Atual'}.</p>
+          <Link href="/dashboard/assinatura" className="bg-primary text-white font-bold px-6 py-3 rounded-lg hover:bg-primary-hover transition-colors">
+            Fazer Upgrade do Plano
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const loyaltyProgram = tenantData?.loyaltyPrograms?.[0] || null;
   const clientPlans = tenantData?.clientPlans || [];
