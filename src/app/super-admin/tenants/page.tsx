@@ -83,7 +83,29 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
     const barberUnits = await db.barberUnit.findMany({ where: { unitId: { in: unitIds } } });
     const barberIds = [...new Set(barberUnits.map(b => b.barberId))];
 
-    // 2. Deletar a barbearia (Prisma Cascade cuidará de agendamentos, comandas, assinaturas, unidades, serviços)
+    // 2. Deletar a barbearia e absolutamente TUDO atrelado a ela
+    // Fazemos isso manualmente ordem reversa para garantir que não dê erro de Foreign Key (Cascade)
+    await db.comandaItem.deleteMany({ where: { comanda: { tenantId } } });
+    await db.comanda.deleteMany({ where: { tenantId } });
+    await db.clientSubscription.deleteMany({ where: { plan: { tenantId } } });
+    await db.clientPlan.deleteMany({ where: { tenantId } });
+    await db.clientLoyalty.deleteMany({ where: { tenantId } });
+    await db.loyaltyProgram.deleteMany({ where: { tenantId } });
+    await db.accountEntry.deleteMany({ where: { tenantId } });
+    await db.review.deleteMany({ where: { tenantId } });
+    await db.notification.deleteMany({ where: { tenantId } });
+    await db.transaction.deleteMany({ where: { tenantId } });
+    await db.sale.deleteMany({ where: { tenantId } });
+    await db.stockMovement.deleteMany({ where: { product: { tenantId } } });
+    await db.product.deleteMany({ where: { tenantId } });
+    await db.appointment.deleteMany({ where: { tenantId } });
+    await db.service.deleteMany({ where: { tenantId } });
+    await db.serviceCategory.deleteMany({ where: { tenantId } });
+    await db.scheduleBlock.deleteMany({ where: { tenantId } });
+    await db.barberContract.deleteMany({ where: { unit: { tenantId } } });
+    await db.barberUnit.deleteMany({ where: { unit: { tenantId } } });
+    await db.unit.deleteMany({ where: { tenantId } });
+    await db.subscription.deleteMany({ where: { tenantId } });
     await db.tenant.delete({ where: { id: tenantId } });
 
     // 3. Deletar usuários (donos/barbeiros) que ficaram órfãos
