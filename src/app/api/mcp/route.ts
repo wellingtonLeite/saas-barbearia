@@ -13,6 +13,14 @@ if (!globalSessions.mcpSessions) {
 }
 
 export async function GET(req: NextRequest) {
+  const accept = req.headers.get('accept') || '';
+  if (!accept.includes('text/event-stream')) {
+    return NextResponse.json(
+      { name: '88barber-mcp', version: '1.0.0', protocol: 'mcp', description: 'MCP Server - 88barber' },
+      { headers: { 'Access-Control-Allow-Origin': '*' } }
+    );
+  }
+
   const sessionId = crypto.randomUUID();
   
   const child = spawn("npx", ["prisma", "mcp"], {

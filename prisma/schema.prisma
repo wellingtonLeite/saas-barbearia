@@ -497,3 +497,23 @@ model ComandaItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
 }
+
+model OAuthClient {
+  id           String       @id @default(uuid())
+  clientId     String       @unique @default(uuid())
+  clientSecret String
+  name         String       @default("Gemini Spark")
+  redirectUris String[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  tokens       OAuthToken[]
+}
+
+model OAuthToken {
+  id          String      @id @default(uuid())
+  clientId    String
+  accessToken String      @unique
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+  client      OAuthClient @relation(fields: [clientId], references: [clientId])
+}
