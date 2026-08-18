@@ -12,7 +12,10 @@ import {
   Smartphone,
   Star,
   Menu,
-  X
+  X,
+  Package,
+  Users,
+  Store
 } from "lucide-react";
 
 export default function Home() {
@@ -227,9 +230,12 @@ export default function Home() {
               { icon: CalendarDays, color: "bg-primary/20 text-primary", title: "Agenda Inteligente", desc: "Seus clientes agendam pelo link próprio 24h por dia. A agenda organiza automaticamente, sem conflitos." },
               { icon: MessageCircle, color: "bg-green-500/20 text-green-400", title: "Lembretes Automáticos", desc: "Reduza faltas a quase zero com lembretes automáticos para que o cliente não esqueça do horário." },
               { icon: TrendingUp, color: "bg-pink-500/20 text-pink-400", title: "Comissões Automáticas", desc: "Configure a % de cada barbeiro. O sistema calcula tudo no fechamento — sem planilha, sem erro." },
-              { icon: Globe, color: "bg-blue-500/20 text-blue-400", title: "Site e App Exclusivos", desc: "Sua barbearia ganha um site moderno. O cliente pode instalar como App direto no celular." },
-              { icon: CreditCard, color: "bg-orange-500/20 text-orange-400", title: "Gestão Financeira", desc: "Controle total de contas a pagar, contas a receber e histórico detalhado do seu fluxo de caixa." },
-              { icon: Globe, color: "bg-indigo-500/20 text-indigo-400", title: "Gestão Centralizada", desc: "Acompanhe de perto o desempenho da sua barbearia com relatórios completos na palma da mão." },
+              { icon: Package, color: "bg-yellow-500/20 text-yellow-400", title: "Controle de Estoque", desc: "Cadastre produtos, controle vendas e acompanhe entradas e saídas para não perder lucro com produtos faltantes." },
+              { icon: CreditCard, color: "bg-orange-500/20 text-orange-400", title: "Gestão Financeira", desc: "Controle total de contas a pagar, receber, DRE e histórico detalhado do seu fluxo de caixa." },
+              { icon: Star, color: "bg-purple-500/20 text-purple-400", title: "Fidelidade e VIP", desc: "Programa de pontos inteligente: o cliente volta mais vezes para ganhar recompensas. Aumente sua retenção." },
+              { icon: Users, color: "bg-blue-500/20 text-blue-400", title: "Comandas e PDV", desc: "Gestão completa do fluxo de caixa diário. Junte serviços e produtos em uma única comanda antes de fechar a conta." },
+              { icon: Store, color: "bg-indigo-500/20 text-indigo-400", title: "Gestão Multi-unidades", desc: "Tem mais de uma loja? Acompanhe tudo em um único painel e gerencie várias unidades com o plano Rede." },
+              { icon: Globe, color: "bg-cyan-500/20 text-cyan-400", title: "Site e App Exclusivos", desc: "Sua barbearia ganha um site moderno. O cliente pode instalar como App direto no celular." },
             ].map(({ icon: Icon, color, title, desc }) => (
               <div key={title} className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface border border-secondary hover:border-primary transition-colors group active:scale-95 cursor-pointer">
                 <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${color} flex items-center justify-center mb-5 sm:mb-8 rotate-3 group-hover:rotate-0 transition-transform`}>
