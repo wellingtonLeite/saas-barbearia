@@ -51,7 +51,12 @@ export async function GET() {
     ];
 
     for (const plan of plans) {
-      const existing = await db.plan.findFirst({ where: { name: plan.name } });
+      // Procurar pelo nome OU pelo preço base (para atualizar os antigos "Navalha", "Tesoura de Ouro", etc)
+      const existingByName = await db.plan.findFirst({ where: { name: plan.name } });
+      const existingByPrice = await db.plan.findFirst({ where: { base_price: plan.base_price } });
+      
+      const existing = existingByName || existingByPrice;
+
       if (!existing) {
         await db.plan.create({ data: plan });
       } else {
@@ -59,6 +64,15 @@ export async function GET() {
           where: { id: existing.id },
           data: plan
         });
+      }
+    }
+
+    // Opcional: Deletar planos extras que ficaram sobrando e não têm assinaturas
+    const allPlans = await db.plan.findMany({ include: { subscriptions: true } });
+    const validNames = plans.map(p => p.name);
+    for (const oldPlan of allPlans) {
+      if (!validNames.includes(oldPlan.name) && oldPlan.subscriptions.length === 0) {
+        await db.plan.delete({ where: { id: oldPlan.id } });
       }
     }
 

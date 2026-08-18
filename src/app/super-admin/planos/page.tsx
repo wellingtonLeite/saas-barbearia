@@ -1,12 +1,23 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { Settings, Plus, Check, Save } from "lucide-react";
+import { Settings, Plus, Check, Save, Edit, X } from "lucide-react";
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default async function PlansPage() {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function PlansPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const editId = typeof searchParams.edit === "string" ? searchParams.edit : undefined;
+
   const plans = await db.plan.findMany({
     orderBy: { base_price: 'asc' }
   });
+
+  const editingPlan = editId ? plans.find(p => p.id === editId) : null;
 
   async function createOrUpdatePlan(formData: FormData) {
     "use server";
@@ -38,6 +49,7 @@ export default async function PlansPage() {
     }
 
     revalidatePath("/super-admin/planos");
+    redirect("/super-admin/planos");
   }
 
   return (
@@ -57,33 +69,44 @@ export default async function PlansPage() {
         
         {/* Formulário Criar/Editar */}
         <div className="bg-surface border border-secondary p-6 rounded-2xl shadow-sm h-fit">
-          <h2 className="text-xl font-bold text-text-primary mb-6">Criar Novo Plano</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-text-primary">
+              {editingPlan ? "Editar Plano" : "Criar Novo Plano"}
+            </h2>
+            {editingPlan && (
+              <Link href="/super-admin/planos" className="text-text-secondary hover:text-white transition-colors">
+                <X size={20} />
+              </Link>
+            )}
+          </div>
           
           <form action={createOrUpdatePlan} className="space-y-4">
+            <input type="hidden" name="id" value={editingPlan?.id || ""} />
+            
             <div>
               <label className="block text-sm font-bold text-text-secondary mb-1">Nome do Plano</label>
-              <input required type="text" name="name" className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="Ex: Plano Pro" />
+              <input required type="text" name="name" defaultValue={editingPlan?.name || ""} className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="Ex: Plano Pro" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-text-secondary mb-1">Preço Base (R$)</label>
-                <input required type="number" step="0.01" name="base_price" className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="99.90" />
+                <input required type="number" step="0.01" name="base_price" defaultValue={editingPlan ? Number(editingPlan.base_price) : ""} className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="99.90" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-text-secondary mb-1">Limite Unidades</label>
-                <input required type="number" name="max_units" className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="1" />
+                <input required type="number" name="max_units" defaultValue={editingPlan?.max_units || ""} className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="1" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-bold text-text-secondary mb-1">Limite de Barbeiros</label>
-              <input required type="number" name="max_barbers" className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="999 (para Ilimitado)" defaultValue={999} />
+              <input required type="number" name="max_barbers" defaultValue={editingPlan?.max_barbers ?? 999} className="w-full bg-background border border-secondary rounded-xl px-4 py-2 text-text-primary focus:border-primary focus:outline-none" placeholder="999 (para Ilimitado)" />
             </div>
 
             <div className="space-y-3 pt-2">
               <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
-                <input type="checkbox" name="has_whatsapp" className="peer sr-only" />
+                <input type="checkbox" name="has_whatsapp" defaultChecked={editingPlan?.has_whatsapp} className="peer sr-only" />
                 <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
@@ -94,7 +117,7 @@ export default async function PlansPage() {
               </label>
 
               <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
-                <input type="checkbox" name="has_financial_module" className="peer sr-only" />
+                <input type="checkbox" name="has_financial_module" defaultChecked={editingPlan?.has_financial_module} className="peer sr-only" />
                 <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
@@ -105,7 +128,7 @@ export default async function PlansPage() {
               </label>
 
               <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
-                <input type="checkbox" name="has_loyalty_module" className="peer sr-only" defaultChecked={true} />
+                <input type="checkbox" name="has_loyalty_module" defaultChecked={editingPlan ? editingPlan.has_loyalty_module : true} className="peer sr-only" />
                 <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
@@ -114,8 +137,9 @@ export default async function PlansPage() {
                   <span className="text-xs text-text-secondary mt-1">Habilita as funcionalidades de reter clientes</span>
                 </div>
               </label>
+              
               <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
-                <input type="checkbox" name="has_clients_module" className="peer sr-only" defaultChecked={true} />
+                <input type="checkbox" name="has_clients_module" defaultChecked={editingPlan ? editingPlan.has_clients_module : true} className="peer sr-only" />
                 <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
@@ -126,7 +150,7 @@ export default async function PlansPage() {
               </label>
 
               <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-primary/50 transition-colors group">
-                <input type="checkbox" name="has_products_module" className="peer sr-only" defaultChecked={true} />
+                <input type="checkbox" name="has_products_module" defaultChecked={editingPlan ? editingPlan.has_products_module : true} className="peer sr-only" />
                 <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
@@ -138,7 +162,7 @@ export default async function PlansPage() {
             </div>
 
             <button type="submit" className="w-full bg-primary text-white font-bold py-3 rounded-xl mt-4 flex items-center justify-center gap-2 hover:bg-primary-hover transition-all">
-              <Save size={18} /> Salvar Plano
+              <Save size={18} /> {editingPlan ? "Atualizar Plano" : "Salvar Plano"}
             </button>
           </form>
         </div>
@@ -146,9 +170,15 @@ export default async function PlansPage() {
         {/* Lista de Planos */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {plans.map(plan => (
-            <div key={plan.id} className="bg-surface border border-secondary p-6 rounded-2xl flex flex-col hover:border-primary/50 transition-colors">
+            <div key={plan.id} className="bg-surface border border-secondary p-6 rounded-2xl flex flex-col hover:border-primary/50 transition-colors group/card relative">
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-text-primary">{plan.name}</h3>
+                <div className="flex justify-between items-start">
+                  <h3 className="text-2xl font-bold text-text-primary">{plan.name}</h3>
+                  <Link href={`/super-admin/planos?edit=${plan.id}`} className="p-2 bg-secondary/50 text-text-secondary hover:text-white rounded-lg opacity-0 group-hover/card:opacity-100 transition-all">
+                    <Edit size={16} />
+                  </Link>
+                </div>
+                
                 <div className="flex items-end gap-1 mt-2">
                   {Number(plan.base_price) === 0 ? (
                     <span className="text-3xl font-display font-bold text-primary">Gratuito</span>
