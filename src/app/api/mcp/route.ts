@@ -64,10 +64,16 @@ export async function POST(req: NextRequest) {
   const url = new URL(req.url);
   const sessionId = url.searchParams.get("sessionId");
   
-  if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+
+  if (!sessionId) return NextResponse.json({ error: "Missing sessionId" }, { status: 400, headers: corsHeaders });
   
   const child = globalSessions.mcpSessions.get(sessionId);
-  if (!child) return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  if (!child) return NextResponse.json({ error: "Session not found" }, { status: 404, headers: corsHeaders });
   
   try {
     const body = await req.text();
@@ -76,12 +82,12 @@ export async function POST(req: NextRequest) {
     
     if (child.stdin && !child.stdin.destroyed) {
         child.stdin.write(payload + "\n");
-        return new Response("Accepted", { status: 202 });
+        return new Response("Accepted", { status: 202, headers: corsHeaders });
     } else {
-        return NextResponse.json({ error: "Stream closed" }, { status: 500 });
+        return NextResponse.json({ error: "Stream closed" }, { status: 500, headers: corsHeaders });
     }
   } catch (e) {
-    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400, headers: corsHeaders });
   }
 }
 
