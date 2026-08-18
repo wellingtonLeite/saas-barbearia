@@ -61,6 +61,10 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
   const loyaltyProgram = tenant.loyaltyPrograms?.[0] || null;
   const clientPlans = tenant.clientPlans || [];
 
+  const plans = await db.plan.findMany({
+    orderBy: { base_price: 'asc' }
+  });
+
   // Função para mapear status da assinatura para cores
   const getStatusDisplay = (status: string | undefined) => {
     switch (status) {
@@ -207,6 +211,74 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-16 mb-8">
+        <h2 className="text-2xl font-display font-bold text-text-primary mb-2">Opções de Upgrade</h2>
+        <p className="text-text-secondary">Faça o upgrade para liberar mais recursos e expandir sua barbearia.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+        {plans.filter(p => p.id !== plan?.id).map((p) => (
+          <div key={p.id} className="bg-surface border border-secondary rounded-2xl p-6 shadow-xl flex flex-col hover:border-primary/50 transition-colors">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-text-primary">{p.name}</h3>
+              <div className="flex items-end gap-1 mt-2">
+                {Number(p.base_price) === 0 ? (
+                  <span className="text-3xl font-display font-bold text-primary">Gratuito</span>
+                ) : (
+                  <>
+                    <span className="text-3xl font-display font-bold text-primary">R$ {Number(p.base_price).toFixed(2)}</span>
+                    <span className="text-text-secondary text-sm mb-1">/mês</span>
+                  </>
+                )}
+              </div>
+              
+              <ul className="mt-6 space-y-3">
+                <li className="flex items-center gap-2 text-sm text-text-secondary">
+                  <CheckCircle2 size={16} className="text-success" />
+                  <strong>{p.max_barbers >= 999 ? 'Ilimitados' : p.max_barbers}</strong> Barbeiros na equipe
+                </li>
+                <li className={`flex items-center gap-2 text-sm ${p.has_whatsapp ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                  <CheckCircle2 size={16} className={p.has_whatsapp ? "text-success" : "text-secondary"} />
+                  Mensagens via WhatsApp
+                </li>
+                <li className={`flex items-center gap-2 text-sm ${p.has_financial_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                  <CheckCircle2 size={16} className={p.has_financial_module ? "text-success" : "text-secondary"} />
+                  Módulo Financeiro
+                </li>
+                <li className={`flex items-center gap-2 text-sm ${p.has_loyalty_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                  <CheckCircle2 size={16} className={p.has_loyalty_module ? "text-success" : "text-secondary"} />
+                  Fidelidade e VIP
+                </li>
+                <li className={`flex items-center gap-2 text-sm ${p.has_clients_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                  <CheckCircle2 size={16} className={p.has_clients_module ? "text-success" : "text-secondary"} />
+                  Gestão de Clientes
+                </li>
+                <li className={`flex items-center gap-2 text-sm ${p.has_products_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
+                  <CheckCircle2 size={16} className={p.has_products_module ? "text-success" : "text-secondary"} />
+                  Estoque de Produtos
+                </li>
+              </ul>
+            </div>
+            
+            <div className="mt-8">
+              {Number(p.base_price) === 0 ? (
+                <button disabled className="w-full bg-secondary/30 text-text-secondary font-bold py-3 rounded-xl cursor-not-allowed">
+                  Plano Gratuito
+                </button>
+              ) : (
+                <form action={createCheckoutSession}>
+                  <input type="hidden" name="tenantId" value={tenant.id} />
+                  <input type="hidden" name="planId" value={p.id} />
+                  <button type="submit" className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20">
+                    Fazer Upgrade
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
