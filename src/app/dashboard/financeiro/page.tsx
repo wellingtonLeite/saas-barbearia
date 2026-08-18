@@ -57,7 +57,7 @@ export default async function FinancePage() {
   let totalPagar = 0;
   let totalReceber = 0;
 
-  if (planFeatures.hasAccountsPayable && tenantId) {
+  if (tenant?.subscription?.plan?.has_financial_module && tenantId) {
     const contas = await db.accountEntry.findMany({
       where: { tenantId, status: { not: 'PAID' } }
     });
@@ -120,7 +120,7 @@ export default async function FinancePage() {
             <Wallet className="text-primary" /> Contas a Pagar e Receber
           </h2>
           
-          {planFeatures.hasAccountsPayable ? (
+          {tenant?.subscription?.plan?.has_financial_module ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-surface border border-secondary rounded-xl p-6 relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-error/5 to-transparent pointer-events-none" />
@@ -141,7 +141,7 @@ export default async function FinancePage() {
               </div>
             </div>
           ) : (
-            <UpgradeCard requiredPlan="Máquina de Corte" featureName="Contas a Pagar e Receber" />
+            <UpgradeCard requiredPlan="Plano VIP" featureName="Contas a Pagar e Receber" />
           )}
         </div>
       )}

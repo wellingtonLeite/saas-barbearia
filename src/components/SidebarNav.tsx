@@ -135,7 +135,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
                 </Link>
               </>
             ) : (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 cursor-not-allowed select-none" title="Disponível no Plano Máquina de Corte">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 cursor-not-allowed select-none" title="Disponível no Plano VIP">
                 <Lock size={13} className="text-slate-600" />
                 <span>Contas a Pagar/Receber</span>
               </div>
@@ -159,7 +159,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
             <BarChart2 size={20} /> Visão do Negócio
           </Link>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 cursor-not-allowed select-none" title="Disponível no Plano Tesoura de Ouro">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 cursor-not-allowed select-none" title="Disponível apenas em planos superiores">
             <Lock size={16} className="text-slate-600" />
             <div className="flex-1 flex items-center justify-between">
               <span>Visão do Negócio</span>

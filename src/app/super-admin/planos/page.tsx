@@ -99,8 +99,8 @@ export default async function PlansPage() {
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Acesso ao Módulo Financeiro</span>
-                  <span className="text-xs text-text-secondary mt-1">Habilita as funcionalidades do menu Financeiro</span>
+                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Contas a Pagar / Receber</span>
+                  <span className="text-xs text-text-secondary mt-1">Habilita gestão de contas a pagar e receber</span>
                 </div>
               </label>
 
@@ -170,13 +170,18 @@ export default async function PlansPage() {
                     <strong>{plan.max_barbers >= 999 ? 'Ilimitados' : plan.max_barbers}</strong> Barbeiros na equipe
                   </li>
                   
+                  <li className="flex items-center gap-2 text-sm text-text-secondary">
+                    <Check size={16} className="text-success" />
+                    Gestão de Ganhos e Extrato
+                  </li>
+                  
                   <li className={`flex items-center gap-2 text-sm ${plan.has_whatsapp ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_whatsapp ? "text-success" : "text-secondary"} />
                     Mensagens via WhatsApp
                   </li>
                   <li className={`flex items-center gap-2 text-sm ${plan.has_financial_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_financial_module ? "text-success" : "text-secondary"} />
-                    Módulo Financeiro
+                    Contas a Pagar / Receber
                   </li>
                   <li className={`flex items-center gap-2 text-sm ${plan.has_loyalty_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_loyalty_module ? "text-success" : "text-secondary"} />

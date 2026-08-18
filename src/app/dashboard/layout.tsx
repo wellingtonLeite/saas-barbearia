@@ -43,7 +43,7 @@ export default async function BarberLayout({ children }: { children: ReactNode }
   
   const tenant = userWithTenant?.units[0]?.unit?.tenant;
   const plan = tenant?.subscription?.plan;
-  const hasAccountsPayable = (plan?.max_barbers ?? 0) >= 10;
+  const hasAccountsPayable = plan?.has_financial_module ?? false;
   const hasGrowthDashboard = (plan?.max_barbers ?? 0) >= 50;
 
   if (tenant && !tenant.active) {

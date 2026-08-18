@@ -42,7 +42,7 @@ export default async function VisaoNegocioPage() {
           <ArrowLeft size={16} /> Voltar ao Painel
         </Link>
         <div className="bg-surface border border-secondary p-8 rounded-2xl text-center">
-          <p className="text-text-secondary">Esta página está disponível apenas para proprietários no plano Tesoura de Ouro.</p>
+          <p className="text-text-secondary">Esta página está disponível apenas para proprietários no plano VIP ou superior.</p>
         </div>
       </div>
     );
