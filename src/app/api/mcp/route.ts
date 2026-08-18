@@ -27,7 +27,9 @@ export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     start(controller) {
       // 1. O MCP cliente vai se conectar aqui e receber a URL para onde deve enviar as mensagens POST
-      controller.enqueue(new TextEncoder().encode(`event: endpoint\ndata: /api/mcp?sessionId=${sessionId}\n\n`));
+      const requestUrl = new URL(req.url);
+      const postUrl = `${requestUrl.protocol}//${requestUrl.host}/api/mcp?sessionId=${sessionId}`;
+      controller.enqueue(new TextEncoder().encode(`event: endpoint\ndata: ${postUrl}\n\n`));
 
       // 2. Lê a saída do Prisma MCP (que é via terminal/stdio) linha por linha
       const rl = readline.createInterface({ input: child.stdout! });
