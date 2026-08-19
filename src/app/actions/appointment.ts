@@ -3,12 +3,60 @@
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+async function dispatchPostSaleWebhook(appointmentId: string) {
+  try {
+    const appt = await db.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        client: true,
+        tenant: {
+          include: {
+            units: true,
+            subscription: { include: { plan: true } }
+          }
+        },
+        unit: true
+      }
+    });
+
+    if (!appt || !appt.client?.phone) return;
+
+    const webhookUrl = process.env.N8N_WEBHOOK_FEEDBACK_URL;
+    const evolutionUrl = process.env.EVOLUTION_API_URL;
+    const evolutionApiKey = process.env.EVOLUTION_API_KEY;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://88barber.top";
+    const reviewLink = `${appUrl}/avaliar/${appt.id}`;
+    const instance = appt.tenant.slug || appt.unit?.phone || appt.tenant.id;
+
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instance,
+          evolution_url: evolutionUrl,
+          evolution_apikey: evolutionApiKey,
+          cliente_whatsapp: appt.client.phone.replace(/\D/g, ""),
+          cliente_nome: appt.client.name,
+          link_avaliacao: reviewLink
+        })
+      }).catch(err => console.error("Erro disparando webhook pós-venda n8n:", err));
+    }
+  } catch (error) {
+    console.error("Erro em dispatchPostSaleWebhook:", error);
+  }
+}
+
 export async function updateAppointmentStatus(appointmentId: string, status: "PENDING" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED") {
   try {
     await db.appointment.update({
       where: { id: appointmentId },
       data: { status }
     });
+
+    if (status === "COMPLETED") {
+      dispatchPostSaleWebhook(appointmentId);
+    }
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/financeiro"); // Se for completed, atualiza financeiro
@@ -107,6 +155,9 @@ export async function processCheckout(appointmentId: string, productIds: string[
       where: { id: appointmentId },
       data: { status: 'COMPLETED' }
     });
+
+    // Disparar avaliação pós-venda
+    dispatchPostSaleWebhook(appointmentId);
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/financeiro");

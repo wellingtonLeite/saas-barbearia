@@ -28,7 +28,8 @@ export default async function WhatsappConfigPage() {
     }
   });
 
-  const tenant = userWithTenant?.units[0]?.unit?.tenant;
+  const unit = userWithTenant?.units[0]?.unit;
+  const tenant = unit?.tenant;
 
   if (!tenant) {
     return <div>Barbearia não encontrada.</div>;
@@ -52,7 +53,11 @@ export default async function WhatsappConfigPage() {
         </div>
       </div>
 
-      <WhatsappConnection tenantId={tenant.id} />
+      <WhatsappConnection 
+        tenantId={tenant.id} 
+        slug={tenant.slug} 
+        phone={unit?.phone || undefined} 
+      />
 
       <div className="bg-surface border border-secondary rounded-xl p-6">
         <WhatsappForm tenantId={tenant.id} defaultValues={templates} />

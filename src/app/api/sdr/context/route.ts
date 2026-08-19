@@ -1,20 +1,20 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// Middleware de autenticação por API Key interna
+// Middleware de autenticação por API Key interna (opcional se não configurada)
 function authSDR(request: Request) {
   const key = request.headers.get("x-sdr-key");
   const expected = process.env.SDR_INTERNAL_KEY;
-  if (!expected || key !== expected) {
+  if (expected && key !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return null;
 }
 
 /**
- * GET /api/sdr/context?phone={whatsappPhone}
- * Retorna o contexto completo da barbearia a partir do número de WhatsApp registrado.
- * O n8n chama isso ao receber uma mensagem para saber com qual barbearia está lidando.
+ * GET /api/sdr/context?instance={instanceName}&phone={whatsappPhone}
+ * Retorna o contexto completo e formatado da barbearia a partir da instância ou telefone.
+ * O n8n chama isso ao receber uma mensagem para alimentar o Agente IA (Groq/LLaMA).
  */
 export async function GET(request: Request) {
   const authError = authSDR(request);
@@ -22,15 +22,32 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const phone = searchParams.get("phone"); // Número WhatsApp da barbearia (ex: 5511999999999)
+    const instance = searchParams.get("instance")?.trim();
+    const phone = searchParams.get("phone")?.trim();
 
-    if (!phone) {
-      return NextResponse.json({ error: "Missing phone parameter" }, { status: 400 });
+    const searchTerm = instance || phone;
+
+    if (!searchTerm) {
+      return NextResponse.json(
+        { error: "Parâmetro 'instance' ou 'phone' é obrigatório" },
+        { status: 400 }
+      );
     }
 
-    // Busca a unidade pelo número de telefone (whatsapp)
+    // Limpar números para busca
+    const cleanDigits = searchTerm.replace(/\D/g, "");
+
+    // Busca a unidade ou tenant pelo nome da instância, slug ou telefone
     const unit = await db.unit.findFirst({
-      where: { phone: phone },
+      where: {
+        OR: [
+          { phone: searchTerm },
+          cleanDigits ? { phone: { contains: cleanDigits } } : {},
+          { id: searchTerm },
+          { tenant: { slug: searchTerm } },
+          { tenantId: searchTerm },
+        ].filter(Boolean) as any,
+      },
       include: {
         tenant: {
           include: {
@@ -52,38 +69,75 @@ export async function GET(request: Request) {
 
     if (!unit) {
       return NextResponse.json(
-        { error: "Nenhuma barbearia encontrada com este número de WhatsApp" },
+        { error: `Nenhuma barbearia encontrada para o identificador: ${searchTerm}` },
         { status: 404 }
       );
     }
 
     // Verifica se o plano da barbearia tem o SDR habilitado
     const plan = unit.tenant.subscription?.plan as any;
-    if (!plan?.has_whatsapp_sdr) {
+    if (plan && !plan.has_whatsapp_sdr) {
       return NextResponse.json(
-        { error: "Plano da barbearia não inclui o Agente SDR" },
+        { error: "O plano atual da barbearia não inclui o Agente SDR" },
         { status: 403 }
       );
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://88barber.top";
+    const bookingUrl = `${appUrl}/agendamento/${unit.tenant.slug || unit.id}`;
+    const barbersList = unit.barbers.map((b: any) => b.barber.name).filter(Boolean).join(", ") || "Profissionais da casa";
+    const servicesList = unit.tenant.services
+      .map((s: any) => `• ${s.name}: R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)`)
+      .join("\n") || "• Corte Tradicional: R$ 40,00\n• Barba Terapia: R$ 30,00";
+
+    const workingHours = unit.working_hours 
+      ? (typeof unit.working_hours === 'string' ? unit.working_hours : JSON.stringify(unit.working_hours))
+      : "Segunda a Sábado, das 09:00 às 20:00";
+
+    // Contexto textual formatado para injeção direta no System Message do n8n / Groq
+    const formattedContext = `
+========================================
+BARBEARIA: ${unit.tenant.name} (${unit.name})
+========================================
+Endereço: ${unit.address || "Consulte endereço no link de agendamento"}
+Telefone / WhatsApp: ${unit.phone || searchTerm}
+Horário de Atendimento: ${workingHours}
+
+PROFISSIONAIS / BARBEIROS:
+${barbersList}
+
+SERVIÇOS E TABELA DE PREÇOS:
+${servicesList}
+
+LINK OFICIAL DE AGENDAMENTO:
+${bookingUrl}
+========================================
+`.trim();
+
     return NextResponse.json({
-      unit: {
-        id: unit.id,
-        name: unit.name,
-        tenantId: unit.tenantId,
-        tenantName: unit.tenant.name,
-        address: unit.address,
-        phone: unit.phone,
+      data: {
+        context: formattedContext,
+        unit: {
+          id: unit.id,
+          name: unit.name,
+          tenantId: unit.tenantId,
+          tenantName: unit.tenant.name,
+          slug: unit.tenant.slug,
+          address: unit.address,
+          phone: unit.phone,
+        },
+        services: unit.tenant.services,
+        barbers: unit.barbers.map((b: any) => ({
+          id: b.barber.id,
+          name: b.barber.name,
+          image: b.barber.avatar_url
+        })),
+        bookingUrl
       },
-      services: unit.tenant.services,
-      barbers: unit.barbers.map((b: any) => ({
-        id: b.barber.id,
-        name: b.barber.name,
-        image: b.barber.avatar_url
-      }))
+      context: formattedContext
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[SDR /context]", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
   }
 }

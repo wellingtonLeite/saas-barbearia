@@ -16,15 +16,16 @@ export async function POST(request: Request) {
     const apiKey = process.env.EVOLUTION_API_KEY;
 
     if (!apiUrl || !apiKey) {
-      console.error('As variáveis EVOLUTION_API_URL e EVOLUTION_API_KEY não estão configuradas.');
-      return NextResponse.json(
-        { error: 'Configurações da Evolution API não encontradas no servidor.' },
-        { status: 500 }
-      );
+      console.warn('Variáveis EVOLUTION_API_URL ou EVOLUTION_API_KEY não configuradas. Retornando QR Code de demonstração.');
+      return NextResponse.json({
+        base64: 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=EvolutionAPI_Configure_Suas_Variaveis',
+        instanceName,
+        isDemo: true
+      });
     }
 
-    // Faz a chamada para a Evolution API para criar a instância
-    const response = await fetch(`${apiUrl}/instance/create`, {
+    // 1. Tenta criar a instância na Evolution API
+    let response = await fetch(`${apiUrl}/instance/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,45 +35,88 @@ export async function POST(request: Request) {
         instanceName,
         qrcode: true,
         integration: 'WHATSAPP-BAILEYS',
-        // Algumas versões da Evolution API requerem isso para forçar base64 no retorno
         b64: true,
       }),
     });
 
-    const data = await response.json();
+    let data = await response.json();
 
+    // 2. Se a instância já existir, busca o QR Code de conexão
     if (!response.ok) {
-      console.error('Erro ao criar instância na Evolution API:', data);
-      return NextResponse.json(
-        {
-          error: data?.response?.message || data?.message || 'Erro ao criar instância',
-          details: data,
+      console.log(`Instância ${instanceName} já existente ou erro inicial. Tentando obter QR code em /instance/connect...`);
+      const connectResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
+        method: 'GET',
+        headers: {
+          'apikey': apiKey,
         },
-        { status: response.status }
-      );
+      });
+
+      if (connectResponse.ok) {
+        data = await connectResponse.json();
+      }
     }
 
-    // Na Evolution API, o QR Code em base64 normalmente vem em `data.qrcode.base64` ou `data.base64`
-    const qrCodeBase64 = data.qrcode?.base64 || data.base64;
+    // Extrai o QR Code em base64
+    const qrCodeBase64 = data.qrcode?.base64 || data.base64 || data.code;
 
     if (!qrCodeBase64) {
-      // Se não veio QR Code, a instância talvez já exista ou já esteja conectada
       return NextResponse.json(
         {
-          error: 'QR Code não retornado pela API. Verifique se a instância já existe e está conectada.',
+          error: 'Não foi possível obter o QR Code. A instância pode já estar conectada.',
           details: data,
         },
         { status: 400 }
       );
     }
 
-    // Retorna o base64 para o frontend renderizar
-    return NextResponse.json({ base64: qrCodeBase64 });
+    return NextResponse.json({ 
+      base64: qrCodeBase64,
+      instanceName,
+      status: 'connecting'
+    });
   } catch (error: any) {
-    console.error('Erro interno na rota /api/whatsapp/instance:', error);
+    console.error('Erro na rota /api/whatsapp/instance (POST):', error);
     return NextResponse.json(
       { error: 'Erro interno no servidor', details: error.message },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const instanceName = searchParams.get('instanceName');
+
+    if (!instanceName) {
+      return NextResponse.json({ error: 'instanceName é obrigatório' }, { status: 400 });
+    }
+
+    const apiUrl = process.env.EVOLUTION_API_URL;
+    const apiKey = process.env.EVOLUTION_API_KEY;
+
+    if (!apiUrl || !apiKey) {
+      return NextResponse.json({ state: 'disconnected', isDemo: true });
+    }
+
+    const response = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
+      method: 'GET',
+      headers: { 'apikey': apiKey }
+    });
+
+    if (!response.ok) {
+      return NextResponse.json({ state: 'disconnected' });
+    }
+
+    const data = await response.json();
+    const state = data.instance?.state || data.state || 'close';
+
+    return NextResponse.json({
+      state,
+      connected: state === 'open'
+    });
+  } catch (error: any) {
+    console.error('Erro na rota /api/whatsapp/instance (GET):', error);
+    return NextResponse.json({ state: 'error', error: error.message }, { status: 500 });
   }
 }
