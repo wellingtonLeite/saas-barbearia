@@ -1,55 +1,146 @@
 {
-  "name": "SDR Multi-Tenant (Evolution API + SaaS Context + Groq)",
+  "name": "SDR 88barber - Agente IA Multi-Tenant (Completo)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "evolution-webhook",
-        "options": {}
+        "options": {
+          "rawBody": true
+        },
+        "responseMode": "responseNode"
       },
-      "id": "1",
-      "name": "Webhook (Evolution)",
+      "id": "webhook-evolution",
+      "name": "Webhook Evolution",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        250,
-        300
-      ],
+      "typeVersion": 2,
+      "position": [200, 300],
       "webhookId": "evolution-webhook"
     },
     {
       "parameters": {
-        "url": "https://SEU_DOMINIO.com/api/sdr/context",
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-msg-exists",
+              "leftValue": "={{ $json.body.data.message.conversation }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            },
+            {
+              "id": "condition-not-from-me",
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filtro-mensagem",
+      "name": "Filtro Mensagem",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://88barber.top/api/sdr/context",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "instance",
-              "value": "={{ $json.body.instance }}"
+              "value": "={{ $('Webhook Evolution').item.json.body.instance }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $('Webhook Evolution').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net', '') }}"
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
       },
-      "id": "2",
-      "name": "Get Context (SaaS)",
+      "id": "buscar-contexto",
+      "name": "Buscar Contexto Barbearia",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        450,
-        300
-      ]
+      "typeVersion": 4.2,
+      "position": [640, 200]
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Webhook Evolution').item.json.body.data.message.conversation }}",
+        "options": {
+          "systemMessage": "={{ $json.data.context }}\n\n## REGRAS IMPORTANTES\n1. Você é o atendente virtual da barbearia. NUNCA diga que é uma IA.\n2. Seja humano, amigável e direto. Use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n3. Responda de forma CURTA. Máximo 3 frases por mensagem.\n4. Sempre ofereça opções claras de horário quando o cliente quer agendar.\n5. Para cancelar: demonstre empatia, confirme o horário e cancele.\n6. Para remarcar: cancele o antigo e agende o novo.\n7. Para dúvidas de preço: informe e já ofereça agendamento.\n8. Se perguntar algo fora do seu escopo, diga gentilmente que só cuida da agenda.\n9. SEMPRE finalize agendamentos com confirmação clara: dia, hora, barbeiro e serviço.\n10. Se o cliente disser apenas \"oi\" ou \"olá\", cumprimente e pergunte como pode ajudar."
+        }
+      },
+      "id": "agente-groq",
+      "name": "Agente Groq (Llama)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "modelId": "llama-3.1-70b-versatile",
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 500
+        }
+      },
+      "id": "groq-chat-model",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [780, 460],
+      "credentials": {
+        "groqApi": {
+          "id": "COLE_ID_CREDENCIAL_GROQ",
+          "name": "Groq API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook Evolution').item.json.body.data.key.remoteJid }}_{{ $('Webhook Evolution').item.json.body.instance }}",
+        "contextWindowLength": 12
+      },
+      "id": "memory-buffer",
+      "name": "Memória da Conversa",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [940, 460]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "url": "={{ $('Webhook Evolution').item.json.body.server_url }}/message/sendText/{{ $('Webhook Evolution').item.json.body.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "Bearer SUA_CHAVE_API_GROQ"
+              "name": "apikey",
+              "value": "={{ $('Webhook Evolution').item.json.body.apikey }}"
             },
             {
               "name": "Content-Type",
@@ -59,74 +150,243 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"llama3-70b-8192\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"{{ $json.data.context }}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $('Webhook (Evolution)').item.json.body.data.message.conversation }}\"\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"number\": \"{{ $('Webhook Evolution').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"{{ $('Agente Groq (Llama)').item.json.output }}\"\n}",
         "options": {}
       },
-      "id": "3",
-      "name": "Groq LLM",
+      "id": "enviar-resposta",
+      "name": "Enviar Resposta",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        650,
-        300
-      ]
+      "typeVersion": 4.2,
+      "position": [1140, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Responder Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1380, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {}
+      },
+      "id": "respond-webhook-ignore",
+      "name": "Ignorar (Responder 200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, 420]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook-pos-venda",
+        "options": {}
+      },
+      "id": "webhook-pos-venda",
+      "name": "Webhook (Fim de Atendimento)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 700],
+      "webhookId": "webhook-pos-venda"
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "minutes"
+      },
+      "id": "wait-15min",
+      "name": "Aguarda 15 Minutos",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [440, 700]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Webhook (Evolution)').item.json.body.server_url }}/message/sendText/{{ $('Webhook (Evolution)').item.json.body.instance }}",
+        "url": "={{ $('Webhook (Fim de Atendimento)').item.json.body.evolution_url }}/message/sendText/{{ $('Webhook (Fim de Atendimento)').item.json.body.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $('Webhook (Evolution)').item.json.body.apikey }}"
+              "value": "={{ $('Webhook (Fim de Atendimento)').item.json.body.evolution_apikey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"number\": \"{{ $('Webhook (Evolution)').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"{{ $json.choices[0].message.content }}\"\n}",
+        "jsonBody": "={\n  \"number\": \"{{ $('Webhook (Fim de Atendimento)').item.json.body.cliente_whatsapp }}\",\n  \"text\": \"E aí {{ $('Webhook (Fim de Atendimento)').item.json.body.cliente_nome }}! Passando pra saber o que achou do atendimento de hoje? 💈\\n\\nSe curtiu, dá aquela moral pra gente avaliando aqui rapidinho (leva 10 segundos):\\n{{ $('Webhook (Fim de Atendimento)').item.json.body.link_avaliacao }}\\n\\nTeu feedback faz toda diferença pra gente, valeu! 🤜🤛\"\n}",
         "options": {}
       },
-      "id": "4",
-      "name": "Send Reply (Evolution)",
+      "id": "enviar-avaliacao",
+      "name": "Dispara Pedido de Avaliação",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        850,
-        300
-      ]
+      "typeVersion": 4.2,
+      "position": [700, 700]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook-lembrete",
+        "options": {}
+      },
+      "id": "webhook-lembrete",
+      "name": "Webhook (Lembrete de Agendamento)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 960],
+      "webhookId": "webhook-lembrete"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.body.evolution_url }}/message/sendText/{{ $json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $json.body.evolution_apikey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.body.cliente_whatsapp }}\",\n  \"text\": \"Fala {{ $json.body.cliente_nome }}! Passando pra lembrar que você tem horário marcado amanhã às {{ $json.body.horario }} com o {{ $json.body.barbeiro }}. 💈\\n\\nTá confirmado? Responde aí um 👍 que a gente te espera!\"\n}",
+        "options": {}
+      },
+      "id": "enviar-lembrete",
+      "name": "Dispara Lembrete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 960]
     }
   ],
   "connections": {
-    "Webhook (Evolution)": {
+    "Webhook Evolution": {
       "main": [
         [
           {
-            "node": "Get Context (SaaS)",
+            "node": "Filtro Mensagem",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Context (SaaS)": {
+    "Filtro Mensagem": {
       "main": [
         [
           {
-            "node": "Groq LLM",
+            "node": "Buscar Contexto Barbearia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignorar (Responder 200)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Groq LLM": {
+    "Buscar Contexto Barbearia": {
       "main": [
         [
           {
-            "node": "Send Reply (Evolution)",
+            "node": "Agente Groq (Llama)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Groq (Llama)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória da Conversa": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Groq (Llama)",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Groq (Llama)": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Fim de Atendimento)": {
+      "main": [
+        [
+          {
+            "node": "Aguarda 15 Minutos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguarda 15 Minutos": {
+      "main": [
+        [
+          {
+            "node": "Dispara Pedido de Avaliação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Lembrete de Agendamento)": {
+      "main": [
+        [
+          {
+            "node": "Dispara Lembrete",
             "type": "main",
             "index": 0
           }
@@ -134,7 +394,11 @@
       ]
     }
   },
+  "pinData": {},
   "settings": {
     "executionOrder": "v1"
-  }
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0
 }
