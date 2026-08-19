@@ -5,43 +5,41 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "evolution-webhook",
-        "options": {
-          "rawBody": true
-        },
+        "options": {},
         "responseMode": "responseNode"
       },
       "id": "webhook-evolution",
       "name": "Webhook Evolution",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 300],
+      "position": [180, 300],
       "webhookId": "evolution-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 5. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || '';\nconst serverUrl = payload.server_url || payload.serverUrl || '';\nconst apiKey = payload.apikey || payload.apiKey || '';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 6. Regra de validação: mensagem real, 1:1, recebida (não enviada por nós)\nconst isValid = !fromMe && !isGroup && !isStatus && userMessage.length > 0;\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  reason,\n  userMessage,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || 'conversation'\n};"
+      },
+      "id": "processar-mensagem",
+      "name": "Processar e Validar Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
     },
     {
       "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
-              "id": "condition-msg-exists",
-              "leftValue": "={{ $json.body.data.message.conversation }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "isNotEmpty"
-              }
-            },
-            {
-              "id": "condition-not-from-me",
-              "leftValue": "={{ $json.body.data.key.fromMe }}",
-              "rightValue": false,
+              "id": "check-is-valid",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": true,
               "operator": {
                 "type": "boolean",
-                "operation": "equals"
+                "operation": "true"
               }
             }
           ],
@@ -53,7 +51,7 @@
       "name": "Filtro Mensagem",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [420, 300]
+      "position": [620, 300]
     },
     {
       "parameters": {
@@ -64,11 +62,11 @@
           "parameters": [
             {
               "name": "instance",
-              "value": "={{ $('Webhook Evolution').item.json.body.instance }}"
+              "value": "={{ $('Processar e Validar Mensagem').item.json.instance }}"
             },
             {
               "name": "phone",
-              "value": "={{ $('Webhook Evolution').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net', '') }}"
+              "value": "={{ $('Processar e Validar Mensagem').item.json.phone }}"
             }
           ]
         },
@@ -84,20 +82,20 @@
       "name": "Buscar Contexto Barbearia",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [640, 200]
+      "position": [840, 200]
     },
     {
       "parameters": {
-        "text": "={{ $('Webhook Evolution').item.json.body.data.message.conversation }}",
+        "text": "={{ $('Processar e Validar Mensagem').item.json.userMessage }}",
         "options": {
-          "systemMessage": "={{ $json.data.context }}\n\n## REGRAS IMPORTANTES\n1. Você é o atendente virtual da barbearia. NUNCA diga que é uma IA.\n2. Seja humano, amigável e direto. Use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n3. Responda de forma CURTA. Máximo 3 frases por mensagem.\n4. Sempre ofereça opções claras de horário quando o cliente quer agendar.\n5. Para cancelar: demonstre empatia, confirme o horário e cancele.\n6. Para remarcar: cancele o antigo e agende o novo.\n7. Para dúvidas de preço: informe e já ofereça agendamento.\n8. Se perguntar algo fora do seu escopo, diga gentilmente que só cuida da agenda.\n9. SEMPRE finalize agendamentos com confirmação clara: dia, hora, barbeiro e serviço.\n10. Se o cliente disser apenas \"oi\" ou \"olá\", cumprimente e pergunte como pode ajudar."
+          "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## REGRAS IMPORTANTES\n1. Você é o atendente virtual da barbearia. NUNCA diga que é uma IA.\n2. Seja humano, amigável e direto. Use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n3. Responda de forma CURTA. Máximo 3 frases por mensagem.\n4. Sempre ofereça opções claras de horário quando o cliente quer agendar.\n5. Para cancelar: demonstre empatia, confirme o horário e cancele.\n6. Para remarcar: cancele o antigo e agende o novo.\n7. Para dúvidas de preço: informe e já ofereça agendamento.\n8. Se perguntar algo fora do seu escopo, diga gentilmente que só cuida da agenda.\n9. SEMPRE finalize agendamentos com confirmação clara: dia, hora, barbeiro e serviço.\n10. Se o cliente disser apenas \"oi\" ou \"olá\", cumprimente e pergunte como pode ajudar."
         }
       },
       "id": "agente-groq",
       "name": "Agente Groq (Llama)",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [880, 200]
+      "position": [1080, 200]
     },
     {
       "parameters": {
@@ -111,7 +109,7 @@
       "name": "Groq Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [780, 460],
+      "position": [980, 460],
       "credentials": {
         "groqApi": {
           "id": "COLE_ID_CREDENCIAL_GROQ",
@@ -122,25 +120,25 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Webhook Evolution').item.json.body.data.key.remoteJid }}_{{ $('Webhook Evolution').item.json.body.instance }}",
+        "sessionKey": "={{ $('Processar e Validar Mensagem').item.json.remoteJid }}_{{ $('Processar e Validar Mensagem').item.json.instance }}",
         "contextWindowLength": 12
       },
       "id": "memory-buffer",
       "name": "Memória da Conversa",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.2,
-      "position": [940, 460]
+      "position": [1160, 460]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Webhook Evolution').item.json.body.server_url }}/message/sendText/{{ $('Webhook Evolution').item.json.body.instance }}",
+        "url": "={{ $('Processar e Validar Mensagem').item.json.serverUrl }}/message/sendText/{{ $('Processar e Validar Mensagem').item.json.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $('Webhook Evolution').item.json.body.apikey }}"
+              "value": "={{ $('Processar e Validar Mensagem').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -150,14 +148,14 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"number\": \"{{ $('Webhook Evolution').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"{{ $('Agente Groq (Llama)').item.json.output }}\"\n}",
+        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').item.json.remoteJid,\n  text: $json.output || $('Agente Groq (Llama)').item.json.output\n}) }}",
         "options": {}
       },
       "id": "enviar-resposta",
       "name": "Enviar Resposta",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1140, 200]
+      "position": [1360, 200]
     },
     {
       "parameters": {
@@ -168,7 +166,7 @@
       "name": "Responder Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1380, 200]
+      "position": [1600, 200]
     },
     {
       "parameters": {
@@ -179,7 +177,7 @@
       "name": "Ignorar (Responder 200)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [640, 420]
+      "position": [840, 420]
     },
     {
       "parameters": {
@@ -191,7 +189,7 @@
       "name": "Webhook (Fim de Atendimento)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 700],
+      "position": [180, 700],
       "webhookId": "webhook-pos-venda"
     },
     {
@@ -203,7 +201,7 @@
       "name": "Aguarda 15 Minutos",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [440, 700]
+      "position": [420, 700]
     },
     {
       "parameters": {
@@ -224,14 +222,14 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"number\": \"{{ $('Webhook (Fim de Atendimento)').item.json.body.cliente_whatsapp }}\",\n  \"text\": \"E aí {{ $('Webhook (Fim de Atendimento)').item.json.body.cliente_nome }}! Passando pra saber o que achou do atendimento de hoje? 💈\\n\\nSe curtiu, dá aquela moral pra gente avaliando aqui rapidinho (leva 10 segundos):\\n{{ $('Webhook (Fim de Atendimento)').item.json.body.link_avaliacao }}\\n\\nTeu feedback faz toda diferença pra gente, valeu! 🤜🤛\"\n}",
+        "jsonBody": "={{ JSON.stringify({\n  number: $('Webhook (Fim de Atendimento)').item.json.body.cliente_whatsapp,\n  text: `E aí ${$('Webhook (Fim de Atendimento)').item.json.body.cliente_nome}! Passando pra saber o que achou do atendimento de hoje? 💈\\n\\nSe curtiu, dá aquela moral pra gente avaliando aqui rapidinho (leva 10 segundos):\\n${$('Webhook (Fim de Atendimento)').item.json.body.link_avaliacao}\\n\\nTeu feedback faz toda diferença pra gente, valeu! 🤜🤛`\n}) }}",
         "options": {}
       },
       "id": "enviar-avaliacao",
       "name": "Dispara Pedido de Avaliação",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [700, 700]
+      "position": [680, 700]
     },
     {
       "parameters": {
@@ -243,7 +241,7 @@
       "name": "Webhook (Lembrete de Agendamento)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 960],
+      "position": [180, 960],
       "webhookId": "webhook-lembrete"
     },
     {
@@ -265,18 +263,29 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"number\": \"{{ $json.body.cliente_whatsapp }}\",\n  \"text\": \"Fala {{ $json.body.cliente_nome }}! Passando pra lembrar que você tem horário marcado amanhã às {{ $json.body.horario }} com o {{ $json.body.barbeiro }}. 💈\\n\\nTá confirmado? Responde aí um 👍 que a gente te espera!\"\n}",
+        "jsonBody": "={{ JSON.stringify({\n  number: $json.body.cliente_whatsapp,\n  text: `Fala ${$json.body.cliente_nome}! Passando pra lembrar que você tem horário marcado amanhã às ${$json.body.horario} com o ${$json.body.barbeiro}. 💈\\n\\nTá confirmado? Responde aí um 👍 que a gente te espera!`\n}) }}",
         "options": {}
       },
       "id": "enviar-lembrete",
       "name": "Dispara Lembrete",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [480, 960]
+      "position": [460, 960]
     }
   ],
   "connections": {
     "Webhook Evolution": {
+      "main": [
+        [
+          {
+            "node": "Processar e Validar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar e Validar Mensagem": {
       "main": [
         [
           {
