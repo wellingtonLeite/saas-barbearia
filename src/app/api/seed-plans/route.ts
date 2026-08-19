@@ -16,21 +16,10 @@ export async function GET() {
         has_products_module: false
       },
       {
-        name: "Plano Inicial",
-        base_price: 49.90,
-        max_units: 1,
-        max_barbers: 3,
-        has_whatsapp: false,
-        has_financial_module: false,
-        has_loyalty_module: false,
-        has_clients_module: true,
-        has_products_module: true
-      },
-      {
-        name: "Plano Intermediário",
+        name: "Barber Pro",
         base_price: 89.90,
         max_units: 2,
-        max_barbers: 10,
+        max_barbers: 15,
         has_whatsapp: true,
         has_financial_module: true,
         has_loyalty_module: true,
@@ -38,10 +27,10 @@ export async function GET() {
         has_products_module: true
       },
       {
-        name: "Plano VIP",
-        base_price: 149.90,
-        max_units: 999,
-        max_barbers: 999, // Ilimitado
+        name: "Barber VIP",
+        base_price: 189.90,
+        max_units: 4,
+        max_barbers: 50,
         has_whatsapp: true,
         has_financial_module: true,
         has_loyalty_module: true,
