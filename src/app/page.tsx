@@ -206,22 +206,8 @@ export default function LandingPage() {
             <p className="text-slate-400 max-w-2xl mx-auto text-lg">Desde a cadeira única até redes de barbearia. Escolha o plano perfeito.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             
-            {/* PLANO GRATUITO */}
-            <div className="bg-[#15151a] border border-white/10 rounded-3xl p-8 flex flex-col">
-              <h3 className="text-xl font-bold text-white mb-2">Gratuito</h3>
-              <p className="text-slate-400 text-sm mb-6 h-10">O essencial para quem está começando.</p>
-              <div className="text-4xl font-display font-bold text-white mb-8">R$ 0<span className="text-lg text-slate-500">/mês</span></div>
-              <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex gap-3 text-sm"><CheckCircle2 className="text-white/30 shrink-0" size={20} /> 1 Barbeiro</li>
-                <li className="flex gap-3 text-sm"><CheckCircle2 className="text-white/30 shrink-0" size={20} /> Gestão de Ganhos</li>
-                <li className="flex gap-3 text-sm opacity-40"><CheckCircle2 className="text-white/10 shrink-0" size={20} /> Sem WhatsApp</li>
-                <li className="flex gap-3 text-sm opacity-40"><CheckCircle2 className="text-white/10 shrink-0" size={20} /> Sem Agente IA</li>
-              </ul>
-              <Link href="/register" className="w-full py-3 rounded-xl border border-white/10 font-bold text-center hover:bg-white/5 transition-colors">Testar Grátis</Link>
-            </div>
-
             {/* PLANO INICIAL */}
             <div className="bg-[#15151a] border border-white/10 rounded-3xl p-8 flex flex-col">
               <h3 className="text-xl font-bold text-white mb-2">Inicial</h3>
