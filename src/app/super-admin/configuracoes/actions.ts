@@ -33,3 +33,31 @@ export async function saveSystemSettings(formData: FormData) {
   revalidatePath("/super-admin/configuracoes");
   return { success: true };
 }
+
+export async function saveGroqSettings(formData: FormData) {
+  const session = await auth();
+  if (session?.user?.role !== "SUPER_ADMIN") {
+    throw new Error("Não autorizado");
+  }
+
+  const api_key = formData.get("groq_api_key") as string;
+  const model = formData.get("groq_model") as string;
+
+  // Só atualiza a chave se o usuário preencheu (evita apagar com ****)
+  const existing = await db.systemSetting.findUnique({ where: { key: "GROQ_CONFIG" } });
+  const existingKey = (existing?.value as any)?.api_key || "";
+
+  const groqConfig = {
+    api_key: api_key && !api_key.startsWith("****") ? api_key : existingKey,
+    model: model || "llama-3.3-70b-versatile",
+  };
+
+  await db.systemSetting.upsert({
+    where: { key: "GROQ_CONFIG" },
+    update: { value: groqConfig },
+    create: { key: "GROQ_CONFIG", value: groqConfig }
+  });
+
+  revalidatePath("/super-admin/configuracoes");
+  return { success: true };
+}
