@@ -11,6 +11,11 @@ export default async function PublicTenantLayout({
   params: Promise<{ slug: string }>
 }) {
   const resolvedParams = await params;
+
+  if (/\\.(json|ico|xml|png|jpg|jpeg|svg|txt|webmanifest)$/i.test(resolvedParams.slug)) {
+    notFound();
+  }
+
   const tenant = await db.tenant.findUnique({
     where: { slug: resolvedParams.slug }
   });

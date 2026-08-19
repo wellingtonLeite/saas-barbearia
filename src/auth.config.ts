@@ -8,7 +8,7 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
-      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+      const isOnAdmin = nextUrl.pathname.startsWith('/super-admin');
       
       if (isOnAdmin) {
         if (!isLoggedIn) return false;
@@ -27,7 +27,7 @@ export const authConfig = {
         if (nextUrl.pathname === '/login' || nextUrl.pathname === '/register') {
           // Se for super admin, manda pro admin. Senão manda pro dashboard
           if (auth.user.role === 'SUPER_ADMIN') {
-            return Response.redirect(new URL('/admin', nextUrl));
+            return Response.redirect(new URL('/super-admin', nextUrl));
           }
           return Response.redirect(new URL('/dashboard', nextUrl));
         }

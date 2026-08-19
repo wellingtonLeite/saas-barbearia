@@ -52,7 +52,7 @@ export default function Timeline({
     
     // Base URL is available on client
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://app.com';
-    text = text.replace(/{link}/g, `${origin}/avaliar`); // Example link
+    text = text.replace(/{link}/g, `${origin}/avaliar/${appt.id}`);
     
     const phone = appt.clientPhone ? appt.clientPhone.replace(/\D/g, '') : '';
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;

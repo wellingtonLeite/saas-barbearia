@@ -15,6 +15,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: '/super-admin',
+        permanent: true,
+      },
+      {
+        source: '/admin/:path*',
+        destination: '/super-admin/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
