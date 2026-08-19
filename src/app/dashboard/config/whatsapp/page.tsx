@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { WhatsappForm } from "./whatsapp-form";
+import { WhatsappConnection } from "./whatsapp-connection";
 import Link from "next/link";
 import { ChevronLeft, MessageCircle } from "lucide-react";
 
@@ -46,10 +47,12 @@ export default async function WhatsappConfigPage() {
             <MessageCircle className="text-success" /> Configurações de WhatsApp
           </h1>
           <p className="text-text-secondary mt-1">
-            Personalize as mensagens enviadas para seus clientes.
+            Personalize as mensagens enviadas para seus clientes e ative o Agente SDR.
           </p>
         </div>
       </div>
+
+      <WhatsappConnection tenantId={tenant.id} />
 
       <div className="bg-surface border border-secondary rounded-xl p-6">
         <WhatsappForm tenantId={tenant.id} defaultValues={templates} />
