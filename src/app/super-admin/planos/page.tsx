@@ -30,6 +30,7 @@ export default async function PlansPage(props: Props) {
     const max_units = Number(formData.get("max_units"));
     const max_barbers = Number(formData.get("max_barbers"));
     const has_whatsapp = formData.get("has_whatsapp") === "on";
+    const has_whatsapp_sdr = formData.get("has_whatsapp_sdr") === "on";
     const has_financial_module = formData.get("has_financial_module") === "on";
     const has_loyalty_module = formData.get("has_loyalty_module") === "on";
     const has_clients_module = formData.get("has_clients_module") === "on";
@@ -37,15 +38,12 @@ export default async function PlansPage(props: Props) {
 
     const { db } = await import("@/lib/db");
 
+    const planData = { name, base_price, max_units, max_barbers, has_whatsapp, has_whatsapp_sdr, has_financial_module, has_loyalty_module, has_clients_module, has_products_module };
+
     if (id) {
-      await db.plan.update({
-        where: { id },
-        data: { name, base_price, max_units, max_barbers, has_whatsapp, has_financial_module, has_loyalty_module, has_clients_module, has_products_module }
-      });
+      await db.plan.update({ where: { id }, data: planData });
     } else {
-      await db.plan.create({
-        data: { name, base_price, max_units, max_barbers, has_whatsapp, has_financial_module, has_loyalty_module, has_clients_module, has_products_module }
-      });
+      await db.plan.create({ data: planData });
     }
 
     revalidatePath("/super-admin/planos");
@@ -111,8 +109,19 @@ export default async function PlansPage(props: Props) {
                   <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Mensagens via WhatsApp</span>
-                  <span className="text-xs text-text-secondary mt-1">Habilita botões para envio de mensagens direto pelo WhatsApp Web</span>
+                  <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">WhatsApp Manual</span>
+                  <span className="text-xs text-text-secondary mt-1">Botões para envio de mensagens direto pelo WhatsApp Web (feito pelo dono)</span>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 p-4 rounded-xl border border-secondary cursor-pointer hover:border-green-500/50 transition-colors group">
+                <input type="checkbox" name="has_whatsapp_sdr" defaultChecked={(editingPlan as any)?.has_whatsapp_sdr} className="peer sr-only" />
+                <div className="w-5 h-5 rounded border border-secondary flex items-center justify-center peer-checked:bg-green-500 peer-checked:border-green-500 transition-colors">
+                  <Check size={14} className="text-white opacity-0 peer-checked:opacity-100" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-text-primary group-hover:text-green-400 transition-colors">Agente SDR Automatizado 🤖</span>
+                  <span className="text-xs text-text-secondary mt-1">Bot com IA (Groq) que agenda clientes direto pelo WhatsApp da barbearia</span>
                 </div>
               </label>
 
@@ -207,7 +216,11 @@ export default async function PlansPage(props: Props) {
                   
                   <li className={`flex items-center gap-2 text-sm ${plan.has_whatsapp ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_whatsapp ? "text-success" : "text-secondary"} />
-                    Mensagens via WhatsApp
+                    WhatsApp Manual
+                  </li>
+                  <li className={`flex items-center gap-2 text-sm ${(plan as any).has_whatsapp_sdr ? 'text-green-400' : 'text-text-secondary/50 line-through'}`}>
+                    <Check size={16} className={(plan as any).has_whatsapp_sdr ? "text-green-400" : "text-secondary"} />
+                    Agente SDR Automatizado 🤖
                   </li>
                   <li className={`flex items-center gap-2 text-sm ${plan.has_financial_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                     <Check size={16} className={plan.has_financial_module ? "text-success" : "text-secondary"} />

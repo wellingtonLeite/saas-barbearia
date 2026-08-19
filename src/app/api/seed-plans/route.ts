@@ -10,6 +10,7 @@ export async function GET() {
         max_units: 1,
         max_barbers: 1,
         has_whatsapp: false,
+        has_whatsapp_sdr: false,
         has_financial_module: false,
         has_loyalty_module: false,
         has_clients_module: false,
@@ -20,7 +21,8 @@ export async function GET() {
         base_price: 89.90,
         max_units: 2,
         max_barbers: 15,
-        has_whatsapp: true,
+        has_whatsapp: true,       // Botões manuais via WhatsApp Web
+        has_whatsapp_sdr: false,  // Sem agente automatizado
         has_financial_module: true,
         has_loyalty_module: true,
         has_clients_module: true,
@@ -31,7 +33,8 @@ export async function GET() {
         base_price: 189.90,
         max_units: 4,
         max_barbers: 50,
-        has_whatsapp: true,
+        has_whatsapp: true,      // Botões manuais via WhatsApp Web
+        has_whatsapp_sdr: true,  // + Agente SDR automatizado
         has_financial_module: true,
         has_loyalty_module: true,
         has_clients_module: true,

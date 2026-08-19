@@ -117,6 +117,7 @@ model Plan {
   max_units            Int
   max_barbers          Int      @default(999)
   has_whatsapp         Boolean  @default(false)
+  has_whatsapp_sdr     Boolean  @default(false)
   has_financial_module Boolean  @default(false)
   has_loyalty_module   Boolean  @default(true)
   has_clients_module   Boolean  @default(true)
