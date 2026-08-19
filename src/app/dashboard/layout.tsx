@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+Ôªøimport { ReactNode } from "react";
 import { 
   Calendar, 
   Users, 
@@ -23,7 +23,7 @@ export default async function BarberLayout({ children }: { children: ReactNode }
     const isOwnerOrAdmin = role === 'OWNER' || role === 'SUPER_ADMIN';
 
     if (!session?.user?.id) {
-      throw new Error("Sess„o inv·lida ou sem ID de usu·rio.");
+      throw new Error("Sess√£o inv√°lida ou sem ID de usu√°rio.");
     }
 
     // Buscar o Tenant (Barbearia) para pegar a logo e plano
