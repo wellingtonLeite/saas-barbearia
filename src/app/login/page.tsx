@@ -14,7 +14,7 @@ export default function LoginPage() {
       {/* Lado Esquerdo - Imagem (Escondido no mobile) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-surface items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-black/60 z-10" />
-        <Image 
+        <Image unoptimized={true} 
           src="/barber_interior.jpg" 
           alt="Interior de barbearia premium" 
           fill 
@@ -42,7 +42,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md animate-fade-in mt-12 lg:mt-0">
           <div className="flex flex-col items-center mb-10">
             <div className="mb-4">
-              <Image src="/logo_88barber.jpg" alt="88barber" width={300} height={90} className="w-auto h-20 object-contain mix-blend-lighten drop-shadow-2xl" />
+              <Image unoptimized={true} src="/logo_88barber.jpg" alt="88barber" width={300} height={90} className="w-auto h-20 object-contain mix-blend-lighten drop-shadow-2xl" />
             </div>
             <p className="text-text-secondary">Acesse o seu painel de controle</p>
           </div>
@@ -103,3 +103,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
