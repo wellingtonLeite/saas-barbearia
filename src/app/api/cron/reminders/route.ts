@@ -29,7 +29,9 @@ export async function GET() {
 
     // Simulando o envio de mensagens (WhatsApp / SMS / E-mail)
     const logs = upcomingAppointments.map(appt => {
-      const apptUrl = `http://localhost:3000/agendamento/${appt.id}`;
+      // Use NEXT_PUBLIC_APP_URL for the domain
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://88barber.top";
+      const apptUrl = `${baseUrl}/agendamento/${appt.id}`;
       const message = `
       Olá ${appt.client.name}, tudo bem?
       Lembrando do seu horário hoje às ${appt.start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} com ${appt.barber.name} na ${appt.tenant.name}.
