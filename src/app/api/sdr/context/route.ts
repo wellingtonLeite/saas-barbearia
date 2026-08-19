@@ -1,25 +1,12 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// Middleware de autenticação por API Key interna (opcional se não configurada)
-function authSDR(request: Request) {
-  const key = request.headers.get("x-sdr-key");
-  const expected = process.env.SDR_INTERNAL_KEY;
-  if (expected && key !== expected) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
-}
-
 /**
  * GET /api/sdr/context?instance={instanceName}&phone={whatsappPhone}
  * Retorna o contexto completo e formatado da barbearia a partir da instância ou telefone.
  * O n8n chama isso ao receber uma mensagem para alimentar o Agente IA (Groq/LLaMA).
  */
 export async function GET(request: Request) {
-  const authError = authSDR(request);
-  if (authError) return authError;
-
   try {
     const { searchParams } = new URL(request.url);
     const instance = searchParams.get("instance")?.trim();
