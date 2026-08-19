@@ -286,47 +286,7 @@ export default async function InfraPage() {
       {/* GRÁFICOS DE TENDÊNCIA */}
       <InfraCharts tenantGrowthData={tenantGrowthData} apptTrendData={apptTrendData} />
 
-      {/* INTEGRAÇÃO COM IA E BI */}
-      <div className="bg-surface border border-secondary rounded-2xl p-6">
-        <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
-          <Zap size={18} className="text-primary" />
-          Integração de Inteligência Artificial (MCP / Spark / BI)
-        </h3>
-        <p className="text-text-secondary text-sm mb-6">
-          Conecte ferramentas de Inteligência Artificial externas ou geradores de dashboard (BI) diretamente ao seu banco de dados para analisar faturamento, retenção e crescimento em tempo real.
-        </p>
 
-        <div className="space-y-4">
-          <div className="bg-background border border-secondary rounded-xl p-4">
-            <h4 className="text-sm font-bold text-text-primary mb-1">String de Conexão do Banco de Dados (PostgreSQL)</h4>
-            <p className="text-xs text-text-secondary mb-3">Utilize este link para conectar plataformas online e de BI (como Metabase, PowerBI, etc).</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-surface p-3 rounded-lg text-xs text-primary font-mono overflow-x-auto whitespace-nowrap block">
-                {process.env.DATABASE_URL || "Variável DATABASE_URL não encontrada no ambiente"}
-              </code>
-            </div>
-            <p className="text-[10px] text-amber-400 mt-3 flex items-center gap-1">
-              <AlertTriangle size={12} /> Cuidado: Este link concede acesso direto ao banco de dados em produção. Nunca o compartilhe publicamente.
-            </p>
-          </div>
-
-          <div className="bg-background border border-secondary rounded-xl p-4">
-            <h4 className="text-sm font-bold text-text-primary mb-1">Endpoint MCP Web (Google Spark / Agentes em Nuvem)</h4>
-            <p className="text-xs text-text-secondary mb-3">Copie esta URL HTTP (SSE) para conectar o Google Spark ou IAs baseadas na web ao seu banco de dados.</p>
-            <code className="bg-surface p-3 rounded-lg text-xs text-primary font-mono block break-all">
-              https://88barber.76.13.225.200.sslip.io/api/mcp
-            </code>
-          </div>
-
-          <div className="bg-background border border-secondary rounded-xl p-4">
-            <h4 className="text-sm font-bold text-text-primary mb-1">Servidor MCP Local (Model Context Protocol)</h4>
-            <p className="text-xs text-text-secondary mb-3">Para ferramentas de desenvolvimento e IAs locais (ex: Claude Desktop, Cursor, Antigravity) que suportam conexão via STDIO.</p>
-            <code className="bg-surface p-3 rounded-lg text-xs text-primary font-mono block">
-              npx prisma mcp
-            </code>
-          </div>
-        </div>
-      </div>
 
       {/* RECOMENDAÇÕES DE INFRAESTRUTURA */}
       <div className="bg-surface border border-secondary rounded-2xl p-6">
