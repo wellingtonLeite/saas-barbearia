@@ -114,7 +114,11 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
        if (!stillAttached) {
          const u = await db.user.findUnique({ where: { id: bId } });
          if (u && u.role !== 'SUPER_ADMIN') {
-           await db.user.delete({ where: { id: bId } });
+           try {
+             await db.user.delete({ where: { id: bId } });
+           } catch (error) {
+             console.error(`Não foi possível deletar o usuário ${bId} (pode ter histórico em outras barbearias):`, error);
+           }
          }
        }
     }
