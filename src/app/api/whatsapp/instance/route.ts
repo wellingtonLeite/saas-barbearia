@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const apiKey = process.env.EVOLUTION_API_KEY;
 
     if (!apiUrl || !apiKey) {
-      console.warn('Variáveis EVOLUTION_API_URL ou EVOLUTION_API_KEY não configuradas. Retornando QR Code de demonstração.');
+      console.warn('Variáveis EVOLUTION_API_URL ou EVOLUTION_API_KEY não configuradas.');
       return NextResponse.json({
         base64: 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=EvolutionAPI_Configure_Suas_Variaveis',
         instanceName,
@@ -54,6 +54,27 @@ export async function POST(request: Request) {
       if (connectResponse.ok) {
         data = await connectResponse.json();
       }
+    }
+
+    // Configurar o webhook do n8n automaticamente na instância se URL estiver configurada
+    const n8nWebhook = process.env.N8N_WEBHOOK_EVOLUTION_URL || 'http://n8n-g4ssskoo8w8o0socc8g0cksc.76.13.225.200.sslip.io/webhook/evolution-webhook';
+    if (n8nWebhook) {
+      fetch(`${apiUrl}/webhook/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          webhook: {
+            enabled: true,
+            url: n8nWebhook,
+            byEvents: false,
+            base64: true,
+            events: ['MESSAGES_UPSERT']
+          }
+        })
+      }).catch(err => console.error("Erro configurando webhook na instância:", err));
     }
 
     // Extrai o QR Code em base64

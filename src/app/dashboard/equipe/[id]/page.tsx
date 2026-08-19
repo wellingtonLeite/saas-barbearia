@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { ArrowLeft, User as UserIcon, CalendarX, Plus } from "lucide-react";
+import { ArrowLeft, CalendarX, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { EditBarberForm } from "./edit-form";
 
 export default async function BarberManagementPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -34,7 +35,6 @@ export default async function BarberManagementPage({ params }: { params: Promise
 
     const { db } = await import("@/lib/db");
     
-    // Assegurando que a data seja interpretada de forma correta (fuso local)
     await db.scheduleBlock.create({
       data: {
         tenantId: contract.unit.tenantId,
@@ -72,19 +72,35 @@ export default async function BarberManagementPage({ params }: { params: Promise
         </div>
         <div>
           <h1 className="text-3xl font-display font-bold text-text-primary">{barber.name}</h1>
-          <p className="text-text-secondary mt-1">Gestão de Agenda e Bloqueios</p>
+          <p className="text-text-secondary mt-1">Gestão Cadastral, Comissões e Agenda</p>
         </div>
       </div>
+
+      {/* Formulário de Edição do Barbeiro */}
+      <EditBarberForm 
+        barber={{
+          id: barber.id,
+          name: barber.name,
+          email: barber.email,
+          phone: barber.phone
+        }}
+        contract={{
+          employment_type: contract.employment_type,
+          fixed_salary: Number(contract.fixed_salary),
+          service_commission_rate: Number(contract.service_commission_rate),
+          product_commission_rate: Number(contract.product_commission_rate)
+        }}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
         {/* Formulário de Bloqueio */}
         <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm h-fit">
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <CalendarX className="text-danger" /> Adicionar Bloqueio
+            <CalendarX className="text-danger" /> Adicionar Bloqueio de Horário
           </h2>
           <p className="text-sm text-text-secondary mb-6">
-            Use esta área para fechar a agenda do funcionário (ex: atestado médico, folga imprevista).
+            Feche horários específicos na agenda deste profissional (ex: atestados, folgas ou intervalos).
           </p>
 
           <form action={addBlock} className="space-y-4">
@@ -126,13 +142,13 @@ export default async function BarberManagementPage({ params }: { params: Promise
               <input 
                 type="text" 
                 name="reason"
-                placeholder="Ex: Atestado Médico, Problema Pessoal..."
+                placeholder="Ex: Atestado Médico, Folga..."
                 className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-danger transition-colors"
               />
             </div>
 
             <button type="submit" className="w-full py-4 bg-danger text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-danger/90 transition-colors shadow-lg shadow-danger/20 mt-4">
-              <Plus size={20} /> Bloquear Agenda
+              <Plus size={20} /> Bloquear Horário na Agenda
             </button>
           </form>
         </div>
@@ -145,24 +161,26 @@ export default async function BarberManagementPage({ params }: { params: Promise
           
           <div className="divide-y divide-secondary">
             {barber.schedule_blocks.length === 0 && (
-              <div className="p-8 text-center text-text-secondary">Nenhum bloqueio registrado.</div>
+              <div className="p-8 text-center text-text-secondary">Nenhum bloqueio registrado para este barbeiro.</div>
             )}
             {barber.schedule_blocks.map(block => (
-              <div key={block.id} className="p-6 hover:bg-surface-hover transition-colors flex justify-between items-center">
+              <div key={block.id} className="p-6 flex items-center justify-between hover:bg-surface-hover transition-colors">
                 <div>
-                  <p className="font-bold text-danger text-lg">{block.reason || "Bloqueio Manual"}</p>
-                  <p className="text-sm text-text-secondary mt-1">
-                    {block.start_time.toLocaleDateString('pt-BR')} <br/>
-                    Das {block.start_time.getHours().toString().padStart(2, '0')}:{block.start_time.getMinutes().toString().padStart(2, '0')} 
-                    {' às '} 
-                    {block.end_time.getHours().toString().padStart(2, '0')}:{block.end_time.getMinutes().toString().padStart(2, '0')}
-                  </p>
+                  <div className="font-bold text-text-primary flex items-center gap-2">
+                    {new Date(block.start_time).toLocaleDateString('pt-BR')}
+                    <span className="text-xs px-2 py-0.5 rounded bg-secondary text-text-secondary font-mono">
+                      {new Date(block.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {new Date(block.end_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  {block.reason && (
+                    <p className="text-sm text-text-secondary mt-1">{block.reason}</p>
+                  )}
                 </div>
-                
+
                 <form action={deleteBlock}>
                   <input type="hidden" name="blockId" value={block.id} />
-                  <button type="submit" className="text-text-secondary hover:text-danger text-sm font-bold border border-secondary hover:border-danger rounded-lg px-4 py-2 transition-colors">
-                    Remover
+                  <button type="submit" className="text-text-secondary hover:text-danger p-2 transition-colors" title="Remover Bloqueio">
+                    <Trash2 size={18} />
                   </button>
                 </form>
               </div>
