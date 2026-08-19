@@ -51,6 +51,7 @@ export async function POST(request: Request) {
           name: clientName || "Cliente WhatsApp",
           role: "CLIENT",
           email: `whatsapp_${clientPhone}@88barber.app`,
+          password_hash: "whatsapp_client_no_password"
         }
       });
     }
@@ -92,13 +93,12 @@ export async function POST(request: Request) {
         tenantId: unit.tenantId,
         start_time: startTime,
         end_time: endTime,
-        status: "CONFIRMED",
-        notes: `Agendado pelo Agente SDR via WhatsApp (${clientPhone})`
+        status: "CONFIRMED"
       },
       include: {
-        service: { select: { name: true, price: true } },
-        barber: { select: { name: true } },
-        unit: { select: { name: true, address: true } }
+        service: true,
+        barber: true,
+        unit: true
       }
     });
 
@@ -108,10 +108,10 @@ export async function POST(request: Request) {
         id: appointment.id,
         clientName: client.name,
         clientPhone,
-        service: appointment.service.name,
-        barber: appointment.barber.name,
-        unit: appointment.unit.name,
-        address: appointment.unit.address,
+        service: appointment.service?.name,
+        barber: appointment.barber?.name,
+        unit: appointment.unit?.name,
+        address: appointment.unit?.address,
         date,
         time,
         status: appointment.status

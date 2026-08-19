@@ -28,23 +28,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing phone parameter" }, { status: 400 });
     }
 
-    // Busca a unidade pelo número de whatsapp registrado
+    // Busca a unidade pelo número de telefone (whatsapp)
     const unit = await db.unit.findFirst({
-      where: { whatsapp_number: phone },
+      where: { phone: phone },
       include: {
         tenant: {
           include: {
-            subscription: { include: { plan: true } }
+            subscription: { include: { plan: true } },
+            services: {
+              select: { id: true, name: true, price: true, duration_minutes: true }
+            }
           }
-        },
-        services: {
-          where: { active: true },
-          select: { id: true, name: true, price: true, duration_minutes: true }
         },
         barbers: {
           include: {
             barber: {
-              select: { id: true, name: true, image: true }
+              select: { id: true, name: true, avatar_url: true }
             }
           }
         }
@@ -76,11 +75,11 @@ export async function GET(request: Request) {
         address: unit.address,
         phone: unit.phone,
       },
-      services: unit.services,
-      barbers: unit.barbers.map(b => ({
+      services: unit.tenant.services,
+      barbers: unit.barbers.map((b: any) => ({
         id: b.barber.id,
         name: b.barber.name,
-        image: b.barber.image
+        image: b.barber.avatar_url
       }))
     });
   } catch (error) {
