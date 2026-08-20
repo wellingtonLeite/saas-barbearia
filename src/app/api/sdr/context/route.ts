@@ -62,11 +62,16 @@ export async function GET(request: Request) {
       );
     }
 
-    // Verifica se o plano da barbearia tem o SDR habilitado
+    // Verifica estritamente se o plano da barbearia tem o SDR habilitado
     const plan = unit.tenant.subscription?.plan as any;
-    if (plan && !plan.has_whatsapp_sdr) {
+    if (!plan || !plan.has_whatsapp_sdr) {
       return NextResponse.json(
-        { error: "O plano atual da barbearia não inclui o Agente SDR" },
+        { 
+          active: false,
+          allow_ai: false,
+          error: "O plano atual desta barbearia é Gratuito e não inclui o Agente IA SDR. Agendamentos automáticos por IA estão desativados.",
+          plan: plan?.name || "Plano Gratuito"
+        },
         { status: 403 }
       );
     }

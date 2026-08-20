@@ -1,9 +1,13 @@
 import { db } from "@/lib/db";
-import { Users, Briefcase, Percent, Star, Crown, Shield, AlertTriangle, ArrowUpRight, CheckCircle2, Zap } from "lucide-react";
+import { Users, Briefcase, Percent, Star, Crown, Shield, ArrowUpRight, Zap, Plus } from "lucide-react";
 import { auth } from "@/auth";
 import Link from "next/link";
 import { BarberActiveToggle } from "./barber-active-toggle";
 import { AddBarberForm } from "./add-barber-form";
+
+export const metadata = {
+  title: "Gestão de Equipe | 88Barber",
+};
 
 export default async function TeamPage() {
   const session = await auth();
@@ -63,134 +67,58 @@ export default async function TeamPage() {
     maxBarbers = plan.max_barbers;
   }
 
-  // Contagem direta de vagas utilizadas
   const totalBarbers = teamMembers.length;
   const isQuotaFull = totalBarbers >= maxBarbers;
-  const percentage = Math.min(100, Math.round((totalBarbers / maxBarbers) * 100));
-  const availableSlots = Math.max(0, maxBarbers - totalBarbers);
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto pb-16">
+      {/* Header com Visual Limpo e Elegante */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-secondary/40">
         <div>
-          <h1 className="text-3xl font-display font-bold text-text-primary">Gestão de Equipe</h1>
-          <p className="text-text-secondary mt-1">Gerencie seus barbeiros, proprietários e regras de atendimento.</p>
+          <h1 className="text-2xl font-bold text-text-primary">Equipe & Profissionais</h1>
+          <p className="text-text-secondary text-sm mt-0.5">
+            Gerencie os barbeiros da sua unidade e permissões de atendimento.
+          </p>
         </div>
 
-        <Link
-          href="/dashboard/assinatura"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/50 hover:bg-primary/20 text-text-primary hover:text-primary rounded-xl text-xs font-bold transition-all border border-secondary self-start sm:self-auto"
-        >
-          <Zap size={14} className="text-primary" /> Ver Planos & Upgrade
-        </Link>
-      </div>
-
-      {/* CARD DE RESUMO: PLANO ATUAL & VAGAS UTILIZADAS */}
-      <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-secondary/60">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
-              <Users size={22} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-text-primary">
-                  Plano Atual: <span className="text-primary">{planName}</span>
-                </h3>
-              </div>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Controle de membros da equipe e capacidade do plano contratado.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 text-sm font-bold">
-            <span className="text-text-secondary text-xs uppercase tracking-wider font-semibold">Vagas Utilizadas:</span>
-            <span className={`px-3 py-1 rounded-lg text-xs font-extrabold border ${
-              isQuotaFull 
-                ? "bg-danger/20 text-danger border-danger/40" 
-                : percentage >= 80 
-                  ? "bg-amber-500/20 text-amber-400 border-amber-500/40" 
-                  : "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-            }`}>
+        {/* Indicador Minimalista de Capacidade */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-secondary text-xs">
+            <span className="text-text-secondary">Capacidade:</span>
+            <span className={`font-bold ${isQuotaFull ? "text-amber-400" : "text-emerald-400"}`}>
               {totalBarbers} / {maxBarbers}
             </span>
-          </div>
-        </div>
-
-        {/* Barra de Progresso Visual */}
-        <div className="pt-5 pb-2">
-          <div className="flex justify-between items-center text-xs text-text-secondary font-medium mb-2">
-            <span>Utilização das vagas: <strong className="text-text-primary">{percentage}%</strong></span>
-            <span>{availableSlots} {availableSlots === 1 ? "vaga restante" : "vagas restantes"}</span>
-          </div>
-          <div className="w-full h-3.5 bg-background border border-secondary rounded-full p-0.5 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isQuotaFull
-                  ? "bg-gradient-to-r from-amber-500 to-danger shadow-sm shadow-danger/50"
-                  : percentage >= 80
-                    ? "bg-gradient-to-r from-amber-400 to-amber-500 shadow-sm shadow-amber-500/40"
-                    : "bg-gradient-to-r from-primary to-emerald-400"
-              }`}
-              style={{ width: `${Math.max(5, percentage)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Pílulas de resumo */}
-        <div className="mt-4 flex flex-wrap items-center gap-3 pt-4 border-t border-secondary/40 text-xs">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-            <CheckCircle2 size={13} /> <strong>{totalBarbers}</strong> Membros Cadastrados
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 font-medium">
-            <Zap size={13} /> <strong>{availableSlots}</strong> Vagas Disponíveis
-          </span>
-        </div>
-      </div>
-
-      {/* BANNER DE AVISO SE O LIMITE FOR ATINGIDO */}
-      {isQuotaFull && (
-        <div className="bg-gradient-to-r from-amber-500/15 via-danger/15 to-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5 border border-amber-500/30">
-              <AlertTriangle size={22} />
-            </div>
-            <div>
-              <h4 className="font-bold text-base text-amber-300">
-                ⚠️ Limite de barbeiros atingido para o seu plano ({planName})
-              </h4>
-              <p className="text-sm text-text-secondary mt-1">
-                Faça upgrade para adicionar mais membros à sua barbearia.
-              </p>
-            </div>
+            <span className="text-text-secondary font-medium">({planName})</span>
           </div>
 
           <Link
             href="/dashboard/assinatura"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-primary hover:brightness-110 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm whitespace-nowrap transition-all hover:scale-105 shrink-0 self-stretch md:self-auto justify-center"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-secondary/60 text-text-secondary hover:text-text-primary rounded-xl text-xs font-medium transition-colors border border-secondary"
           >
-            Fazer Upgrade da Assinatura <ArrowUpRight size={16} />
+            <Zap size={13} className="text-primary" /> Planos
           </Link>
         </div>
-      )}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Lista de Equipe */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-surface border border-secondary rounded-xl overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-secondary flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Users className="text-primary" /> Membros da Barbearia
+        {/* Coluna Principal: Lista de Membros da Equipe */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-surface border border-secondary rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-secondary/50 flex justify-between items-center">
+              <h2 className="font-semibold text-text-primary flex items-center gap-2 text-sm">
+                <Users size={18} className="text-primary" /> Profissionais Cadastrados
               </h2>
-              <span className="text-xs text-text-secondary font-medium">
+              <span className="text-xs text-text-secondary">
                 {teamMembers.length} {teamMembers.length === 1 ? "membro" : "membros"}
               </span>
             </div>
-            <div className="divide-y divide-secondary">
+
+            <div className="divide-y divide-secondary/40">
               {teamMembers.length === 0 && (
-                <div className="p-8 text-center text-text-secondary">Nenhum membro na equipe ainda.</div>
+                <div className="p-8 text-center text-text-secondary text-sm">
+                  Nenhum membro cadastrado nesta unidade.
+                </div>
               )}
               {teamMembers.map(item => {
                 const barber = item.barber;
@@ -198,15 +126,19 @@ export default async function TeamPage() {
                 const reviews = barber.barber_reviews || [];
                 const averageRating = reviews.length > 0 
                   ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-                  : "Sem notas";
+                  : null;
 
                 const isOwner = barber.role === 'OWNER';
 
                 return (
-                  <div key={barber.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-hover transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="w-14 h-14 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xl font-bold text-text-primary border-2 border-primary/30 shadow-sm">
+                  <div 
+                    key={barber.id} 
+                    className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-hover transition-colors"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      {/* Avatar */}
+                      <div className="relative shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-background border border-secondary overflow-hidden flex items-center justify-center text-base font-bold text-text-primary shadow-sm">
                           {barber.avatar_url ? (
                             <img src={barber.avatar_url} alt={barber.name} className="w-full h-full object-cover" />
                           ) : (
@@ -214,35 +146,47 @@ export default async function TeamPage() {
                           )}
                         </div>
                         {isOwner && (
-                          <div className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full shadow-lg" title="Proprietário">
-                            <Crown size={12} className="fill-slate-950" />
+                          <div className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 p-0.5 rounded-full shadow" title="Proprietário">
+                            <Crown size={10} className="fill-slate-950" />
                           </div>
                         )}
                       </div>
 
+                      {/* Info */}
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-lg text-text-primary">{barber.name}</h3>
+                          <h3 className="font-semibold text-text-primary text-sm">{barber.name}</h3>
                           {isOwner && (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                              <Shield size={10} /> Proprietário
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              Proprietário
                             </span>
                           )}
                         </div>
 
-                        <p className="text-text-secondary text-sm">{barber.email}</p>
-                        {barber.phone && <p className="text-text-secondary text-xs">{barber.phone}</p>}
+                        <p className="text-text-secondary text-xs mt-0.5">{barber.email}</p>
 
-                        <div className="flex items-center gap-1 mt-1 text-xs font-bold text-primary">
-                          <Star size={12} className="fill-primary" />
-                          <span>{averageRating}</span>
-                          <span className="text-text-secondary font-normal ml-1">({reviews.length} avaliações)</span>
+                        <div className="flex items-center gap-3 mt-1.5 text-xs text-text-secondary">
+                          {averageRating ? (
+                            <div className="flex items-center gap-1 text-primary font-medium">
+                              <Star size={11} className="fill-primary" />
+                              <span>{averageRating}</span>
+                              <span className="text-text-secondary font-normal">({reviews.length})</span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-text-secondary">Sem avaliações</span>
+                          )}
+
+                          {contract && (
+                            <span className="text-[11px] text-text-secondary">
+                              • {contract.employment_type === 'CLT' ? 'CLT' : `Comissão ${Number(contract.service_commission_rate || 0)}%`}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                   
-                    <div className="flex flex-col sm:items-end gap-2">
-                      {/* Switcher: Atende na Agenda & SDR */}
+                    {/* Ações e Toggle */}
+                    <div className="flex sm:flex-col sm:items-end items-center justify-between gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-secondary/40">
                       <BarberActiveToggle
                         barberId={barber.id}
                         unitId={unitId!}
@@ -250,24 +194,12 @@ export default async function TeamPage() {
                         isOwner={isOwner}
                       />
 
-                      <div className="flex items-center gap-2 mt-1">
-                        {contract?.employment_type === 'CLT' ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-primary/20 text-primary border-primary/30 flex items-center gap-1">
-                            <Briefcase size={10} /> CLT
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-success/20 text-success border-success/30 flex items-center gap-1">
-                            <Percent size={10} /> Comissão {contract?.service_commission_rate ? `${Number(contract.service_commission_rate)}%` : ""}
-                          </span>
-                        )}
-
-                        <Link 
-                          href={`/dashboard/equipe/${barber.id}`} 
-                          className="px-3 py-1 bg-secondary/50 hover:bg-primary/20 text-text-primary hover:text-primary rounded-lg text-xs font-bold transition-colors"
-                        >
-                          Gerenciar / Editar
-                        </Link>
-                      </div>
+                      <Link 
+                        href={`/dashboard/equipe/${barber.id}`} 
+                        className="px-2.5 py-1 text-text-secondary hover:text-text-primary rounded-lg text-xs font-medium hover:bg-secondary/50 transition-colors border border-transparent hover:border-secondary"
+                      >
+                        Editar
+                      </Link>
                     </div>
                   </div>
                 );
@@ -276,12 +208,13 @@ export default async function TeamPage() {
           </div>
         </div>
 
-        {/* Formulário Novo Membro */}
+        {/* Coluna Lateral: Adicionar Barbeiro / Card de Upgrade */}
         <div>
           <AddBarberForm
             isQuotaFull={isQuotaFull}
             activeCount={totalBarbers}
             maxBarbers={maxBarbers}
+            planName={planName}
           />
         </div>
 

@@ -28,19 +28,19 @@ function SubmitButton() {
   );
 }
 
-export function WhatsappForm({ tenantId, defaultValues }: { tenantId: string, defaultValues: any }) {
+export function WhatsappForm({ tenantId, defaultValues, hasWhatsappSdr = false }: { tenantId: string, defaultValues?: any, hasWhatsappSdr?: boolean }) {
   const [state, formAction] = useActionState(saveWhatsappTemplates, null);
 
   const variablesHelper = (
-    <div className="mt-2 text-xs text-text-secondary bg-background/60 border border-secondary/60 p-3 rounded-xl">
-      <p className="font-semibold text-text-primary mb-1.5 flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Variáveis dinâmicas para preenchimento:
+    <div className="mt-2 text-xs text-text-secondary bg-background/60 border border-secondary/60 p-2.5 rounded-lg">
+      <p className="font-medium text-text-primary mb-1 text-[11px] flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Variáveis dinâmicas:
       </p>
       <div className="flex flex-wrap gap-1.5">
         {["{cliente}", "{barbearia}", "{hora}", "{barbeiro}", "{link}"].map((tag) => (
           <span 
             key={tag} 
-            className="bg-surface border border-secondary text-primary font-mono text-[11px] px-2 py-0.5 rounded-md cursor-help"
+            className="bg-surface border border-secondary text-primary font-mono text-[11px] px-1.5 py-0.5 rounded cursor-help"
             title={`Substituído automaticamente por: ${tag.replace(/[{}]/g, '')}`}
           >
             {tag}
@@ -51,8 +51,20 @@ export function WhatsappForm({ tenantId, defaultValues }: { tenantId: string, de
   );
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="tenantId" value={tenantId} />
+    <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm space-y-5">
+      <div className="border-b border-secondary/50 pb-3">
+        <h3 className="font-semibold text-text-primary">
+          {hasWhatsappSdr ? "Templates de Mensagens Automáticas" : "Modelos de Mensagens de Contato"}
+        </h3>
+        <p className="text-xs text-text-secondary mt-0.5">
+          {hasWhatsappSdr
+            ? "Personalize os textos dos lembretes, solicitações de avaliação e cancelamentos enviados aos clientes."
+            : "Textos pré-formatados para envio manual de avisos e lembretes via WhatsApp aos seus clientes."}
+        </p>
+      </div>
+
+      <form action={formAction} className="space-y-5">
+        <input type="hidden" name="tenantId" value={tenantId} />
 
       {state?.success === true && (
         <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 p-4 rounded-xl flex items-center gap-3 animate-fade-in">
@@ -119,5 +131,6 @@ export function WhatsappForm({ tenantId, defaultValues }: { tenantId: string, de
         <SubmitButton />
       </div>
     </form>
+    </div>
   );
 }

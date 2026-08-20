@@ -1,7 +1,49 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    // Buscar o plano do usuário logado
+    const userWithTenant = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        units: {
+          include: {
+            unit: {
+              include: {
+                tenant: {
+                  include: {
+                    subscription: {
+                      include: { plan: true }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const tenant = userWithTenant?.units[0]?.unit?.tenant;
+    const plan = tenant?.subscription?.plan as any;
+
+    if (!plan || !plan.has_whatsapp_sdr) {
+      return NextResponse.json(
+        { 
+          error: 'O plano Gratuito inclui apenas mensagens manuais. Para conectar o WhatsApp e ativar o Agente IA SDR, faça upgrade para o Plano Barber Pro ou Barber VIP.',
+          code: 'UPGRADE_REQUIRED'
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { instanceName } = body;
 

@@ -18,7 +18,8 @@ import {
   Lock,
   ShoppingBag,
   Gift,
-  Bot
+  Bot,
+  MessageSquare
 } from "lucide-react";
 import { useMobileSidebar } from "./layouts/MobileSidebarWrapper";
 
@@ -49,7 +50,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
   ];
 
   const adminItems: NavItem[] = [
-    { href: "/dashboard/config/whatsapp", label: "Conectar WhatsApp", icon: Bot, badge: "IA SDR" },
+    { href: "/dashboard/config/whatsapp", label: "WhatsApp", icon: MessageSquare, badge: "SDR" },
     { href: "/dashboard/comandas", label: "Comandas / PDV", icon: ShoppingBag },
     { href: "/dashboard/servicos", label: "Serviços", icon: Scissors },
     { href: "/dashboard/produtos", label: "Produtos", icon: Package },

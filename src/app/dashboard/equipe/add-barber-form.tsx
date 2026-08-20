@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { addTeamMember } from "@/app/actions/team";
-import { UserPlus, Loader2, CheckCircle2, AlertCircle, ArrowUpRight, Camera, Sparkles, Check, Image as ImageIcon } from "lucide-react";
+import { UserPlus, Loader2, CheckCircle2, AlertCircle, ArrowUpRight, Zap, Users, Sparkles, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BARBER_AVATAR_PRESETS } from "@/lib/catalog-presets";
@@ -11,15 +11,20 @@ interface AddBarberFormProps {
   isQuotaFull?: boolean;
   activeCount?: number;
   maxBarbers?: number;
+  planName?: string;
 }
 
-export function AddBarberForm({ isQuotaFull = false, activeCount = 0, maxBarbers = 0 }: AddBarberFormProps) {
+export function AddBarberForm({ 
+  isQuotaFull = false, 
+  activeCount = 0, 
+  maxBarbers = 0,
+  planName = "Plano Gratuito"
+}: AddBarberFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [nameInput, setNameInput] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,249 +41,216 @@ export function AddBarberForm({ isQuotaFull = false, activeCount = 0, maxBarbers
       if (res?.error) {
         setMessage({ type: "error", text: res.error });
       } else {
-        setMessage({ type: "success", text: "Barbeiro cadastrado com sucesso!" });
+        setMessage({ type: "success", text: "Profissional cadastrado com sucesso!" });
         formRef.current?.reset();
         setAvatarUrl("");
-        setNameInput("");
         router.refresh();
       }
     } catch (err: any) {
-      setMessage({ type: "error", text: "Erro inesperado ao cadastrar barbeiro." });
+      setMessage({ type: "error", text: "Erro inesperado ao cadastrar profissional." });
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="bg-surface border border-secondary rounded-xl p-6 sticky top-6 shadow-sm">
-      <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-text-primary">
-        <UserPlus className="text-primary" /> Adicionar Barbeiro
-      </h2>
-
-      {/* Alerta prévio caso o limite do plano já esteja atingido */}
-      {isQuotaFull && (
-        <div className="bg-danger/15 border-2 border-danger/50 p-4 rounded-xl mb-6 text-sm text-danger flex flex-col gap-2 animate-fade-in">
-          <div className="flex items-start gap-2.5">
-            <AlertCircle size={20} className="text-danger shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-danger text-sm">Limite do Plano Atingido</p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                Você atingiu o limite de <strong>{maxBarbers} {maxBarbers === 1 ? "membro" : "membros"}</strong> ({activeCount}/{maxBarbers}). Faça upgrade da sua assinatura para adicionar mais profissionais.
-              </p>
-            </div>
+  // CASO 1: LIMITE ATINGIDO (Design Limpo e Focado em Conversão)
+  if (isQuotaFull) {
+    return (
+      <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+            <Users size={20} />
           </div>
-          <Link
-            href="/dashboard/assinatura"
-            className="mt-1 inline-flex items-center justify-center gap-1.5 w-full bg-danger hover:bg-red-600 text-white font-bold py-2.5 px-3 rounded-lg text-xs transition-colors shadow-sm"
-          >
-            Fazer Upgrade de Plano <ArrowUpRight size={14} />
-          </Link>
+          <div>
+            <h3 className="font-semibold text-text-primary text-sm">Capacidade Máxima</h3>
+            <p className="text-xs text-text-secondary mt-0.5">{planName} ({activeCount}/{maxBarbers} vagas)</p>
+          </div>
         </div>
-      )}
 
-      <div className="bg-primary/10 border border-primary/30 p-4 rounded-lg mb-6 text-sm text-text-secondary">
-        <p><strong>Acesso do Funcionário:</strong></p>
-        <p className="mt-1 text-xs">
-          Após cadastrar, passe o E-mail e a Senha para o barbeiro. Ele utilizará a <strong>mesma tela de login do sistema</strong> (<span className="text-primary font-medium">/login</span>) para acessar sua agenda.
+        <p className="text-xs text-text-secondary leading-relaxed">
+          Você atingiu o limite de profissionais cadastrados no seu plano atual. Faça o upgrade para adicionar mais barbeiros à sua equipe.
+        </p>
+
+        <div className="p-3.5 rounded-xl bg-background border border-secondary space-y-2 text-xs">
+          <div className="flex items-center justify-between text-text-primary font-medium">
+            <span>Barber Pro</span>
+            <span className="text-primary font-bold">R$ 89,90/mês</span>
+          </div>
+          <p className="text-[11px] text-text-secondary">
+            • Até 15 barbeiros na equipe<br />
+            • Robô IA no WhatsApp incluso
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard/assinatura"
+          className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md shadow-primary/20 transition-all hover:scale-[1.02]"
+        >
+          <Zap size={14} /> Fazer Upgrade da Assinatura
+        </Link>
+      </div>
+    );
+  }
+
+  // CASO 2: FORMULÁRIO DISPONÍVEL
+  return (
+    <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm space-y-5">
+      <div>
+        <h3 className="font-semibold text-text-primary text-sm flex items-center gap-2">
+          <UserPlus size={18} className="text-primary" /> Novo Profissional
+        </h3>
+        <p className="text-xs text-text-secondary mt-0.5">
+          Cadastre um novo barbeiro para atender na barbearia.
         </p>
       </div>
 
       {message && (
         <div
-          className={`mb-6 p-4 rounded-xl text-sm flex flex-col gap-2 animate-fade-in ${
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
             message.type === "success"
-              ? "bg-success/10 border border-success/20 text-success font-medium"
-              : "bg-danger/15 border-2 border-danger/40 text-danger font-medium"
+              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium"
+              : "bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium"
           }`}
         >
-          <div className="flex items-start gap-2">
-            {message.type === "success" ? (
-              <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
-            ) : (
-              <AlertCircle size={18} className="shrink-0 mt-0.5 text-danger" />
-            )}
-            <span className="text-xs leading-relaxed">{message.text}</span>
-          </div>
-
-          {message.type === "error" && message.text.toLowerCase().includes("plano") && (
-            <div className="pt-2 border-t border-danger/20 flex justify-end">
-              <Link
-                href="/dashboard/assinatura"
-                className="inline-flex items-center gap-1 text-xs font-bold bg-danger text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
-              >
-                Fazer Upgrade Agora <ArrowUpRight size={13} />
-              </Link>
-            </div>
+          {message.type === "success" ? (
+            <CheckCircle2 size={16} className="shrink-0" />
+          ) : (
+            <AlertCircle size={16} className="shrink-0" />
           )}
+          <span>{message.text}</span>
         </div>
       )}
-      
+
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-        {/* SELETOR VISUAL DE FOTO / AVATAR DO BARBEIRO */}
-        <div className="p-4 bg-background/60 border border-secondary rounded-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
-              <Camera size={14} className="text-primary" /> Foto / Avatar do Barbeiro
-            </label>
-            {avatarUrl && (
-              <button
-                type="button"
-                onClick={() => setAvatarUrl("")}
-                className="text-[11px] text-text-secondary hover:text-danger transition-colors"
-              >
-                Remover foto
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Preview do Avatar */}
-            <div className="relative shrink-0">
-              <div className="w-16 h-16 rounded-full border-2 border-primary/60 overflow-hidden bg-surface flex items-center justify-center shadow-md">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onError={() => setAvatarUrl("")}
-                  />
-                ) : (
-                  <span className="text-xl font-bold text-text-secondary uppercase">
-                    {nameInput ? nameInput.charAt(0) : <Camera size={20} />}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-1">
-              <p className="text-xs font-medium text-text-secondary">Escolha uma foto da galeria rápida ou cole a URL:</p>
-              <input
-                type="url"
-                name="avatar_url"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://exemplo.com/foto.jpg"
-                className="w-full bg-background border border-secondary rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Galeria de Avatares Rápidos */}
-          <div>
-            <div className="flex items-center gap-1 text-[11px] text-text-secondary mb-2 font-medium">
-              <Sparkles size={12} className="text-primary" /> Modelos profissionais recomendados:
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {BARBER_AVATAR_PRESETS.map((preset) => {
-                const isSelected = avatarUrl === preset.image_url;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setAvatarUrl(preset.image_url)}
-                    title={`${preset.name} - ${preset.roleTitle}`}
-                    className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all group ${
-                      isSelected
-                        ? "border-primary ring-2 ring-primary/40 scale-95"
-                        : "border-secondary/60 hover:border-primary/60"
-                    }`}
-                  >
-                    <img
-                      src={preset.image_url}
-                      alt={preset.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
-                        <div className="bg-primary text-black rounded-full p-0.5 shadow-sm">
-                          <Check size={12} strokeWidth={3} />
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Seletor de Foto do Barbeiro */}
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-2">
+            Foto / Avatar do Profissional
+          </label>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {BARBER_AVATAR_PRESETS.slice(0, 5).map((preset) => {
+              const isSelected = avatarUrl === preset.image_url;
+              return (
+                <button
+                  type="button"
+                  key={preset.id}
+                  onClick={() => setAvatarUrl(isSelected ? "" : preset.image_url)}
+                  className={`relative w-10 h-10 rounded-xl overflow-hidden border transition-all shrink-0 ${
+                    isSelected 
+                      ? "border-primary ring-2 ring-primary/30 scale-105" 
+                      : "border-secondary hover:border-text-secondary opacity-70 hover:opacity-100"
+                  }`}
+                  title={preset.name}
+                >
+                  <img src={preset.image_url} alt={preset.name} className="w-full h-full object-cover" />
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-primary/40 flex items-center justify-center">
+                      <Check size={12} className="text-white stroke-[3]" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
+        {/* Nome Completo */}
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
-          <input 
-            type="text" 
+          <label className="block text-xs font-medium text-text-secondary mb-1">
+            Nome Completo
+          </label>
+          <input
+            type="text"
             name="name"
             required
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value)}
-            placeholder="Ex: Carlos Oliveira"
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+            placeholder="Ex: Carlos Silva"
+            className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
           />
         </div>
-        
+
+        {/* E-mail de Login */}
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">E-mail (Login)</label>
-          <input 
-            type="email" 
+          <label className="block text-xs font-medium text-text-secondary mb-1">
+            E-mail de Acesso
+          </label>
+          <input
+            type="email"
             name="email"
             required
             placeholder="carlos@barbearia.com"
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
           />
         </div>
 
+        {/* Telefone / WhatsApp */}
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Telefone / WhatsApp</label>
-          <input 
-            type="tel" 
+          <label className="block text-xs font-medium text-text-secondary mb-1">
+            WhatsApp
+          </label>
+          <input
+            type="text"
             name="phone"
             placeholder="(11) 99999-9999"
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
           />
         </div>
 
+        {/* Senha */}
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1">Senha de Acesso</label>
-          <input 
-            type="password" 
+          <label className="block text-xs font-medium text-text-secondary mb-1">
+            Senha Provisória
+          </label>
+          <input
+            type="password"
             name="password"
             required
-            placeholder="••••••••"
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+            placeholder="Mínimo 6 caracteres"
+            className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Tipo de Contrato & Comissão */}
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">Tipo Contrato</label>
-            <select 
+            <label className="block text-xs font-medium text-text-secondary mb-1">
+              Contrato
+            </label>
+            <select
               name="employment_type"
-              className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-background border border-secondary rounded-xl px-2.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
             >
-              <option value="COMMISSION_ONLY">Comissão</option>
+              <option value="COMMISSION">Comissão</option>
               <option value="CLT">CLT</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">Comissão Serviços (%)</label>
-            <input 
-              type="number" 
+            <label className="block text-xs font-medium text-text-secondary mb-1">
+              Comissão (%)
+            </label>
+            <input
+              type="number"
               name="service_commission_rate"
-              defaultValue="50"
-              min="0"
-              max="100"
-              className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
+              defaultValue={50}
+              min={0}
+              max={100}
+              className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
             />
           </div>
         </div>
 
-        <button 
+        <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-primary text-black font-bold py-3.5 rounded-lg hover:bg-primary-hover transition-colors mt-2 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+          className="w-full mt-2 bg-primary hover:bg-primary-hover text-white font-bold py-2.5 rounded-xl text-xs shadow-md shadow-primary/20 transition-colors flex items-center justify-center gap-2"
         >
-          {isLoading ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
-          Cadastrar Barbeiro
+          {isLoading ? (
+            <>
+              <Loader2 size={14} className="animate-spin" /> Cadastrando...
+            </>
+          ) : (
+            "Cadastrar Barbeiro"
+          )}
         </button>
       </form>
     </div>

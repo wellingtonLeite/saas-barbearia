@@ -10,13 +10,11 @@ import {
   RefreshCw, 
   Bot, 
   Sparkles, 
-  Crown, 
-  Clock, 
-  CalendarCheck, 
-  Mic, 
+  Lock, 
   ArrowRight,
   ShieldCheck,
-  Zap
+  Zap,
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 
@@ -42,8 +40,9 @@ export function WhatsappConnection({
 
   const instanceName = slug || phone?.replace(/\D/g, "") || `tenant_${tenantId.slice(0, 8)}`;
 
-  // Verificar status atual da conexão ao carregar
+  // Verificar status atual da conexão ao carregar (apenas se tiver SDR)
   useEffect(() => {
+    if (!hasWhatsappSdr) return;
     let isMounted = true;
 
     async function checkCurrentStatus() {
@@ -64,11 +63,11 @@ export function WhatsappConnection({
     return () => {
       isMounted = false;
     };
-  }, [instanceName]);
+  }, [instanceName, hasWhatsappSdr]);
 
-  // Polling para checar se o usuário leu o QR Code
+  // Polling para checar leitura do QR Code
   useEffect(() => {
-    if (status !== "connecting") return;
+    if (!hasWhatsappSdr || status !== "connecting") return;
 
     const interval = setInterval(async () => {
       try {
@@ -87,9 +86,10 @@ export function WhatsappConnection({
     }, 3500);
 
     return () => clearInterval(interval);
-  }, [status, instanceName]);
+  }, [status, instanceName, hasWhatsappSdr]);
 
   const handleConnect = async () => {
+    if (!hasWhatsappSdr) return;
     setIsLoading(true);
     setErrorMessage(null);
     try {
@@ -113,7 +113,7 @@ export function WhatsappConnection({
         setQrCode(qrSource);
         setStatus("connecting");
       } else {
-        throw new Error("QR Code não recebido do servidor do WhatsApp.");
+        throw new Error("QR Code não recebido do servidor.");
       }
     } catch (error: any) {
       console.error("Erro ao conectar WhatsApp:", error);
@@ -123,74 +123,111 @@ export function WhatsappConnection({
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Banner de Upgrade para Planos sem IA SDR */}
-      {!hasWhatsappSdr && (
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-surface to-amber-500/5 p-6 shadow-xl">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                  <Crown size={12} /> {planName} • WhatsApp Manual Ativo
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-text-primary">
-                Quer que a IA atenda e agende sozinha no WhatsApp 24h por dia?
-              </h3>
-              <p className="text-sm text-text-secondary max-w-2xl">
-                Seu plano atual permite disparar mensagens manuais. Para que o <strong>Agente IA SDR</strong> responda mensagens, consulte a agenda e marque horários automaticamente, faça o upgrade para o Plano VIP.
-              </p>
-            </div>
-            <Link
-              href="/dashboard/assinatura"
-              className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-bold text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-105"
-            >
-              <Zap size={16} /> Liberar IA SDR no VIP <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Card Principal de Conexão com Status em Destaque */}
-      <div className="bg-surface border border-secondary rounded-2xl p-6 md:p-8 shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-secondary/50">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary/10 text-primary rounded-xl border border-primary/20">
-                <Smartphone size={24} />
+  // CASO 1: PLANO GRATUITO (SEM IA SDR)
+  if (!hasWhatsappSdr) {
+    return (
+      <div className="space-y-6">
+        {/* Card Status Manual */}
+        <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-secondary/50 text-text-secondary shrink-0">
+                <MessageSquare size={22} />
               </div>
               <div>
-                <h2 className="text-xl font-display font-bold text-text-primary flex items-center gap-2">
-                  Conexão com o WhatsApp
-                </h2>
-                <p className="text-xs text-text-secondary font-mono mt-0.5">
-                  Instância: <span className="text-text-primary font-semibold">{instanceName}</span>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-text-primary">WhatsApp Manual Ativo</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-secondary text-text-secondary font-medium">
+                    Plano Gratuito
+                  </span>
+                </div>
+                <p className="text-sm text-text-secondary mt-1">
+                  Suas mensagens e confirmações são enviadas pelo próprio barbeiro através de links diretos do WhatsApp ao criar ou finalizar atendimentos.
                 </p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Status Badge Visual */}
+        {/* Card Apresentação & Upgrade Barber Pro/VIP */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-surface to-surface/80 border border-primary/30 rounded-2xl p-6 sm:p-8 shadow-xl">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
+                <Sparkles size={13} /> Automação com Inteligência Artificial
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
+                Atendimento e Agendamento Automático 24h
+              </h2>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                No **Barber Pro** e **Barber VIP**, seu WhatsApp é conectado a um Agente de IA que responde clientes, consulta a agenda dos barbeiros e confirma horários sozinho, mesmo de madrugada ou feriados.
+              </p>
+              
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-secondary pt-2">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  Agendamento em tempo real no banco
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  Compreende texto e áudios de voz
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  Atendimento 24/7 sem fila de espera
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                  Lembretes para redução de faltas
+                </li>
+              </ul>
+            </div>
+
+            <div className="shrink-0 flex flex-col gap-3">
+              <Link 
+                href="/dashboard/assinatura"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/25 transition-all hover:scale-[1.02]"
+              >
+                <Zap size={16} /> Fazer Upgrade para Barber Pro
+              </Link>
+              <span className="text-center text-[11px] text-text-secondary">
+                A partir de R$ 89,90/mês
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // CASO 2: PLANOS PRO OU VIP (COM IA SDR)
+  return (
+    <div className="space-y-6">
+      {/* Card de Conexão */}
+      <div className="bg-surface border border-secondary rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-secondary/50">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+              <Smartphone size={22} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-text-primary">Conexão do WhatsApp da Barbearia</h3>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Instância: <code className="text-primary font-mono">{instanceName}</code>
+              </p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3">
-            {status === "connected" && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-                <span className="font-bold text-sm">🟢 WhatsApp Conectado</span>
+            {status === "connected" ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                WhatsApp Conectado
               </div>
-            )}
-
-            {status === "connecting" && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-                <Loader2 className="animate-spin text-amber-400" size={16} />
-                <span className="font-bold text-sm">🟡 Aguardando Leitura</span>
-              </div>
-            )}
-
-            {status === "disconnected" && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                <span className="font-bold text-sm">🔴 Desconectado</span>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-secondary text-xs font-medium text-text-secondary">
+                <span className="w-2 h-2 rounded-full bg-slate-500" />
+                Desconectado
               </div>
             )}
 
@@ -198,10 +235,10 @@ export function WhatsappConnection({
               <button
                 onClick={handleConnect}
                 disabled={isLoading}
-                title="Reconectar ou Gerar Novo QR Code"
-                className="p-2.5 text-text-secondary hover:text-white bg-background border border-secondary rounded-xl hover:border-primary/50 transition-colors"
+                title="Reconectar WhatsApp"
+                className="p-2 text-text-secondary hover:text-text-primary rounded-lg border border-secondary hover:bg-secondary/50 transition-colors"
               >
-                <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+                <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
               </button>
             )}
           </div>
@@ -209,178 +246,77 @@ export function WhatsappConnection({
 
         {/* Mensagem de Erro se houver */}
         {errorMessage && (
-          <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3">
-            <AlertCircle size={20} className="shrink-0" />
+          <div className="mt-4 p-3.5 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Estado Desconectado - Botão de Ação */}
-        {status === "disconnected" && (
-          <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-xl bg-background/60 border border-secondary">
-            <div className="space-y-1 text-center md:text-left">
-              <h3 className="text-base font-bold text-text-primary flex items-center gap-2 justify-center md:justify-start">
-                <QrCode size={18} className="text-primary" /> Conecte o aparelho da sua barbearia
-              </h3>
-              <p className="text-sm text-text-secondary">
-                Clique no botão ao lado para gerar o QR Code oficial e sincronizar seu WhatsApp em poucos segundos.
-              </p>
+        {/* Conteúdo dependendo do status */}
+        <div className="mt-6">
+          {status === "connected" ? (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-sm text-emerald-400">
+              <CheckCircle2 size={18} className="shrink-0" />
+              <div>
+                <p className="font-semibold text-text-primary">Instância conectada e operacional!</p>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  O Agente IA SDR está ativo respondendo mensagens e agendando horários no seu WhatsApp.
+                </p>
+              </div>
             </div>
+          ) : qrCode ? (
+            <div className="flex flex-col md:flex-row items-center gap-8 p-6 bg-background rounded-xl border border-secondary">
+              <div className="bg-white p-3 rounded-2xl shadow-lg shrink-0">
+                <img 
+                  src={qrCode} 
+                  alt="QR Code WhatsApp" 
+                  className="w-56 h-56 object-contain"
+                />
+              </div>
 
-            <button
-              onClick={handleConnect}
-              disabled={isLoading}
-              className="shrink-0 flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold transition-all disabled:opacity-50 shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  <span>Gerando QR Code...</span>
-                </>
-              ) : (
-                <>
-                  <QrCode size={20} />
-                  <span>Gerar QR Code de Conexão</span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
+              <div className="space-y-4 text-sm flex-1">
+                <div className="flex items-center gap-2 text-primary font-semibold">
+                  <QrCode size={18} /> Escaneie o QR Code para conectar
+                </div>
 
-        {/* Estado Conectando - Exibição do QR Code Grande e Instruções */}
-        {status === "connecting" && qrCode && (
-          <div className="mt-8 p-6 md:p-10 border border-secondary rounded-2xl bg-background/80 flex flex-col items-center text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 text-xs font-bold mb-4">
-              <Sparkles size={14} /> Passo a Passo de Conexão
+                <ol className="space-y-2.5 text-xs text-text-secondary list-decimal list-inside leading-relaxed">
+                  <li>Abra o **WhatsApp** no celular da barbearia.</li>
+                  <li>Toque em **Configurações / Aparelhos Conectados**.</li>
+                  <li>Toque em **Conectar um aparelho** e aponte para o código.</li>
+                </ol>
+
+                <div className="flex items-center gap-2 text-xs text-text-secondary pt-2">
+                  <Loader2 size={14} className="animate-spin text-primary" />
+                  Aguardando leitura do QR Code...
+                </div>
+              </div>
             </div>
-            
-            <h3 className="text-2xl font-display font-bold text-text-primary mb-3">
-              Escaneie o QR Code com seu WhatsApp
-            </h3>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-background rounded-xl border border-secondary">
+              <div>
+                <h4 className="text-sm font-semibold text-text-primary">Conectar número do WhatsApp</h4>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Gere o QR Code para parear o número da barbearia com a inteligência artificial.
+                </p>
+              </div>
 
-            <ol className="text-left text-sm text-text-secondary max-w-md space-y-2 mb-8 bg-surface p-4 rounded-xl border border-secondary/60">
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
-                <span>Abra o WhatsApp no celular da sua barbearia.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
-                <span>Toque em <strong>Aparelhos Conectados</strong> e depois em <strong>Conectar um aparelho</strong>.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
-                <span>Aponte a câmera do celular para o código abaixo:</span>
-              </li>
-            </ol>
-
-            {/* Container do QR Code em tamanho grande com contraste ideal */}
-            <div className="relative p-6 bg-white rounded-3xl shadow-2xl border-4 border-primary/40 inline-block">
-              <img 
-                src={qrCode} 
-                alt="QR Code WhatsApp" 
-                width={280} 
-                height={280}
-                className="rounded-xl object-contain block mx-auto"
-              />
+              <button
+                onClick={handleConnect}
+                disabled={isLoading}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-primary/20 shrink-0"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Gerando QR Code...
+                  </>
+                ) : (
+                  <>
+                    <QrCode size={14} /> Gerar QR Code
+                  </>
+                )}
+              </button>
             </div>
-
-            <div className="mt-8 flex items-center gap-3 px-5 py-2.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <Loader2 className="animate-spin text-primary shrink-0" size={18} />
-              <span className="text-sm font-semibold">
-                Aguardando leitura do celular... A tela atualizará automaticamente!
-              </span>
-            </div>
-
-            <button
-              onClick={handleConnect}
-              disabled={isLoading}
-              className="mt-4 text-xs text-text-secondary hover:text-text-primary underline flex items-center gap-1.5 cursor-pointer"
-            >
-              <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} /> O código expirou? Clique para gerar outro
-            </button>
-          </div>
-        )}
-
-        {/* Estado Conectado - Confirmação */}
-        {status === "connected" && (
-          <div className="mt-6 p-6 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center gap-4">
-            <div className="p-3 bg-emerald-500/20 rounded-xl text-emerald-400 shrink-0">
-              <CheckCircle2 size={24} />
-            </div>
-            <div>
-              <h4 className="font-bold text-text-primary text-base">
-                Instância do WhatsApp Conectada com Sucesso!
-              </h4>
-              <p className="text-sm text-text-secondary mt-0.5">
-                Seu número está pronto para interações automáticas, envio de confirmações e integração com o Agente SDR.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Card Especial: Apresentação do Agente IA SDR */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-b from-surface via-surface to-primary/5 p-6 md:p-8 shadow-xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-            <Bot size={28} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-display font-bold text-text-primary">
-                Agente IA SDR no WhatsApp
-              </h3>
-              <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                Inteligência Artificial
-              </span>
-            </div>
-            <p className="text-sm text-text-secondary mt-1">
-              Seu assistente virtual 24h que atende, tira dúvidas e agenda cortes automaticamente.
-            </p>
-          </div>
-        </div>
-
-        {/* Grid de Recursos do SDR */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-background/70 border border-secondary hover:border-primary/40 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 text-primary flex items-center justify-center mb-3">
-              <Clock size={20} />
-            </div>
-            <h4 className="font-bold text-text-primary text-sm mb-1">Atendimento 24/7</h4>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              Atende clientes mesmo fora do horário comercial, fins de semana e feriados sem atrasos.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-background/70 border border-secondary hover:border-primary/40 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3">
-              <CalendarCheck size={20} />
-            </div>
-            <h4 className="font-bold text-text-primary text-sm mb-1">Agendamento Real-Time</h4>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              Consulta a agenda dos barbeiros e confirma o agendamento diretamente no banco de dados.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-background/70 border border-secondary hover:border-primary/40 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center mb-3">
-              <Mic size={20} />
-            </div>
-            <h4 className="font-bold text-text-primary text-sm mb-1">Entende Áudios e Texto</h4>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              Transcreve áudios com IA e responde de forma natural e amigável aos clientes da barbearia.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-background/70 border border-secondary hover:border-primary/40 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center mb-3">
-              <ShieldCheck size={20} />
-            </div>
-            <h4 className="font-bold text-text-primary text-sm mb-1">Zero Faltas (No-Show)</h4>
-            <p className="text-xs text-text-secondary leading-relaxed">
-              Dispara lembretes automáticos com links rápidos para confirmar ou reagendar horários.
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
