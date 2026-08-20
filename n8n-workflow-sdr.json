@@ -1,5 +1,5 @@
 {
-  "name": "SDR 88barber - Agente IA Multi-Tenant (Completo)",
+  "name": "SDR 88barber - Agente IA Multi-Tenant (Autônomo com Tool)",
   "nodes": [
     {
       "parameters": {
@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 5. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || '';\nconst serverUrl = payload.server_url || payload.serverUrl || '';\nconst apiKey = payload.apikey || payload.apiKey || '';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 6. Regra de validação: mensagem real, 1:1, recebida (não enviada por nós)\nconst isValid = !fromMe && !isGroup && !isStatus && userMessage.length > 0;\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  reason,\n  userMessage,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || 'conversation'\n};"
+        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 5. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || '';\nconst serverUrl = payload.server_url || payload.serverUrl || 'https://evolution.88barber.top';\nconst apiKey = payload.apikey || payload.apiKey || '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 6. Regra de validação: mensagem real, 1:1, recebida (não enviada por nós)\nconst isValid = !fromMe && !isGroup && !isStatus && userMessage.length > 0;\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  reason,\n  userMessage,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || 'conversation'\n};"
       },
       "id": "processar-mensagem",
       "name": "Processar e Validar Mensagem",
@@ -86,9 +86,10 @@
     },
     {
       "parameters": {
+        "promptType": "define",
         "text": "={{ $('Processar e Validar Mensagem').item.json.userMessage }}",
         "options": {
-          "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## REGRAS IMPORTANTES\n1. Você é o atendente virtual da barbearia. NUNCA diga que é uma IA.\n2. Seja humano, amigável e direto. Use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n3. Responda de forma CURTA. Máximo 3 frases por mensagem.\n4. Sempre ofereça opções claras de horário quando o cliente quer agendar.\n5. Para cancelar: demonstre empatia, confirme o horário e cancele.\n6. Para remarcar: cancele o antigo e agende o novo.\n7. Para dúvidas de preço: informe e já ofereça agendamento.\n8. Se perguntar algo fora do seu escopo, diga gentilmente que só cuida da agenda.\n9. SEMPRE finalize agendamentos com confirmação clara: dia, hora, barbeiro e serviço.\n10. Se o cliente disser apenas \"oi\" ou \"olá\", cumprimente e pergunte como pode ajudar."
+          "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## INSTRUÇÕES DE AGENDAMENTO AUTÔNOMO:\n1. Você é o recepcionista da barbearia. Seja amigável, direto e use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n2. Quando o cliente solicitar horário, verifique serviço, barbeiro de preferência e horário.\n3. Quando o cliente CONFIRMAR o agendamento (ex: \"pode sim\", \"confirma\", \"fechado\", \"quero esse horário\"), você DEVE EXECUTAR A FERRAMENTA `criar_agendamento` para gravar o agendamento no sistema oficial da barbearia.\n4. Parâmetros da ferramenta `criar_agendamento`:\n   - instance: \"{{ $('Processar e Validar Mensagem').item.json.instance }}\"\n   - clientPhone: \"{{ $('Processar e Validar Mensagem').item.json.phone }}\"\n   - clientName: \"{{ $('Processar e Validar Mensagem').item.json.pushName }}\"\n   - barberName: nome do barbeiro combinado\n   - serviceName: nome do serviço combinado\n   - time: horário combinado (ex: \"10:15\")\n   - date: data combinada (ex: \"2026-08-20\" ou omita se for hoje)\n5. Após executar a ferramenta, envie a confirmação final calorosa dizendo que já está garantido na agenda do barbeiro!\n6. Responda sempre em no máximo 3-4 frases curtas."
         }
       },
       "id": "agente-groq",
@@ -99,10 +100,9 @@
     },
     {
       "parameters": {
-        "modelId": "llama-3.1-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "options": {
-          "temperature": 0.7,
-          "maxTokens": 500
+          "temperature": 0.5
         }
       },
       "id": "groq-chat-model",
@@ -112,10 +112,27 @@
       "position": [980, 460],
       "credentials": {
         "groqApi": {
-          "id": "COLE_ID_CREDENCIAL_GROQ",
-          "name": "Groq API"
+          "id": "NEt69xAc9NgeNmfp",
+          "name": "Groq account"
         }
       }
+    },
+    {
+      "parameters": {
+        "name": "criar_agendamento",
+        "description": "Grava e confirma o agendamento no banco de dados e agenda oficial da barbearia.",
+        "method": "POST",
+        "url": "https://88barber.top/api/sdr/book",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').item.json.instance }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').item.json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').item.json.pushName }}\",\n  \"barberName\": \"{{ $fromAI('barberName', 'Nome do barbeiro combinado') }}\",\n  \"serviceName\": \"{{ $fromAI('serviceName', 'Nome do serviço combinado') }}\",\n  \"time\": \"{{ $fromAI('time', 'Horário combinado no formato HH:MM') }}\",\n  \"date\": \"{{ $fromAI('date', 'Data no formato YYYY-MM-DD (opcional se for hoje)') }}\"\n}",
+        "options": {}
+      },
+      "id": "tool-criar-agendamento",
+      "name": "Criar Agendamento (Tool)",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [1120, 460]
     },
     {
       "parameters": {
@@ -127,18 +144,18 @@
       "name": "Memória da Conversa",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.2,
-      "position": [1160, 460]
+      "position": [1260, 460]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Processar e Validar Mensagem').item.json.serverUrl }}/message/sendText/{{ $('Processar e Validar Mensagem').item.json.instance }}",
+        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').item.json.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $('Processar e Validar Mensagem').item.json.apiKey }}"
+              "value": "88barber-evolution-pbzJxGX3Ih2OHMKo"
             },
             {
               "name": "Content-Type",
@@ -178,99 +195,6 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [840, 420]
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "webhook-pos-venda",
-        "options": {}
-      },
-      "id": "webhook-pos-venda",
-      "name": "Webhook (Fim de Atendimento)",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [180, 700],
-      "webhookId": "webhook-pos-venda"
-    },
-    {
-      "parameters": {
-        "amount": 15,
-        "unit": "minutes"
-      },
-      "id": "wait-15min",
-      "name": "Aguarda 15 Minutos",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [420, 700]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $('Webhook (Fim de Atendimento)').item.json.body.evolution_url }}/message/sendText/{{ $('Webhook (Fim de Atendimento)').item.json.body.instance }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $('Webhook (Fim de Atendimento)').item.json.body.evolution_apikey }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $('Webhook (Fim de Atendimento)').item.json.body.cliente_whatsapp,\n  text: `E aí ${$('Webhook (Fim de Atendimento)').item.json.body.cliente_nome}! Passando pra saber o que achou do atendimento de hoje? 💈\\n\\nSe curtiu, dá aquela moral pra gente avaliando aqui rapidinho (leva 10 segundos):\\n${$('Webhook (Fim de Atendimento)').item.json.body.link_avaliacao}\\n\\nTeu feedback faz toda diferença pra gente, valeu! 🤜🤛`\n}) }}",
-        "options": {}
-      },
-      "id": "enviar-avaliacao",
-      "name": "Dispara Pedido de Avaliação",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 700]
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "webhook-lembrete",
-        "options": {}
-      },
-      "id": "webhook-lembrete",
-      "name": "Webhook (Lembrete de Agendamento)",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [180, 960],
-      "webhookId": "webhook-lembrete"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $json.body.evolution_url }}/message/sendText/{{ $json.body.instance }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $json.body.evolution_apikey }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $json.body.cliente_whatsapp,\n  text: `Fala ${$json.body.cliente_nome}! Passando pra lembrar que você tem horário marcado amanhã às ${$json.body.horario} com o ${$json.body.barbeiro}. 💈\\n\\nTá confirmado? Responde aí um 👍 que a gente te espera!`\n}) }}",
-        "options": {}
-      },
-      "id": "enviar-lembrete",
-      "name": "Dispara Lembrete",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [460, 960]
     }
   ],
   "connections": {
@@ -336,6 +260,17 @@
         ]
       ]
     },
+    "Criar Agendamento (Tool)": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Groq (Llama)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Memória da Conversa": {
       "ai_memory": [
         [
@@ -368,46 +303,9 @@
           }
         ]
       ]
-    },
-    "Webhook (Fim de Atendimento)": {
-      "main": [
-        [
-          {
-            "node": "Aguarda 15 Minutos",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Aguarda 15 Minutos": {
-      "main": [
-        [
-          {
-            "node": "Dispara Pedido de Avaliação",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook (Lembrete de Agendamento)": {
-      "main": [
-        [
-          {
-            "node": "Dispara Lembrete",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
-  "pinData": {},
   "settings": {
     "executionOrder": "v1"
-  },
-  "staticData": null,
-  "tags": [],
-  "triggerCount": 0
+  }
 }
