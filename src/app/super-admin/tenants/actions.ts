@@ -21,6 +21,23 @@ export async function toggleTenantStatusAction(formData: FormData): Promise<void
   revalidatePath("/super-admin/tenants");
 }
 
+export async function toggleTenantAccess(tenantId: string, active: boolean) {
+  const session = await auth();
+  if (session?.user?.role !== "SUPER_ADMIN") return { error: "Não autorizado" };
+
+  try {
+    await db.tenant.update({
+      where: { id: tenantId },
+      data: { active }
+    });
+
+    revalidatePath("/super-admin/tenants");
+    return { success: true };
+  } catch (error: any) {
+    return { error: "Erro ao alterar status de acesso da barbearia." };
+  }
+}
+
 export async function updateSubscriptionAction(formData: FormData) {
   const session = await auth();
   if (session?.user?.role !== "SUPER_ADMIN") throw new Error("Não autorizado");

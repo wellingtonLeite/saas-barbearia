@@ -7,6 +7,7 @@ import {
   updateSubscriptionAction, 
   deleteTenantPermanentAction 
 } from "./actions";
+import { TenantAccessToggle } from "./tenant-access-toggle";
 
 export default async function TenantsPage({ searchParams }: { searchParams: Promise<{ editPlanFor?: string, deleteTenantFor?: string }> }) {
   const resolvedParams = await searchParams;
@@ -107,21 +108,11 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
                       ) : "-"}
                     </td>
                     <td className="py-4 px-6">
-                      <form action={toggleTenantStatusAction}>
-                        <input type="hidden" name="tenantId" value={tenant.id} />
-                        <input type="hidden" name="currentStatus" value={String(tenant.active)} />
-                        <button 
-                          type="submit" 
-                          title={tenant.active ? "Bloquear Acesso" : "Desbloquear Acesso"}
-                          className={`p-2 rounded-xl border transition-all ${
-                            tenant.active 
-                              ? "bg-success/10 text-success border-success/30 hover:bg-danger/20 hover:text-danger hover:border-danger/30" 
-                              : "bg-danger/10 text-danger border-danger/30 hover:bg-success/20 hover:text-success hover:border-success/30"
-                          }`}
-                        >
-                          {tenant.active ? <Power size={18} /> : <PowerOff size={18} />}
-                        </button>
-                      </form>
+                      <TenantAccessToggle 
+                        tenantId={tenant.id} 
+                        initialActive={tenant.active} 
+                        tenantName={tenant.name} 
+                      />
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
