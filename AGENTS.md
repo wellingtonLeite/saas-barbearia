@@ -41,6 +41,17 @@ The Project Manager continuously monitors and evaluates the performance of every
 3. **Strict Code Review**: Review all code changes, diffs, types, and build status before approving.
 4. **Executive Synthesis**: Report the validated, production-ready outcome directly to the CEO.
 
+## 6. Master Multi-Tenant SDR Architecture (Workflow Único Universal)
+- **Single Master Workflow**: Existe e sempre existirá **apenas 1 único workflow central no n8n** para atender simultaneamente a todas as barbearias parceiras do SaaS.
+- **Zero Hardcoding**: É terminantemente proibido colocar nomes fixos de barbearias ou instâncias (ex: `ms-barber`) dentro dos nós do n8n ou no código backend.
+- **Roteamento Dinâmico por Tenant (`instance`)**:
+  - O webhook da Evolution API recebe a mensagem de qualquer barbearia com a chave `{ instance }`.
+  - O nó `Processar e Validar Mensagem` extrai a `instance`, `phone`, `pushName` e `userMessage`.
+  - A API `/api/sdr/context?instance={{ instance }}` busca o banco de dados do tenant específico (serviços, barbeiros, horários, preços).
+  - A ferramenta `/api/sdr/book` grava o agendamento no tenant correspondente via `instance`.
+  - O nó de resposta envia a mensagem para `/message/sendText/{{ instance }}`.
+  - A memória da conversa usa chave isolada: `sessionKey: {{ remoteJid }}_{{ instance }}` para que conversas de barbearias diferentes nunca se cruzem.
+
 # Custom Project Rules & Skill Triggers
 
 You are working in a modern Next.js 16 environment. To ensure you use the most up-to-date syntax, **always** activate the relevant skills before making changes:
