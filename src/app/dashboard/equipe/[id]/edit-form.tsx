@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { updateTeamMember, deleteTeamMember, toggleBarberActive } from "@/app/actions/team";
-import { Save, Trash2, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Scissors, ShieldAlert, Crown, Shield } from "lucide-react";
+import { Save, Trash2, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Scissors, ShieldAlert, Camera, Sparkles, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { BARBER_AVATAR_PRESETS } from "@/lib/catalog-presets";
 
 interface EditBarberFormProps {
   barber: {
@@ -11,6 +12,7 @@ interface EditBarberFormProps {
     name: string;
     email: string;
     phone?: string | null;
+    avatar_url?: string | null;
     role?: string;
   };
   contract: {
@@ -35,6 +37,8 @@ export function EditBarberForm({
   const [employmentType, setEmploymentType] = useState<string>(contract.employment_type || "COMMISSION_ONLY");
   const [showPassword, setShowPassword] = useState(false);
   const [isActive, setIsActive] = useState(initialActive);
+  const [avatarUrl, setAvatarUrl] = useState(barber.avatar_url || "");
+  const [nameInput, setNameInput] = useState(barber.name);
   const [isToggling, setIsToggling] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -72,6 +76,7 @@ export function EditBarberForm({
 
     const formData = new FormData(e.currentTarget);
     formData.append("barberId", barber.id);
+    formData.set("avatar_url", avatarUrl);
 
     try {
       const res = await updateTeamMember(formData);
@@ -152,7 +157,7 @@ export function EditBarberForm({
       </div>
 
       <div className="flex justify-between items-center pt-2">
-        <h2 className="text-xl font-bold text-text-primary">Dados Cadastrais</h2>
+        <h2 className="text-xl font-bold text-text-primary">Dados Cadastrais & Foto de Perfil</h2>
         {!isOwner && (
           <button
             type="button"
@@ -193,12 +198,102 @@ export function EditBarberForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* SELETOR VISUAL DE FOTO / AVATAR DO BARBEIRO */}
+        <div className="p-5 bg-background/60 border border-secondary rounded-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
+              <Camera size={16} className="text-primary" /> Foto de Perfil do Profissional
+            </label>
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={() => setAvatarUrl("")}
+                className="text-xs text-text-secondary hover:text-danger transition-colors font-medium"
+              >
+                Remover foto
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            {/* Preview da Foto */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 rounded-full border-2 border-primary overflow-hidden bg-surface flex items-center justify-center shadow-lg">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={nameInput}
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarUrl("")}
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-text-secondary uppercase">
+                    {nameInput ? nameInput.charAt(0) : <Camera size={24} />}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 w-full space-y-1.5">
+              <p className="text-xs font-medium text-text-secondary">URL da Foto de Perfil (Unsplash, Imgur, CDN):</p>
+              <input
+                type="url"
+                name="avatar_url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full bg-background border border-secondary rounded-xl px-4 py-2.5 text-xs text-text-primary focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Galeria de Fotos Rápidas */}
+          <div>
+            <div className="flex items-center gap-1.5 text-xs text-text-secondary mb-2 font-medium">
+              <Sparkles size={14} className="text-primary" /> Sugestões de Fotos Profissionais (1 clique):
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {BARBER_AVATAR_PRESETS.map((preset) => {
+                const isSelected = avatarUrl === preset.image_url;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setAvatarUrl(preset.image_url)}
+                    title={`${preset.name} - ${preset.roleTitle}`}
+                    className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all group ${
+                      isSelected
+                        ? "border-primary ring-2 ring-primary/40 scale-95"
+                        : "border-secondary/60 hover:border-primary/60"
+                    }`}
+                  >
+                    <img
+                      src={preset.image_url}
+                      alt={preset.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                        <div className="bg-primary text-black rounded-full p-0.5 shadow-sm">
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
           <input
             type="text"
             name="name"
-            defaultValue={barber.name}
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
             required
             className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
           />
@@ -335,7 +430,7 @@ export function EditBarberForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-primary text-white font-bold py-3.5 rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+          className="w-full bg-primary text-black font-bold py-3.5 rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
           Salvar Alterações

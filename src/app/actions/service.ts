@@ -9,9 +9,11 @@ export async function createService(formData: FormData) {
   if (!session?.user?.id) return { error: "Não autorizado" };
 
   const name = formData.get("name") as string;
+  const description = (formData.get("description") as string) || null;
   const priceStr = formData.get("price") as string;
   const durationStr = formData.get("duration") as string;
   const categoryId = formData.get("categoryId") as string | null;
+  const image_url = (formData.get("image_url") as string) || null;
 
   if (!name || !priceStr || !durationStr) return { error: "Preencha todos os campos" };
 
@@ -27,8 +29,10 @@ export async function createService(formData: FormData) {
       data: {
         tenantId: tenant.id,
         name,
+        description,
         price,
         duration_minutes: duration,
+        image_url,
         categoryId: categoryId || null
       }
     });
@@ -38,6 +42,47 @@ export async function createService(formData: FormData) {
   } catch (error) {
     console.error(error);
     return { error: "Erro ao criar serviço" };
+  }
+}
+
+export async function updateService(serviceId: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autorizado" };
+
+  const name = formData.get("name") as string;
+  const description = (formData.get("description") as string) || null;
+  const priceStr = formData.get("price") as string;
+  const durationStr = formData.get("duration") as string;
+  const categoryId = formData.get("categoryId") as string | null;
+  const image_url = (formData.get("image_url") as string) || null;
+
+  if (!name || !priceStr || !durationStr) return { error: "Preencha todos os campos" };
+
+  const price = parseFloat(priceStr);
+  const duration = parseInt(durationStr);
+
+  try {
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(session.user.id);
+    if (!tenant) return { error: "Não autorizado" };
+
+    await db.service.updateMany({
+      where: { id: serviceId, tenantId: tenant.id },
+      data: {
+        name,
+        description,
+        price,
+        duration_minutes: duration,
+        image_url,
+        categoryId: categoryId || null
+      }
+    });
+
+    revalidatePath("/dashboard/servicos");
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+    return { error: "Erro ao atualizar serviço" };
   }
 }
 

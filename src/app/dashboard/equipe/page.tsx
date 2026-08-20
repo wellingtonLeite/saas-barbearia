@@ -206,8 +206,12 @@ export default async function TeamPage() {
                   <div key={barber.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-hover transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-xl font-bold text-text-primary border border-secondary/80">
-                          {barber.name.charAt(0).toUpperCase()}
+                        <div className="w-14 h-14 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xl font-bold text-text-primary border-2 border-primary/30 shadow-sm">
+                          {barber.avatar_url ? (
+                            <img src={barber.avatar_url} alt={barber.name} className="w-full h-full object-cover" />
+                          ) : (
+                            barber.name.charAt(0).toUpperCase()
+                          )}
                         </div>
                         {isOwner && (
                           <div className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 p-1 rounded-full shadow-lg" title="Proprietário">

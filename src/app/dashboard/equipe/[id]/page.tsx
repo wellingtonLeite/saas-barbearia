@@ -75,8 +75,12 @@ export default async function BarberManagementPage({ params }: { params: Promise
 
       <div className="flex items-center gap-4">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-2xl font-bold text-text-primary border-2 border-secondary">
-            {barber.name.charAt(0).toUpperCase()}
+          <div className="w-16 h-16 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-2xl font-bold text-text-primary border-2 border-primary/40 shadow-md">
+            {barber.avatar_url ? (
+              <img src={barber.avatar_url} alt={barber.name} className="w-full h-full object-cover" />
+            ) : (
+              barber.name.charAt(0).toUpperCase()
+            )}
           </div>
           {isOwner && (
             <div className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 p-1.5 rounded-full shadow-lg" title="Proprietário">
@@ -110,6 +114,7 @@ export default async function BarberManagementPage({ params }: { params: Promise
               name: barber.name,
               email: barber.email,
               phone: barber.phone,
+              avatar_url: barber.avatar_url,
               role: barber.role
             }}
             contract={{

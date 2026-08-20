@@ -12,6 +12,7 @@ export async function addTeamMember(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
+  const avatar_url = (formData.get("avatar_url") as string) || null;
   const password = formData.get("password") as string;
   const employment_type = formData.get("employment_type") as "CLT" | "COMMISSION_ONLY";
   const fixed_salary = parseFloat((formData.get("fixed_salary") as string) || "0");
@@ -84,6 +85,7 @@ export async function addTeamMember(formData: FormData) {
           name,
           email,
           phone,
+          avatar_url,
           password_hash: hashedPassword,
           role: "BARBER"
         }
@@ -157,6 +159,7 @@ export async function updateTeamMember(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
+  const avatar_url = (formData.get("avatar_url") as string) || null;
   const password = formData.get("password") as string;
   const employment_type = formData.get("employment_type") as "CLT" | "COMMISSION_ONLY";
   const fixed_salary = parseFloat((formData.get("fixed_salary") as string) || "0");
@@ -186,7 +189,8 @@ export async function updateTeamMember(formData: FormData) {
     const userDataToUpdate: any = {
       name,
       email,
-      phone
+      phone,
+      avatar_url
     };
 
     if (password && password.trim().length > 0) {
