@@ -1,5 +1,5 @@
 {
-  "name": "SDR 88barber - Agente IA Multi-Tenant (Autônomo com Tool)",
+  "name": "SDR 88barber - Agente IA com Áudio (Whisper Groq + LLaMA)",
   "nodes": [
     {
       "parameters": {
@@ -12,18 +12,18 @@
       "name": "Webhook Evolution",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [180, 300],
+      "position": [160, 300],
       "webhookId": "evolution-webhook"
     },
     {
       "parameters": {
-        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 5. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || '';\nconst serverUrl = payload.server_url || payload.serverUrl || 'https://evolution.88barber.top';\nconst apiKey = payload.apikey || payload.apiKey || '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 6. Regra de validação: mensagem real, 1:1, recebida (não enviada por nós)\nconst isValid = !fromMe && !isGroup && !isStatus && userMessage.length > 0;\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  reason,\n  userMessage,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || 'conversation'\n};"
+        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Detectar áudio / notas de voz\nconst isAudio = Boolean(message.audioMessage || data.messageType === 'audioMessage');\n\n// 5. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 6. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || '';\nconst serverUrl = 'https://evolution.88barber.top';\nconst apiKey = '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 7. Regra de validação: mensagem real, 1:1, recebida (texto ou áudio)\nconst isValid = !fromMe && !isGroup && !isStatus && (userMessage.length > 0 || isAudio);\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (!isAudio && userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  isAudio,\n  reason,\n  userMessage,\n  rawMessage: data || payload,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || (isAudio ? 'audioMessage' : 'conversation')\n};"
       },
       "id": "processar-mensagem",
       "name": "Processar e Validar Mensagem",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [400, 300]
+      "position": [380, 300]
     },
     {
       "parameters": {
@@ -51,7 +51,66 @@
       "name": "Filtro Mensagem",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [620, 300]
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-is-audio",
+              "leftValue": "={{ $json.isAudio }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "verificar-audio",
+      "name": "É Mensagem de Áudio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [820, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://88barber.top/api/sdr/transcribe",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').item.json.instance,\n  message: $('Processar e Validar Mensagem').item.json.rawMessage?.message || $('Processar e Validar Mensagem').item.json.rawMessage\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "transcrever-audio",
+      "name": "Transcrever Áudio (Whisper Groq)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Processar e Validar Mensagem').item.json;\nconst transcribedText = $json.text || '';\n\nreturn {\n  ...original,\n  userMessage: transcribedText,\n  transcription: transcribedText\n};"
+      },
+      "id": "definir-texto-transcrito",
+      "name": "Definir Texto Transcrito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1260, 100]
     },
     {
       "parameters": {
@@ -82,21 +141,21 @@
       "name": "Buscar Contexto Barbearia",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [840, 200]
+      "position": [1480, 200]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $('Processar e Validar Mensagem').item.json.userMessage }}",
+        "text": "={{ $('Definir Texto Transcrito').item?.json?.userMessage || $('Processar e Validar Mensagem').item.json.userMessage }}",
         "options": {
-          "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## INSTRUÇÕES DE AGENDAMENTO AUTÔNOMO:\n1. Você é o recepcionista da barbearia. Seja amigável, direto e use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n2. Quando o cliente solicitar horário, verifique serviço, barbeiro de preferência e horário.\n3. Quando o cliente CONFIRMAR o agendamento (ex: \"pode sim\", \"confirma\", \"fechado\", \"quero esse horário\"), você DEVE EXECUTAR A FERRAMENTA `criar_agendamento` para gravar o agendamento no sistema oficial da barbearia.\n4. Parâmetros da ferramenta `criar_agendamento`:\n   - instance: \"{{ $('Processar e Validar Mensagem').item.json.instance }}\"\n   - clientPhone: \"{{ $('Processar e Validar Mensagem').item.json.phone }}\"\n   - clientName: \"{{ $('Processar e Validar Mensagem').item.json.pushName }}\"\n   - barberName: nome do barbeiro combinado\n   - serviceName: nome do serviço combinado\n   - time: horário combinado (ex: \"10:15\")\n   - date: data combinada (ex: \"2026-08-20\" ou omita se for hoje)\n5. Após executar a ferramenta, envie a confirmação final calorosa dizendo que já está garantido na agenda do barbeiro!\n6. Responda sempre em no máximo 3-4 frases curtas."
+          "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## INSTRUÇÕES DE AGENDAMENTO AUTÔNOMO:\n1. Você é o recepcionista da barbearia. Seja amigável, direto e use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n2. Quando o cliente solicitar horário (por texto ou áudio), verifique o serviço, barbeiro de preferência e horário.\n3. Quando o cliente CONFIRMAR o agendamento (ex: \"pode sim\", \"confirma\", \"fechado\", \"quero esse horário\"), você DEVE EXECUTAR A FERRAMENTA `criar_agendamento` para gravar o agendamento no sistema oficial da barbearia.\n4. Para a ferramenta `criar_agendamento`, você deve fornecer apenas:\n   - barberName: nome do barbeiro combinado\n   - serviceName: nome do serviço combinado\n   - time: horário combinado (ex: \"10:15\")\n   - date: data combinada (ex: \"2026-08-20\" ou omita se for hoje)\n5. Após executar a ferramenta, envie a confirmação final calorosa dizendo que já está garantido na agenda do barbeiro!\n6. Responda sempre em no máximo 3-4 frases curtas."
         }
       },
       "id": "agente-groq",
       "name": "Agente Groq (Llama)",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [1080, 200]
+      "position": [1720, 200]
     },
     {
       "parameters": {
@@ -109,7 +168,7 @@
       "name": "Groq Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [980, 460],
+      "position": [1620, 460],
       "credentials": {
         "groqApi": {
           "id": "NEt69xAc9NgeNmfp",
@@ -125,14 +184,34 @@
         "url": "https://88barber.top/api/sdr/book",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').item.json.instance }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').item.json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').item.json.pushName }}\",\n  \"barberName\": \"{{ $fromAI('barberName', 'Nome do barbeiro combinado') }}\",\n  \"serviceName\": \"{{ $fromAI('serviceName', 'Nome do serviço combinado') }}\",\n  \"time\": \"{{ $fromAI('time', 'Horário combinado no formato HH:MM') }}\",\n  \"date\": \"{{ $fromAI('date', 'Data no formato YYYY-MM-DD (opcional se for hoje)') }}\"\n}",
+        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').item.json.instance }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').item.json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').item.json.pushName }}\",\n  \"barberName\": \"{barberName}\",\n  \"serviceName\": \"{serviceName}\",\n  \"time\": \"{time}\",\n  \"date\": \"{date}\"\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "barberName",
+              "description": "Nome do barbeiro combinado com o cliente"
+            },
+            {
+              "name": "serviceName",
+              "description": "Nome do serviço combinado com o cliente"
+            },
+            {
+              "name": "time",
+              "description": "Horário combinado no formato HH:MM"
+            },
+            {
+              "name": "date",
+              "description": "Data no formato YYYY-MM-DD"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "tool-criar-agendamento",
       "name": "Criar Agendamento (Tool)",
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
-      "position": [1120, 460]
+      "position": [1760, 460]
     },
     {
       "parameters": {
@@ -144,18 +223,18 @@
       "name": "Memória da Conversa",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.2,
-      "position": [1260, 460]
+      "position": [1900, 460]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Processar e Validar Mensagem').first().json.serverUrl || 'https://evolution.88barber.top' }}/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
+        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $('Processar e Validar Mensagem').first().json.apiKey || '88barber-evolution-pbzJxGX3Ih2OHMKo' }}"
+              "value": "88barber-evolution-pbzJxGX3Ih2OHMKo"
             },
             {
               "name": "Content-Type",
@@ -172,7 +251,7 @@
       "name": "Enviar Resposta",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1360, 200]
+      "position": [2020, 200]
     },
     {
       "parameters": {
@@ -183,7 +262,7 @@
       "name": "Responder Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1600, 200]
+      "position": [2260, 200]
     },
     {
       "parameters": {
@@ -194,7 +273,7 @@
       "name": "Ignorar (Responder 200)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [840, 420]
+      "position": [820, 440]
     }
   ],
   "connections": {
@@ -224,7 +303,7 @@
       "main": [
         [
           {
-            "node": "Buscar Contexto Barbearia",
+            "node": "É Mensagem de Áudio?",
             "type": "main",
             "index": 0
           }
@@ -232,6 +311,46 @@
         [
           {
             "node": "Ignorar (Responder 200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Mensagem de Áudio?": {
+      "main": [
+        [
+          {
+            "node": "Transcrever Áudio (Whisper Groq)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Contexto Barbearia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever Áudio (Whisper Groq)": {
+      "main": [
+        [
+          {
+            "node": "Definir Texto Transcrito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Definir Texto Transcrito": {
+      "main": [
+        [
+          {
+            "node": "Buscar Contexto Barbearia",
             "type": "main",
             "index": 0
           }

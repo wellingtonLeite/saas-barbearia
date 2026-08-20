@@ -94,14 +94,24 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      {sub?.status === 'ACTIVE' && <span className="text-success font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success animate-pulse" /> Ativo</span>}
-                      {sub?.status === 'TRIAL' && <span className="text-primary font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> Teste (Trial)</span>}
-                      {sub?.status === 'PAST_DUE' && <span className="text-danger font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger" /> Em Atraso</span>}
-                      {sub?.status === 'CANCELED' && <span className="text-text-secondary font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-500" /> Cancelado</span>}
-                      {!sub && <span className="text-text-secondary">Nenhum</span>}
+                      {Number(plan?.base_price || 0) === 0 ? (
+                        <span className="text-emerald-400 font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> Ativo (Gratuito)</span>
+                      ) : sub?.status === 'ACTIVE' ? (
+                        <span className="text-success font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success animate-pulse" /> Ativo</span>
+                      ) : sub?.status === 'TRIAL' ? (
+                        <span className="text-primary font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> Avaliação</span>
+                      ) : sub?.status === 'PAST_DUE' ? (
+                        <span className="text-danger font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger" /> Em Atraso</span>
+                      ) : sub?.status === 'CANCELED' ? (
+                        <span className="text-text-secondary font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-500" /> Cancelado</span>
+                      ) : (
+                        <span className="text-text-secondary">Nenhum</span>
+                      )}
                     </td>
                     <td className="py-4 px-6 text-text-secondary">
-                      {sub?.current_period_end ? (
+                      {Number(plan?.base_price || 0) === 0 ? (
+                        <span className="text-emerald-400 font-bold">Permanente</span>
+                      ) : sub?.current_period_end ? (
                         <span className={isOverdue ? "text-danger font-bold" : ""}>
                           {new Date(sub.current_period_end).toLocaleDateString('pt-BR')}
                         </span>

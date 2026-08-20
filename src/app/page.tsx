@@ -56,7 +56,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/checkout?plan=gratuito" className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-full font-bold text-lg hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(139,92,246,0.5)]">
-              Começar Teste Grátis <ArrowRight size={20} />
+              Criar Conta Gratuita <ArrowRight size={20} />
             </Link>
             <a href="#como-funciona" className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white rounded-full font-bold text-lg hover:bg-white/10 transition-colors border border-white/10">
               Entender a Tecnologia
@@ -225,7 +225,7 @@ export default function LandingPage() {
                 <li className="flex gap-3 text-sm opacity-40"><CheckCircle2 className="text-white/10 shrink-0" size={20} /> Sem Financeiro / PDV</li>
                 <li className="flex gap-3 text-sm opacity-40"><CheckCircle2 className="text-white/10 shrink-0" size={20} /> Sem WhatsApp IA</li>
               </ul>
-              <Link href="/checkout?plan=gratuito" className="w-full py-3 rounded-xl border border-white/10 font-bold text-center hover:bg-white/5 transition-colors">Testar Grátis</Link>
+              <Link href="/checkout?plan=gratuito" className="w-full py-3 rounded-xl border border-white/10 font-bold text-center hover:bg-white/5 transition-colors">Criar Conta Gratuita</Link>
             </div>
 
             {/* BARBER PRO */}
@@ -281,8 +281,8 @@ export default function LandingPage() {
               <p className="text-slate-400 text-sm leading-relaxed">Sempre que um serviço é finalizado no caixa, o sistema deduz a taxa (se houver) e joga a comissão exata na carteira do barbeiro, e o lucro no extrato da Barbearia. Transparência total.</p>
             </div>
             <div className="bg-[#15151a] border border-white/5 p-6 rounded-2xl">
-              <h4 className="text-lg font-bold text-white mb-2">Posso testar antes de pagar?</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">Sim. Temos o plano gratuito (sem limite de tempo) para uso básico com 1 barbeiro. Para destravar o Agente IA e recursos de equipe, basta fazer o upgrade via Mercado Pago a qualquer momento no seu painel.</p>
+              <h4 className="text-lg font-bold text-white mb-2">O Plano Gratuito tem limite de tempo?</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Não! O Plano Gratuito é permanente e livre de mensalidades para quem atende sozinho (1 cadeira). Quando sua barbearia crescer e você quiser mais barbeiros ou o Robô SDR no WhatsApp, basta assinar o Barber Pro diretamente pelo painel.</p>
             </div>
           </div>
         </div>
