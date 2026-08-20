@@ -1,5 +1,5 @@
 {
-  "name": "SDR 88barber - Agente IA com Áudio (Whisper Groq + LLaMA + Google TTS)",
+  "name": "SDR 88Barber - Agente IA WhatsApp Multi-Tenant (Groq Whisper + LLaMA)",
   "nodes": [
     {
       "parameters": {
@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Detectar áudio / notas de voz\nconst isAudio = Boolean(message.audioMessage || data.messageType === 'audioMessage');\n\n// 5. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 6. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || payload.instanceId || 'ms-barber';\nconst serverUrl = 'https://evolution.88barber.top';\nconst apiKey = '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 7. Regra de validação: mensagem real, 1:1, recebida (texto ou áudio)\nconst isValid = !fromMe && !isGroup && !isStatus && (userMessage.length > 0 || isAudio);\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (!isAudio && userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  isAudio,\n  reason,\n  userMessage,\n  rawMessage: data || payload,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || (isAudio ? 'audioMessage' : 'conversation')\n};"
+        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Detectar áudio / notas de voz\nconst isAudio = Boolean(message.audioMessage || data.messageType === 'audioMessage');\n\n// 5. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 6. Extrair instância, servidor, apikey, nome e telefone limpo (100% dinâmico)\nconst instance = payload.instance || data.instanceId || payload.instanceId || data.instance || payload.sender || '';\nconst serverUrl = 'https://evolution.88barber.top';\nconst apiKey = '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 7. Regra de validação: mensagem real, 1:1, recebida (texto ou áudio)\nconst isValid = !fromMe && !isGroup && !isStatus && (userMessage.length > 0 || isAudio);\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (!isAudio && userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  isAudio,\n  reason,\n  userMessage,\n  rawMessage: data || payload,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || (isAudio ? 'audioMessage' : 'conversation')\n};"
       },
       "id": "processar-mensagem",
       "name": "Processar e Validar Mensagem",
@@ -79,7 +79,7 @@
       "name": "É Mensagem de Áudio?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [820, 200]
+      "position": [820, 300]
     },
     {
       "parameters": {
@@ -87,7 +87,7 @@
         "url": "https://88barber.top/api/sdr/transcribe",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').first().json.instance || 'ms-barber',\n  message: $('Processar e Validar Mensagem').first().json.rawMessage,\n  messageId: $('Processar e Validar Mensagem').first().json.rawMessage?.key?.id\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').first().json.instance,\n  message: $('Processar e Validar Mensagem').first().json.rawMessage,\n  messageId: $('Processar e Validar Mensagem').first().json.rawMessage?.key?.id\n}) }}",
         "options": {
           "response": {
             "response": {
@@ -100,7 +100,7 @@
       "name": "Transcrever Áudio (Whisper Groq)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1040, 100]
+      "position": [1040, 180]
     },
     {
       "parameters": {
@@ -110,7 +110,7 @@
       "name": "Definir Texto Transcrito",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1260, 100]
+      "position": [1260, 180]
     },
     {
       "parameters": {
@@ -121,7 +121,7 @@
           "parameters": [
             {
               "name": "instance",
-              "value": "={{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}"
+              "value": "={{ $('Processar e Validar Mensagem').first().json.instance }}"
             },
             {
               "name": "phone",
@@ -141,7 +141,7 @@
       "name": "Buscar Contexto Barbearia",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1480, 200]
+      "position": [1480, 300]
     },
     {
       "parameters": {
@@ -155,7 +155,7 @@
       "name": "Agente Groq (Llama)",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [1720, 200]
+      "position": [1720, 300]
     },
     {
       "parameters": {
@@ -168,7 +168,7 @@
       "name": "Groq Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [1620, 460],
+      "position": [1600, 520],
       "credentials": {
         "groqApi": {
           "id": "NEt69xAc9NgeNmfp",
@@ -184,7 +184,7 @@
         "url": "https://88barber.top/api/sdr/book",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').first().json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').first().json.pushName || 'Cliente' }}\",\n  \"barberName\": \"{barberName}\",\n  \"serviceName\": \"{serviceName}\",\n  \"time\": \"{time}\",\n  \"date\": \"{date}\"\n}",
+        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').first().json.instance }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').first().json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').first().json.pushName || 'Cliente' }}\",\n  \"barberName\": \"{barberName}\",\n  \"serviceName\": \"{serviceName}\",\n  \"time\": \"{time}\",\n  \"date\": \"{date}\"\n}",
         "placeholderDefinitions": {
           "values": [
             {
@@ -211,110 +211,24 @@
       "name": "Criar Agendamento (Tool)",
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
-      "position": [1760, 460]
+      "position": [1760, 520]
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Processar e Validar Mensagem').first().json.remoteJid }}_{{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}",
+        "sessionKey": "={{ $('Processar e Validar Mensagem').first().json.remoteJid }}_{{ $('Processar e Validar Mensagem').first().json.instance }}",
         "contextWindowLength": 12
       },
       "id": "memory-buffer",
       "name": "Memória da Conversa",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.2,
-      "position": [1900, 460]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "typeValidation": "loose"
-          },
-          "conditions": [
-            {
-              "id": "check-is-audio-reply",
-              "leftValue": "={{ $('Processar e Validar Mensagem').first().json.isAudio }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "verificar-audio-resposta",
-      "name": "É Mensagem de Áudio? (Resposta)",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1960, 200]
+      "position": [1920, 520]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://88barber.top/api/sdr/speak",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  text: $json.output || $('Agente Groq (Llama)').first().json.output,\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  instance: $('Processar e Validar Mensagem').first().json.instance || 'ms-barber',\n  lang: \"pt\"\n}) }}",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "json"
-            }
-          }
-        }
-      },
-      "id": "gerar-audio-tts",
-      "name": "Gerar Áudio de Resposta (Google TTS)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2200, 100]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://evolution.88barber.top/message/sendWhatsAppAudio/{{ $json.instance || 'ms-barber' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "88barber-evolution-pbzJxGX3Ih2OHMKo"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $json.number,\n  audio: $json.base64\n}) }}",
-        "options": {}
-      },
-      "id": "enviar-audio-whatsapp",
-      "name": "Enviar Áudio WhatsApp",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2440, 100]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}",
+        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -337,7 +251,7 @@
       "name": "Enviar Resposta (Texto)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2200, 320]
+      "position": [2060, 300]
     }
   ],
   "connections": {
@@ -462,36 +376,7 @@
       "main": [
         [
           {
-            "node": "É Mensagem de Áudio? (Resposta)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "É Mensagem de Áudio? (Resposta)": {
-      "main": [
-        [
-          {
-            "node": "Gerar Áudio de Resposta (Google TTS)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "Enviar Resposta (Texto)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gerar Áudio de Resposta (Google TTS)": {
-      "main": [
-        [
-          {
-            "node": "Enviar Áudio WhatsApp",
             "type": "main",
             "index": 0
           }
