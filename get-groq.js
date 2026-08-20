@@ -1,0 +1,1 @@
+const { Pool } = require('pg'); require('dotenv').config(); const pool = new Pool({ connectionString: process.env.DATABASE_URL }); pool.query('SELECT value FROM "SystemSetting" WHERE key = \$' + '1', ['GROQ_CONFIG']).then(res => { console.log(res.rows[0].value); pool.end(); }).catch(console.error);

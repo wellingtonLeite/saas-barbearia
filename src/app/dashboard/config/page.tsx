@@ -248,22 +248,27 @@ export default async function ConfigPage() {
           </Link>
         </div>
 
-        {/* Card: WhatsApp */}
+        {/* Card: WhatsApp & IA SDR */}
         <div className="bg-surface border border-secondary rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-success/20 text-success rounded-lg">
-              <MessageCircle size={24} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                <MessageCircle size={24} />
+              </div>
+              <h2 className="text-xl font-bold text-text-primary">Conectar WhatsApp & IA SDR</h2>
             </div>
-            <h2 className="text-xl font-bold text-text-primary">WhatsApp (Mensagens)</h2>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              IA SDR
+            </span>
           </div>
           <p className="text-sm text-text-secondary mb-4">
-            Personalize as mensagens automáticas enviadas para seus clientes, como lembretes, avaliação e cancelamentos.
+            Conecte o WhatsApp da sua barbearia para ativar o robô inteligente de agendamentos 24/7 e personalizar mensagens automáticas.
           </p>
           <Link 
             href="/dashboard/config/whatsapp"
-            className="inline-block mt-2 px-6 py-3 bg-secondary/50 hover:bg-success/20 text-text-primary hover:text-success rounded-xl text-sm font-bold transition-colors w-full text-center"
+            className="inline-block mt-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold transition-all w-full text-center shadow-lg shadow-primary/20 hover:scale-[1.02]"
           >
-            Configurar Mensagens
+            Conectar WhatsApp & IA SDR
           </Link>
         </div>
 

@@ -168,14 +168,27 @@ export function EditBarberForm({
 
       {message && (
         <div
-          className={`p-4 rounded-xl text-sm flex items-center gap-2 animate-fade-in ${
+          className={`p-4 rounded-xl text-sm flex flex-col gap-2 animate-fade-in ${
             message.type === "success"
               ? "bg-success/10 border border-success/20 text-success"
-              : "bg-danger/10 border border-danger/20 text-danger"
+              : "bg-danger/15 border-2 border-danger/40 text-danger"
           }`}
         >
-          {message.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-          <span>{message.text}</span>
+          <div className="flex items-start gap-2">
+            {message.type === "success" ? <CheckCircle2 size={18} className="shrink-0 mt-0.5" /> : <AlertCircle size={18} className="shrink-0 mt-0.5" />}
+            <span className="text-xs leading-relaxed">{message.text}</span>
+          </div>
+
+          {message.type === "error" && message.text.toLowerCase().includes("plano") && (
+            <div className="pt-2 border-t border-danger/20 flex justify-end">
+              <a
+                href="/dashboard/assinatura"
+                className="inline-flex items-center gap-1 text-xs font-bold bg-danger text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+              >
+                Fazer Upgrade do Plano
+              </a>
+            </div>
+          )}
         </div>
       )}
 

@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { saveWhatsappTemplates } from "@/app/actions/whatsapp";
 import { useFormStatus } from "react-dom";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Save, Loader2, MessageSquareText, Star, BellRing } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -11,9 +11,19 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="bg-success text-white font-bold px-6 py-2 rounded-lg hover:bg-success/90 hover:scale-105 transition-all shadow-lg shadow-success/20 disabled:opacity-50 disabled:pointer-events-none"
+      className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-primary/25 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
     >
-      {pending ? "Salvando..." : "Salvar Templates"}
+      {pending ? (
+        <>
+          <Loader2 className="animate-spin" size={18} />
+          <span>Salvando...</span>
+        </>
+      ) : (
+        <>
+          <Save size={18} />
+          <span>Salvar Templates de Mensagem</span>
+        </>
+      )}
     </button>
   );
 }
@@ -22,16 +32,21 @@ export function WhatsappForm({ tenantId, defaultValues }: { tenantId: string, de
   const [state, formAction] = useActionState(saveWhatsappTemplates, null);
 
   const variablesHelper = (
-    <div className="mt-2 text-xs text-text-secondary bg-background border border-secondary p-3 rounded-lg">
-      <p className="font-bold mb-1">Variáveis disponíveis:</p>
-      <ul className="flex flex-wrap gap-2">
-        <li className="bg-secondary/50 px-2 py-1 rounded">{"{cliente}"}</li>
-        <li className="bg-secondary/50 px-2 py-1 rounded">{"{barbearia}"}</li>
-        <li className="bg-secondary/50 px-2 py-1 rounded">{"{hora}"}</li>
-        <li className="bg-secondary/50 px-2 py-1 rounded">{"{barbeiro}"}</li>
-        <li className="bg-secondary/50 px-2 py-1 rounded">{"{link}"}</li>
-      </ul>
-      <p className="mt-2">Use essas variáveis nos seus textos para personalizá-los dinamicamente.</p>
+    <div className="mt-2 text-xs text-text-secondary bg-background/60 border border-secondary/60 p-3 rounded-xl">
+      <p className="font-semibold text-text-primary mb-1.5 flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Variáveis dinâmicas para preenchimento:
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {["{cliente}", "{barbearia}", "{hora}", "{barbeiro}", "{link}"].map((tag) => (
+          <span 
+            key={tag} 
+            className="bg-surface border border-secondary text-primary font-mono text-[11px] px-2 py-0.5 rounded-md cursor-help"
+            title={`Substituído automaticamente por: ${tag.replace(/[{}]/g, '')}`}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
     </div>
   );
 
@@ -40,58 +55,67 @@ export function WhatsappForm({ tenantId, defaultValues }: { tenantId: string, de
       <input type="hidden" name="tenantId" value={tenantId} />
 
       {state?.success === true && (
-        <div className="bg-success/10 text-success border border-success/20 p-4 rounded-lg flex items-center gap-2">
-          <CheckCircle2 size={20} />
-          <p>{state.message}</p>
+        <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 p-4 rounded-xl flex items-center gap-3 animate-fade-in">
+          <CheckCircle2 size={20} className="shrink-0" />
+          <p className="font-medium text-sm">{state.message}</p>
         </div>
       )}
 
       {state?.success === false && (
-        <div className="bg-danger/10 text-danger border border-danger/20 p-4 rounded-lg flex items-center gap-2">
-          <AlertCircle size={20} />
-          <p>{state.error}</p>
+        <div className="bg-rose-500/10 text-rose-400 border border-rose-500/20 p-4 rounded-xl flex items-center gap-3 animate-fade-in">
+          <AlertCircle size={20} className="shrink-0" />
+          <p className="font-medium text-sm">{state.error}</p>
         </div>
       )}
 
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-bold text-text-primary block mb-2">Lembrete de Agendamento</label>
+      <div className="space-y-6">
+        {/* Lembrete */}
+        <div className="p-4 rounded-xl bg-background/40 border border-secondary/60">
+          <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
+            <BellRing size={16} className="text-primary" /> Lembrete de Agendamento
+          </label>
           <textarea
             name="reminder"
-            defaultValue={defaultValues?.reminder}
-            rows={4}
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:border-success focus:outline-none resize-y"
+            defaultValue={defaultValues?.reminder || "Olá {cliente}, seu horário em {barbearia} está confirmado para {hora} com {barbeiro}."}
+            rows={3}
+            className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-y"
             placeholder="Olá {cliente}, seu horário em {barbearia} está confirmado para {hora} com {barbeiro}."
           />
           {variablesHelper}
         </div>
 
-        <div className="pt-4 border-t border-secondary">
-          <label className="text-sm font-bold text-text-primary block mb-2">Pedido de Avaliação</label>
+        {/* Avaliação */}
+        <div className="p-4 rounded-xl bg-background/40 border border-secondary/60">
+          <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
+            <Star size={16} className="text-amber-400" /> Pedido de Avaliação Pós-Corte
+          </label>
           <textarea
             name="review"
-            defaultValue={defaultValues?.review}
-            rows={4}
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:border-success focus:outline-none resize-y"
-            placeholder="E aí {cliente}, o que achou do corte com {barbeiro}? Avalie no link: {link}"
+            defaultValue={defaultValues?.review || "E aí {cliente}, o que achou do atendimento com {barbeiro}? Avalie no link: {link}"}
+            rows={3}
+            className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-y"
+            placeholder="E aí {cliente}, o que achou do atendimento com {barbeiro}? Avalie no link: {link}"
           />
           {variablesHelper}
         </div>
 
-        <div className="pt-4 border-t border-secondary">
-          <label className="text-sm font-bold text-text-primary block mb-2">Mensagem de Cancelamento</label>
+        {/* Cancelamento */}
+        <div className="p-4 rounded-xl bg-background/40 border border-secondary/60">
+          <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
+            <MessageSquareText size={16} className="text-rose-400" /> Aviso de Cancelamento
+          </label>
           <textarea
             name="cancellation"
-            defaultValue={defaultValues?.cancellation}
-            rows={4}
-            className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:border-success focus:outline-none resize-y"
-            placeholder="Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado."
+            defaultValue={defaultValues?.cancellation || "Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado. Se desejar reagendar, acesse: {link}"}
+            rows={3}
+            className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-y"
+            placeholder="Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado. Se desejar reagendar, acesse: {link}"
           />
           {variablesHelper}
         </div>
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-2">
         <SubmitButton />
       </div>
     </form>

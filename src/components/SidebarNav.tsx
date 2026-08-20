@@ -17,7 +17,8 @@ import {
   BarChart2,
   Lock,
   ShoppingBag,
-  Gift
+  Gift,
+  Bot
 } from "lucide-react";
 import { useMobileSidebar } from "./layouts/MobileSidebarWrapper";
 
@@ -27,6 +28,13 @@ type Props = {
   hasGrowthDashboard?: boolean;
 };
 
+type NavItem = {
+  href: string;
+  label: string;
+  icon: any;
+  badge?: string;
+};
+
 export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false, hasGrowthDashboard = false }: Props) {
   const { closeSidebar } = useMobileSidebar();
   const pathname = usePathname();
@@ -34,13 +42,14 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
   const abaParam = searchParams.get("aba");
   const isFinanceiroActive = pathname.startsWith("/dashboard/financeiro");
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: "/dashboard", label: "Agenda", icon: Calendar },
     { href: "/dashboard/clientes", label: "Clientes", icon: Users },
     { href: "/dashboard/config/horarios", label: "Meus Horários", icon: Clock },
   ];
 
-  const adminItems = [
+  const adminItems: NavItem[] = [
+    { href: "/dashboard/config/whatsapp", label: "Conectar WhatsApp", icon: Bot, badge: "IA SDR" },
     { href: "/dashboard/comandas", label: "Comandas / PDV", icon: ShoppingBag },
     { href: "/dashboard/servicos", label: "Serviços", icon: Scissors },
     { href: "/dashboard/produtos", label: "Produtos", icon: Package },
@@ -50,7 +59,7 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
     { href: "/dashboard/config", label: "Configurações", icon: Settings },
   ];
 
-  const allItems = isOwnerOrAdmin ? [...navItems, ...adminItems] : navItems;
+  const allItems: NavItem[] = isOwnerOrAdmin ? [...navItems, ...adminItems] : navItems;
 
   return (
     <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
@@ -178,13 +187,20 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
               key={item.href}
               href={item.href}
               onClick={closeSidebar}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
                 isActive
                   ? "text-white bg-primary shadow-lg shadow-primary/20"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <item.icon size={20} /> {item.label}
+              <item.icon size={20} className={item.badge ? "text-emerald-400 shrink-0" : "shrink-0"} /> 
+              <span className="flex-1 truncate">{item.label}</span>
+              {item.badge && (
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.25)] flex items-center gap-1 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -2,10 +2,17 @@
 
 import { useState, useRef } from "react";
 import { addTeamMember } from "@/app/actions/team";
-import { UserPlus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { UserPlus, Loader2, CheckCircle2, AlertCircle, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-export function AddBarberForm() {
+interface AddBarberFormProps {
+  isQuotaFull?: boolean;
+  activeCount?: number;
+  maxBarbers?: number;
+}
+
+export function AddBarberForm({ isQuotaFull = false, activeCount = 0, maxBarbers = 0 }: AddBarberFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +47,27 @@ export function AddBarberForm() {
         <UserPlus className="text-primary" /> Adicionar Barbeiro
       </h2>
 
+      {/* Alerta prévio caso o limite do plano já esteja atingido */}
+      {isQuotaFull && (
+        <div className="bg-danger/15 border-2 border-danger/50 p-4 rounded-xl mb-6 text-sm text-danger flex flex-col gap-2 animate-fade-in">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle size={20} className="text-danger shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-danger text-sm">Limite do Plano Atingido</p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Você atingiu o limite de <strong>{maxBarbers} {maxBarbers === 1 ? "membro" : "membros"}</strong> ({activeCount}/{maxBarbers}). Faça upgrade da sua assinatura para adicionar mais profissionais.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/assinatura"
+            className="mt-1 inline-flex items-center justify-center gap-1.5 w-full bg-danger hover:bg-red-600 text-white font-bold py-2.5 px-3 rounded-lg text-xs transition-colors shadow-sm"
+          >
+            Fazer Upgrade de Plano <ArrowUpRight size={14} />
+          </Link>
+        </div>
+      )}
+
       <div className="bg-primary/10 border border-primary/30 p-4 rounded-lg mb-6 text-sm text-text-secondary">
         <p><strong>Acesso do Funcionário:</strong></p>
         <p className="mt-1 text-xs">
@@ -49,14 +77,31 @@ export function AddBarberForm() {
 
       {message && (
         <div
-          className={`mb-6 p-4 rounded-xl text-sm flex items-center gap-2 animate-fade-in ${
+          className={`mb-6 p-4 rounded-xl text-sm flex flex-col gap-2 animate-fade-in ${
             message.type === "success"
               ? "bg-success/10 border border-success/20 text-success font-medium"
-              : "bg-danger/10 border border-danger/20 text-danger font-medium"
+              : "bg-danger/15 border-2 border-danger/40 text-danger font-medium"
           }`}
         >
-          {message.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-          <span>{message.text}</span>
+          <div className="flex items-start gap-2">
+            {message.type === "success" ? (
+              <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle size={18} className="shrink-0 mt-0.5 text-danger" />
+            )}
+            <span className="text-xs leading-relaxed">{message.text}</span>
+          </div>
+
+          {message.type === "error" && message.text.toLowerCase().includes("plano") && (
+            <div className="pt-2 border-t border-danger/20 flex justify-end">
+              <Link
+                href="/dashboard/assinatura"
+                className="inline-flex items-center gap-1 text-xs font-bold bg-danger text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+              >
+                Fazer Upgrade Agora <ArrowUpRight size={13} />
+              </Link>
+            </div>
+          )}
         </div>
       )}
       

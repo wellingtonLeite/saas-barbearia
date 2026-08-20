@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CheckCircle2, MessageSquare, CalendarDays, DollarSign, Users, Package, Smartphone, Scissors, ChevronRight, Star, ArrowRight, Bot, Zap } from 'lucide-react';
+import { CheckCircle2, MessageSquare, CalendarDays, DollarSign, Users, Package, Smartphone, Scissors, ChevronRight, Star, ArrowRight, Bot, Zap, Compass, CalendarCheck } from 'lucide-react';
 
 export const metadata = {
   title: '88barber | Sistema de Gestão e IA para Barbearias',
@@ -19,7 +19,13 @@ export default function LandingPage() {
             </div>
             <span className="text-white font-display font-bold text-2xl tracking-tight">88barber</span>
           </div>
-          <nav className="hidden md:flex gap-8 text-sm font-medium">
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
+            <Link href="/explorar" className="text-white hover:text-primary transition-colors flex items-center gap-1.5 font-semibold bg-white/5 hover:bg-white/10 border border-white/10 px-3.5 py-1.5 rounded-full">
+              <Compass size={15} className="text-primary" /> Encontrar Barbearias
+            </Link>
+            <Link href="/meus-agendamentos" className="hover:text-white transition-colors flex items-center gap-1.5">
+              <CalendarCheck size={15} /> Meus Agendamentos
+            </Link>
             <a href="#recursos" className="hover:text-white transition-colors">Recursos</a>
             <a href="#como-funciona" className="hover:text-white transition-colors">Como Funciona</a>
             <a href="#planos" className="hover:text-white transition-colors">Planos</a>
@@ -289,8 +295,10 @@ export default function LandingPage() {
             <Scissors size={18} />
             <span className="font-display font-bold text-white">88barber SaaS</span>
           </div>
-          <p>© {new Date().getFullYear()} 88barber. O sistema definitivo para donos de barbearia.</p>
-          <div className="flex gap-4">
+          <p>© {new Date().getFullYear()} 88barber. O sistema definitivo para barbearias e clientes.</p>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/explorar" className="hover:text-white transition-colors">Encontrar Barbearias</Link>
+            <Link href="/meus-agendamentos" className="hover:text-white transition-colors">Meus Agendamentos</Link>
             <a href="#" className="hover:text-white transition-colors">Termos</a>
             <a href="#" className="hover:text-white transition-colors">Privacidade</a>
           </div>

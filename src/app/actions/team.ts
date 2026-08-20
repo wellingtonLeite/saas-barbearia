@@ -46,32 +46,33 @@ export async function addTeamMember(formData: FormData) {
           include: {
             plan: true
           }
-        },
-        units: {
-          include: {
-            barbers: {
-              include: {
-                barber: true
-              }
-            }
-          }
         }
       }
     });
 
-    if (tenant?.subscription?.plan) {
-      const plan = tenant.subscription.plan;
-      // Contabiliza apenas barbeiros contratados (role BARBER)
-      const hiredBarbers = tenant.units.reduce((acc, unit) => {
-        const count = unit.barbers.filter((b: any) => b.barber?.role === 'BARBER').length;
-        return acc + count;
-      }, 0);
-      
-      if (plan.max_barbers !== null && hiredBarbers >= plan.max_barbers) {
-        return { 
-          error: `Limite de barbeiros atingido para o plano ${plan.name} (Máx: ${plan.max_barbers} barbeiros contratados). Faça upgrade para adicionar mais profissionais.` 
-        };
-      }
+    const plan = tenant?.subscription?.plan;
+    const planName = plan?.name || "Plano Gratuito";
+    
+    // Limites fixos: Plano Gratuito: 1 | Barber Pro: 15 | Barber VIP: 50
+    let maxBarbers = 1;
+    const lowerName = planName.toLowerCase();
+    if (lowerName.includes("vip")) {
+      maxBarbers = 50;
+    } else if (lowerName.includes("pro") || lowerName.includes("intermediário") || lowerName.includes("intermediario") || lowerName.includes("máquina")) {
+      maxBarbers = 15;
+    } else if (plan?.max_barbers) {
+      maxBarbers = plan.max_barbers;
+    }
+
+    // Contagem simples e direta: total de barbeiros cadastrados na equipe
+    const totalBarbers = await db.barberUnit.count({
+      where: { unitId }
+    });
+
+    if (totalBarbers >= maxBarbers) {
+      return { 
+        error: `Limite de barbeiros atingido para o seu plano (${planName}). Faça upgrade para adicionar mais membros.` 
+      };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -88,7 +89,7 @@ export async function addTeamMember(formData: FormData) {
         }
       });
 
-      // 2. Vincular o Barbeiro à Unidade
+      // 2. Vincular o Barbeiro à Unidade (inicia ativo)
       await tx.barberUnit.create({
         data: {
           barberId: newUser.id,
@@ -144,7 +145,7 @@ export async function toggleBarberActive(barberId: string, unitId: string, isAct
     return { success: true };
   } catch (error: any) {
     console.error("Erro ao alterar status do barbeiro:", error);
-    return { error: "Erro ao alterar status na agenda." };
+    return { error: error?.message || "Erro ao alterar status na agenda." };
   }
 }
 
