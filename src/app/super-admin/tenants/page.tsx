@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { Building2, Power, PowerOff, Trash2, AlertTriangle } from "lucide-react";
-import { revalidatePath } from "next/cache";
-
+import { Building2, Power, PowerOff, Trash2, AlertTriangle, MessageCircle, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { SubscriptionStatus } from "@/generated/prisma/enums";
+import { 
+  toggleTenantStatusAction, 
+  updateSubscriptionAction, 
+  deleteTenantPermanentAction 
+} from "./actions";
 
 export default async function TenantsPage({ searchParams }: { searchParams: Promise<{ editPlanFor?: string, deleteTenantFor?: string }> }) {
   const resolvedParams = await searchParams;
@@ -26,109 +28,6 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
 
   const plans = await db.plan.findMany({ orderBy: { base_price: 'asc' } });
 
-  async function toggleTenantStatus(formData: FormData) {
-    "use server";
-    const session = await auth();
-    if (session?.user?.role !== 'SUPER_ADMIN') return;
-
-    const tenantId = formData.get("tenantId") as string;
-    const currentStatus = formData.get("currentStatus") === "true";
-
-    const { db } = await import("@/lib/db");
-    await db.tenant.update({
-      where: { id: tenantId },
-      data: { active: !currentStatus }
-    });
-
-    const { revalidatePath } = await import("next/cache");
-    revalidatePath("/super-admin/tenants");
-  }
-
-  async function updateSubscription(formData: FormData) {
-    "use server";
-    const session = await auth();
-    if (session?.user?.role !== 'SUPER_ADMIN') return;
-
-    const tenantId = formData.get("tenantId") as string;
-    const planId = formData.get("planId") as string;
-    const status = formData.get("status") as SubscriptionStatus;
-    const dateStr = formData.get("endDate") as string;
-    const current_period_end = new Date(dateStr + "T23:59:59");
-
-    const { db } = await import("@/lib/db");
-    
-    await db.subscription.upsert({
-      where: { tenantId },
-      create: { tenantId, planId, status, current_period_end },
-      update: { planId, status, current_period_end }
-    });
-
-    const { revalidatePath } = await import("next/cache");
-    const { redirect } = await import("next/navigation");
-    revalidatePath("/super-admin");
-    redirect("/super-admin/tenants");
-  }
-
-  async function deleteTenant(formData: FormData) {
-    "use server";
-    const session = await auth();
-    if (session?.user?.role !== 'SUPER_ADMIN') return;
-
-    const tenantId = formData.get("tenantId") as string;
-    const { db } = await import("@/lib/db");
-
-    // 1. Encontrar todos os barbeiros/donos associados para limpá-los também se não estiverem em outro tenant
-    const units = await db.unit.findMany({ where: { tenantId } });
-    const unitIds = units.map(u => u.id);
-    const barberUnits = await db.barberUnit.findMany({ where: { unitId: { in: unitIds } } });
-    const barberIds = [...new Set(barberUnits.map(b => b.barberId))];
-
-    // 2. Deletar a barbearia e absolutamente TUDO atrelado a ela
-    // Fazemos isso manualmente ordem reversa para garantir que não dê erro de Foreign Key (Cascade)
-    await db.comandaItem.deleteMany({ where: { comanda: { tenantId } } });
-    await db.comanda.deleteMany({ where: { tenantId } });
-    await db.clientSubscription.deleteMany({ where: { plan: { tenantId } } });
-    await db.clientPlan.deleteMany({ where: { tenantId } });
-    await db.clientLoyalty.deleteMany({ where: { tenantId } });
-    await db.loyaltyProgram.deleteMany({ where: { tenantId } });
-    await db.accountEntry.deleteMany({ where: { tenantId } });
-    await db.review.deleteMany({ where: { tenantId } });
-    await db.notification.deleteMany({ where: { tenantId } });
-    await db.transaction.deleteMany({ where: { tenantId } });
-    await db.sale.deleteMany({ where: { tenantId } });
-    await db.stockMovement.deleteMany({ where: { product: { tenantId } } });
-    await db.product.deleteMany({ where: { tenantId } });
-    await db.appointment.deleteMany({ where: { tenantId } });
-    await db.service.deleteMany({ where: { tenantId } });
-    await db.serviceCategory.deleteMany({ where: { tenantId } });
-    await db.scheduleBlock.deleteMany({ where: { tenantId } });
-    await db.barberContract.deleteMany({ where: { unit: { tenantId } } });
-    await db.barberUnit.deleteMany({ where: { unit: { tenantId } } });
-    await db.unit.deleteMany({ where: { tenantId } });
-    await db.subscription.deleteMany({ where: { tenantId } });
-    await db.tenant.delete({ where: { id: tenantId } });
-
-    // 3. Deletar usuários (donos/barbeiros) que ficaram órfãos
-    for (const bId of barberIds) {
-       const stillAttached = await db.barberUnit.findFirst({ where: { barberId: bId } });
-       if (!stillAttached) {
-         const u = await db.user.findUnique({ where: { id: bId } });
-         if (u && u.role !== 'SUPER_ADMIN') {
-           try {
-             await db.user.delete({ where: { id: bId } });
-           } catch (error) {
-             console.error(`Não foi possível deletar o usuário ${bId} (pode ter histórico em outras barbearias):`, error);
-           }
-         }
-       }
-    }
-
-    const { revalidatePath } = await import("next/cache");
-    const { redirect } = await import("next/navigation");
-    revalidatePath("/super-admin");
-    redirect("/super-admin/tenants");
-  }
-
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
@@ -136,101 +35,117 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
           <Building2 className="text-primary" /> Barbearias (Tenants)
         </h1>
         <p className="text-text-secondary mt-2">
-          Gerencie o acesso de todas as barbearias na sua plataforma.
+          Gerencie o acesso, assinaturas e instâncias de todas as barbearias na sua plataforma.
         </p>
       </div>
 
-      <div className="bg-surface border border-secondary rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-surface border border-secondary rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-background/50 border-b border-secondary text-text-secondary text-sm uppercase tracking-wider">
-                <th className="p-4 font-bold">Barbearia</th>
-                <th className="p-4 font-bold">Plano</th>
-                <th className="p-4 font-bold">Unidades</th>
-                <th className="p-4 font-bold">Status</th>
-                <th className="p-4 font-bold text-right">Ação</th>
+              <tr className="border-b border-secondary bg-surface-hover/50 text-text-secondary text-xs uppercase tracking-wider font-semibold">
+                <th className="py-4 px-6">Barbearia / Slug</th>
+                <th className="py-4 px-6">Plano Atual</th>
+                <th className="py-4 px-6">Status Assinatura</th>
+                <th className="py-4 px-6">Vencimento</th>
+                <th className="py-4 px-6">Acesso</th>
+                <th className="py-4 px-6 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-secondary">
+            <tbody className="divide-y divide-secondary text-sm">
+              {tenants.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-text-secondary">
+                    Nenhuma barbearia cadastrada no sistema.
+                  </td>
+                </tr>
+              )}
               {tenants.map(tenant => {
                 const sub = tenant.subscription;
-                const statusColor = tenant.active ? "text-success bg-success/10" : "text-danger bg-danger/10";
+                const plan = sub?.plan;
+                const isOverdue = sub?.status === 'PAST_DUE' || (sub?.current_period_end && new Date(sub.current_period_end) < new Date());
+                const primaryUnit = tenant.units[0];
+                const cleanPhone = primaryUnit?.phone?.replace(/\D/g, "") || "";
+                
+                // Mensagem de cobrança WhatsApp
+                const msg = encodeURIComponent(
+                  b2b_billing
+                    .replace("{dono}", tenant.name)
+                    .replace("{barbearia}", tenant.name)
+                    .replace("{plano}", plan?.name || "Plano")
+                    .replace("{link_pagamento}", `https://88barber.top/dashboard/assinatura`)
+                );
+                const waLink = cleanPhone ? `https://wa.me/55${cleanPhone}?text=${msg}` : null;
 
                 return (
-                  <tr key={tenant.id} className="hover:bg-surface-hover transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        {tenant.logo_url ? (
-                          <img src={tenant.logo_url} alt="Logo" className="w-8 h-8 rounded object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center font-bold">
-                            {tenant.name.charAt(0)}
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-bold text-text-primary">{tenant.name}</p>
-                          <p className="text-xs text-text-secondary">/{tenant.slug}</p>
-                        </div>
+                  <tr key={tenant.id} className="hover:bg-surface-hover/30 transition-colors">
+                    <td className="py-4 px-6 font-bold text-text-primary">
+                      <div className="flex items-center gap-2">
+                        {tenant.name}
                       </div>
-                    </td>
-                    <td className="p-4 text-sm font-medium text-text-secondary">
-                      {sub?.plan?.name || "Sem Plano"}
-                    </td>
-                    <td className="p-4 text-sm font-medium text-text-secondary">
-                      {tenant.units.length}
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${statusColor}`}>
-                        {tenant.active ? "Ativo" : "Bloqueado"}
+                      <span className="text-xs font-normal text-text-secondary font-mono">
+                        /{tenant.slug}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <a 
-                          href={`https://wa.me/?text=${encodeURIComponent(
-                            b2b_billing
-                              .replace("{dono}", "Dono")
-                              .replace("{barbearia}", tenant.name)
-                              .replace("{plano}", sub?.plan?.name || "Sem Plano")
-                              .replace("{link_pagamento}", "Seu painel > Assinatura")
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-green-500 bg-green-500/10 hover:bg-green-500/20 transition-colors"
-                          title="Cobrar via WhatsApp"
+                    <td className="py-4 px-6">
+                      <span className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-bold">
+                        {plan?.name || "Sem Plano"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      {sub?.status === 'ACTIVE' && <span className="text-success font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success animate-pulse" /> Ativo</span>}
+                      {sub?.status === 'TRIAL' && <span className="text-primary font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> Teste (Trial)</span>}
+                      {sub?.status === 'PAST_DUE' && <span className="text-danger font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger" /> Em Atraso</span>}
+                      {sub?.status === 'CANCELED' && <span className="text-text-secondary font-bold flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-500" /> Cancelado</span>}
+                      {!sub && <span className="text-text-secondary">Nenhum</span>}
+                    </td>
+                    <td className="py-4 px-6 text-text-secondary">
+                      {sub?.current_period_end ? (
+                        <span className={isOverdue ? "text-danger font-bold" : ""}>
+                          {new Date(sub.current_period_end).toLocaleDateString('pt-BR')}
+                        </span>
+                      ) : "-"}
+                    </td>
+                    <td className="py-4 px-6">
+                      <form action={toggleTenantStatusAction}>
+                        <input type="hidden" name="tenantId" value={tenant.id} />
+                        <input type="hidden" name="currentStatus" value={String(tenant.active)} />
+                        <button 
+                          type="submit" 
+                          title={tenant.active ? "Bloquear Acesso" : "Desbloquear Acesso"}
+                          className={`p-2 rounded-xl border transition-all ${
+                            tenant.active 
+                              ? "bg-success/10 text-success border-success/30 hover:bg-danger/20 hover:text-danger hover:border-danger/30" 
+                              : "bg-danger/10 text-danger border-danger/30 hover:bg-success/20 hover:text-success hover:border-success/30"
+                          }`}
                         >
-                          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-                        </a>
+                          {tenant.active ? <Power size={18} /> : <PowerOff size={18} />}
+                        </button>
+                      </form>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {waLink && isOverdue && (
+                          <a 
+                            href={waLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            title="Cobrar via WhatsApp"
+                            className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 transition-all flex items-center gap-1 text-xs font-bold"
+                          >
+                            <MessageCircle size={16} /> Cobrar
+                          </a>
+                        )}
                         <Link 
                           href={`/super-admin/tenants?editPlanFor=${tenant.id}`}
-                          className="px-3 py-1.5 rounded-lg text-sm font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          className="px-3 py-1.5 bg-secondary text-text-primary hover:text-primary rounded-xl text-xs font-bold transition-colors border border-secondary"
                         >
-                          Plano
+                          Editar Assinatura
                         </Link>
-                        <form action={toggleTenantStatus}>
-                          <input type="hidden" name="tenantId" value={tenant.id} />
-                          <input type="hidden" name="currentStatus" value={String(tenant.active)} />
-                          
-                          <button 
-                            type="submit" 
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                              tenant.active 
-                                ? "bg-danger/10 text-danger hover:bg-danger/20" 
-                                : "bg-success/10 text-success hover:bg-success/20"
-                            }`}
-                          >
-                            {tenant.active ? (
-                              <><PowerOff size={16} /> Suspender</>
-                            ) : (
-                              <><Power size={16} /> Reativar</>
-                            )}
-                          </button>
-                        </form>
                         <Link 
                           href={`/super-admin/tenants?deleteTenantFor=${tenant.id}`}
-                          className="px-3 py-1.5 rounded-lg text-sm font-bold bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
-                          title="Deletar Tudo"
+                          title="Excluir Definitivamente"
+                          className="p-2 bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />
                         </Link>
@@ -244,16 +159,17 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
+      {/* Modal Atribuir Plano */}
       {editPlanFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-surface border border-secondary p-6 rounded-2xl shadow-xl max-w-md w-full relative">
             <Link href="/super-admin/tenants" className="absolute top-4 right-4 text-text-secondary hover:text-text-primary">
-              X
+              ✕
             </Link>
             
             <h2 className="text-xl font-bold text-text-primary mb-4">Atribuir Plano</h2>
             
-            <form action={updateSubscription} className="space-y-4">
+            <form action={updateSubscriptionAction} className="space-y-4">
               <input type="hidden" name="tenantId" value={editPlanFor} />
               
               <div>
@@ -294,31 +210,36 @@ export default async function TenantsPage({ searchParams }: { searchParams: Prom
         </div>
       )}
 
+      {/* Modal Deletar Barbearia Total */}
       {deleteTenantFor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-surface border border-red-500/50 p-6 rounded-2xl shadow-xl max-w-md w-full relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-surface border border-red-500/50 p-6 rounded-2xl shadow-2xl max-w-md w-full relative">
             <div className="flex items-center gap-3 text-red-500 mb-4">
               <AlertTriangle size={32} />
               <h2 className="text-xl font-bold">Atenção! Ação Irreversível</h2>
             </div>
             
-            <p className="text-text-secondary mb-6">
-              Você está prestes a deletar uma barbearia. Isso irá <strong>APAGAR PERMANENTEMENTE</strong> do banco de dados:
+            <p className="text-text-secondary mb-6 text-sm leading-relaxed">
+              Você está prestes a deletar uma barbearia. Isso irá <strong>APAGAR PERMANENTEMENTE</strong>:
               <br/><br/>
-              - O cadastro da barbearia<br/>
-              - Todos os serviços e categorias<br/>
-              - Todo o histórico de agendamentos<br/>
-              - Todas as comandas e dados financeiros<br/>
-              - Os usuários (donos e barbeiros) se não estiverem em outra unidade
+              • A barbearia e todas as suas unidades<br/>
+              • <strong>Todas as instâncias do WhatsApp na Evolution API</strong><br/>
+              • Todos os serviços, produtos e estoque<br/>
+              • Todo o histórico de agendamentos e avaliações<br/>
+              • Todas as comandas e movimentações financeiras<br/>
+              • Usuários donos e barbeiros exclusivos desta conta
             </p>
             
-            <form action={deleteTenant} className="space-y-4">
+            <form action={deleteTenantPermanentAction} className="space-y-4">
               <input type="hidden" name="tenantId" value={deleteTenantFor} />
-              <div className="pt-2 flex justify-end gap-2">
-                <Link href="/super-admin/tenants" className="px-4 py-2 rounded-lg font-bold text-text-secondary hover:bg-secondary transition-colors">
+              <div className="pt-2 flex justify-end gap-3">
+                <Link href="/super-admin/tenants" className="px-4 py-2 rounded-xl font-bold text-text-secondary hover:bg-secondary transition-colors">
                   Cancelar
                 </Link>
-                <button type="submit" className="bg-red-600 text-white font-bold px-6 py-2 rounded-xl hover:bg-red-700 transition-colors">
+                <button 
+                  type="submit" 
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-red-600/20"
+                >
                   Sim, Deletar Tudo
                 </button>
               </div>
