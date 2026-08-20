@@ -35,7 +35,7 @@ function cleanTextForSpeech(input: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { text, lang = "pt" } = body;
+    const { text, number, instance, lang = "pt" } = body;
 
     if (!text || typeof text !== "string" || !text.trim()) {
       return NextResponse.json(
@@ -72,6 +72,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       base64: base64Audio,
+      number: number || null,
+      instance: instance || "ms-barber",
       mimetype: "audio/mp3",
       byteLength: combinedBuffer.length,
       lang: lang || "pt",

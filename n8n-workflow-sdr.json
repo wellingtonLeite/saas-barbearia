@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Detectar áudio / notas de voz\nconst isAudio = Boolean(message.audioMessage || data.messageType === 'audioMessage');\n\n// 5. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 6. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || '';\nconst serverUrl = 'https://evolution.88barber.top';\nconst apiKey = '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 7. Regra de validação: mensagem real, 1:1, recebida (texto ou áudio)\nconst isValid = !fromMe && !isGroup && !isStatus && (userMessage.length > 0 || isAudio);\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (!isAudio && userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  isAudio,\n  reason,\n  userMessage,\n  rawMessage: data || payload,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || (isAudio ? 'audioMessage' : 'conversation')\n};"
+        "jsCode": "const payload = $json.body || $json;\nconst data = Array.isArray(payload.data) ? payload.data[0] : (payload.data || {});\nconst key = data.key || {};\nconst message = data.message || {};\n\n// 1. Extrair e normalizar fromMe\nconst fromMe = Boolean(key.fromMe);\n\n// 2. Extrair remoteJid\nconst remoteJid = key.remoteJid || key.remoteJidAlt || '';\n\n// 3. Identificar grupos e status broadcasts\nconst isGroup = remoteJid.endsWith('@g.us');\nconst isStatus = remoteJid.includes('broadcast') || remoteJid === 'status@broadcast';\n\n// 4. Detectar áudio / notas de voz\nconst isAudio = Boolean(message.audioMessage || data.messageType === 'audioMessage');\n\n// 5. Extrair texto de qualquer formato Baileys/Evolution API\nlet userMessage = '';\nif (typeof message === 'string') {\n  userMessage = message;\n} else if (message && typeof message === 'object') {\n  userMessage = \n    message.conversation ||\n    message.extendedTextMessage?.text ||\n    message.imageMessage?.caption ||\n    message.videoMessage?.caption ||\n    message.documentMessage?.caption ||\n    message.buttonsResponseMessage?.selectedDisplayText ||\n    message.buttonsResponseMessage?.selectedButtonId ||\n    message.listResponseMessage?.singleSelectReply?.selectedRowId ||\n    message.listResponseMessage?.title ||\n    message.templateButtonReplyMessage?.selectedId ||\n    message.templateButtonReplyMessage?.selectedDisplayText ||\n    message.reactionMessage?.text ||\n    '';\n}\n\nuserMessage = (userMessage || '').trim();\n\n// 6. Extrair instância, servidor, apikey, nome e telefone limpo\nconst instance = payload.instance || data.instanceId || payload.instanceId || 'ms-barber';\nconst serverUrl = 'https://evolution.88barber.top';\nconst apiKey = '88barber-evolution-pbzJxGX3Ih2OHMKo';\nconst pushName = data.pushName || payload.pushName || 'Cliente';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '').replace(/\\D/g, '');\nconst event = payload.event || '';\n\n// 7. Regra de validação: mensagem real, 1:1, recebida (texto ou áudio)\nconst isValid = !fromMe && !isGroup && !isStatus && (userMessage.length > 0 || isAudio);\n\nlet reason = 'OK';\nif (fromMe) reason = 'Mensagem enviada por mim (fromMe: true)';\nelse if (isGroup) reason = 'Mensagem de grupo ignorada';\nelse if (isStatus) reason = 'Status / Broadcast ignorado';\nelse if (!isAudio && userMessage.length === 0) reason = 'Mensagem sem texto ou evento sem conteúdo';\n\nreturn {\n  isValid,\n  isAudio,\n  reason,\n  userMessage,\n  rawMessage: data || payload,\n  remoteJid,\n  phone,\n  pushName,\n  instance,\n  serverUrl,\n  apiKey,\n  fromMe,\n  event,\n  messageType: data.messageType || (isAudio ? 'audioMessage' : 'conversation')\n};"
       },
       "id": "processar-mensagem",
       "name": "Processar e Validar Mensagem",
@@ -87,7 +87,7 @@
         "url": "https://88barber.top/api/sdr/transcribe",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').item.json.instance,\n  message: $('Processar e Validar Mensagem').item.json.rawMessage,\n  messageId: $('Processar e Validar Mensagem').item.json.rawMessage?.key?.id\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').first().json.instance || 'ms-barber',\n  message: $('Processar e Validar Mensagem').first().json.rawMessage,\n  messageId: $('Processar e Validar Mensagem').first().json.rawMessage?.key?.id\n}) }}",
         "options": {
           "response": {
             "response": {
@@ -104,7 +104,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const original = $('Processar e Validar Mensagem').item.json;\nconst transcribedText = $json.text || '';\n\nreturn {\n  ...original,\n  userMessage: transcribedText,\n  transcription: transcribedText\n};"
+        "jsCode": "const original = $('Processar e Validar Mensagem').first().json;\nconst transcribedText = $json.text || '';\n\nreturn {\n  ...original,\n  userMessage: transcribedText,\n  transcription: transcribedText\n};"
       },
       "id": "definir-texto-transcrito",
       "name": "Definir Texto Transcrito",
@@ -121,11 +121,11 @@
           "parameters": [
             {
               "name": "instance",
-              "value": "={{ $('Processar e Validar Mensagem').item.json.instance }}"
+              "value": "={{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}"
             },
             {
               "name": "phone",
-              "value": "={{ $('Processar e Validar Mensagem').item.json.phone }}"
+              "value": "={{ $('Processar e Validar Mensagem').first().json.phone }}"
             }
           ]
         },
@@ -146,7 +146,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $('Definir Texto Transcrito').item?.json?.userMessage || $('Processar e Validar Mensagem').item.json.userMessage }}",
+        "text": "={{ $('Definir Texto Transcrito').item?.json?.userMessage || $('Processar e Validar Mensagem').first().json.userMessage }}",
         "options": {
           "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## INSTRUÇÕES DE AGENDAMENTO AUTÔNOMO:\n1. Você é o recepcionista da barbearia. Seja amigável, direto e use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n2. Quando o cliente solicitar horário (por texto ou áudio), verifique o serviço, barbeiro de preferência e horário.\n3. Quando o cliente CONFIRMAR o agendamento (ex: \"pode sim\", \"confirma\", \"fechado\", \"quero esse horário\"), você DEVE EXECUTAR A FERRAMENTA `criar_agendamento` para gravar o agendamento no sistema oficial da barbearia.\n4. Para a ferramenta `criar_agendamento`, você deve fornecer apenas:\n   - barberName: nome do barbeiro combinado\n   - serviceName: nome do serviço combinado\n   - time: horário combinado (ex: \"10:15\")\n   - date: data combinada (ex: \"2026-08-20\" ou omita se for hoje)\n5. Após executar a ferramenta, envie a confirmação final calorosa dizendo que já está garantido na agenda do barbeiro!\n6. Responda sempre em no máximo 3-4 frases curtas."
         }
@@ -184,7 +184,7 @@
         "url": "https://88barber.top/api/sdr/book",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').item.json.instance }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').item.json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').item.json.pushName }}\",\n  \"barberName\": \"{barberName}\",\n  \"serviceName\": \"{serviceName}\",\n  \"time\": \"{time}\",\n  \"date\": \"{date}\"\n}",
+        "jsonBody": "={\n  \"instance\": \"{{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}\",\n  \"clientPhone\": \"{{ $('Processar e Validar Mensagem').first().json.phone }}\",\n  \"clientName\": \"{{ $('Processar e Validar Mensagem').first().json.pushName || 'Cliente' }}\",\n  \"barberName\": \"{barberName}\",\n  \"serviceName\": \"{serviceName}\",\n  \"time\": \"{time}\",\n  \"date\": \"{date}\"\n}",
         "placeholderDefinitions": {
           "values": [
             {
@@ -216,7 +216,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Processar e Validar Mensagem').item.json.remoteJid }}_{{ $('Processar e Validar Mensagem').item.json.instance }}",
+        "sessionKey": "={{ $('Processar e Validar Mensagem').first().json.remoteJid }}_{{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}",
         "contextWindowLength": 12
       },
       "id": "memory-buffer",
@@ -268,7 +268,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  text: $json.output || $('Agente Groq (Llama)').item.json.output,\n  lang: \"pt\"\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  text: $json.output || $('Agente Groq (Llama)').first().json.output,\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  instance: $('Processar e Validar Mensagem').first().json.instance || 'ms-barber',\n  lang: \"pt\"\n}) }}",
         "options": {
           "response": {
             "response": {
@@ -286,7 +286,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://evolution.88barber.top/message/sendWhatsAppAudio/{{ $('Processar e Validar Mensagem').first().json.instance }}",
+        "url": "https://evolution.88barber.top/message/sendWhatsAppAudio/{{ $json.instance || 'ms-barber' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -302,7 +302,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  audio: $json.base64\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  number: $json.number,\n  audio: $json.base64\n}) }}",
         "options": {}
       },
       "id": "enviar-audio-whatsapp",
@@ -314,7 +314,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
+        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance || 'ms-barber' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -330,7 +330,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  text: $json.output || $('Agente Groq (Llama)').item.json.output\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  text: $json.output || $('Agente Groq (Llama)').first().json.output\n}) }}",
         "options": {}
       },
       "id": "enviar-resposta-texto",
