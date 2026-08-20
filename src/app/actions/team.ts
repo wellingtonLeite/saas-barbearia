@@ -14,7 +14,8 @@ export async function addTeamMember(formData: FormData) {
   const phone = formData.get("phone") as string;
   const avatar_url = (formData.get("avatar_url") as string) || null;
   const password = formData.get("password") as string;
-  const employment_type = formData.get("employment_type") as "CLT" | "COMMISSION_ONLY";
+  const employment_type_raw = (formData.get("employment_type") as string) || "COMMISSION_ONLY";
+  const employment_type: "CLT" | "COMMISSION_ONLY" = employment_type_raw === "CLT" ? "CLT" : "COMMISSION_ONLY";
   const fixed_salary = parseFloat((formData.get("fixed_salary") as string) || "0");
   const service_commission_rate = parseFloat((formData.get("service_commission_rate") as string) || "0");
   const product_commission_rate = parseFloat((formData.get("product_commission_rate") as string) || "0");
@@ -117,7 +118,7 @@ export async function addTeamMember(formData: FormData) {
     return { success: true };
   } catch (error: any) {
     console.error("Erro ao adicionar membro:", error);
-    return { error: "Erro ao cadastrar novo barbeiro. Tente novamente." };
+    return { error: error?.message || "Erro ao cadastrar novo barbeiro. Tente novamente." };
   }
 }
 

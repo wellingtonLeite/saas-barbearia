@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   BarChart, 
-  Building,
-  Settings,
-  CreditCard,
-  Server
+  Building, 
+  Settings, 
+  CreditCard, 
+  Server,
+  ShoppingBag
 } from "lucide-react";
 import { useMobileSidebar } from "@/components/layouts/MobileSidebarWrapper";
 
@@ -17,10 +18,11 @@ export default function SuperAdminSidebarNav() {
 
   const navItems = [
     { href: "/super-admin", label: "Visão Geral", icon: BarChart },
-    { href: "/super-admin/infraestrutura", label: "Infraestrutura", icon: Server },
+    { href: "/super-admin/pedidos", label: "Pedidos & Assinaturas", icon: ShoppingBag },
     { href: "/super-admin/tenants", label: "Barbearias", icon: Building },
     { href: "/super-admin/planos", label: "Planos", icon: Settings },
     { href: "/super-admin/pagamentos", label: "Pagamentos", icon: CreditCard },
+    { href: "/super-admin/infraestrutura", label: "Infraestrutura", icon: Server },
     { href: "/super-admin/configuracoes", label: "Configurações", icon: Settings },
   ];
 

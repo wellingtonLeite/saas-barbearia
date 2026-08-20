@@ -219,7 +219,7 @@ export function AddBarberForm({
               name="employment_type"
               className="w-full bg-background border border-secondary rounded-xl px-2.5 py-2.5 text-xs text-text-primary focus:border-primary focus:outline-none"
             >
-              <option value="COMMISSION">Comissão</option>
+              <option value="COMMISSION_ONLY">Comissão</option>
               <option value="CLT">CLT</option>
             </select>
           </div>
