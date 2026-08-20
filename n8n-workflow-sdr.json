@@ -87,7 +87,7 @@
         "url": "https://88barber.top/api/sdr/transcribe",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').item.json.instance,\n  message: $('Processar e Validar Mensagem').item.json.rawMessage?.message || $('Processar e Validar Mensagem').item.json.rawMessage\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  instance: $('Processar e Validar Mensagem').item.json.instance,\n  message: $('Processar e Validar Mensagem').item.json.rawMessage,\n  messageId: $('Processar e Validar Mensagem').item.json.rawMessage?.key?.id\n}) }}",
         "options": {
           "response": {
             "response": {

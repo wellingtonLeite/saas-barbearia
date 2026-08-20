@@ -20,21 +20,30 @@ export async function POST(request: Request) {
       const evolutionUrl = process.env.EVOLUTION_API_URL || "https://evolution.88barber.top";
       const evolutionKey = process.env.EVOLUTION_API_KEY || "88barber-evolution-pbzJxGX3Ih2OHMKo";
 
+      // Extrair ID da mensagem de qualquer estrutura recebida
+      const messageId = 
+        message?.key?.id || 
+        message?.id || 
+        body.messageId || 
+        (typeof message === "string" ? message : null) ||
+        body.rawMessage?.key?.id;
+
+      const evolutionPayload = messageId 
+        ? { message: { key: { id: messageId } }, convertToMp4: false }
+        : { message, convertToMp4: false };
+
       const evolutionRes = await fetch(`${evolutionUrl}/chat/getBase64FromMediaMessage/${instance}`, {
         method: "POST",
         headers: {
           "apikey": evolutionKey,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          message,
-          convertToMp4: false
-        })
+        body: JSON.stringify(evolutionPayload)
       });
 
       if (!evolutionRes.ok) {
         const errText = await evolutionRes.text();
-        console.error("[SDR /transcribe] Erro Evolution API:", errText);
+        console.error("[SDR /transcribe] Erro Evolution API:", errText, "Payload enviado:", evolutionPayload);
         return NextResponse.json(
           { error: "Falha ao obter mídia da Evolution API", details: errText },
           { status: evolutionRes.status }
