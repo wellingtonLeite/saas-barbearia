@@ -1,4 +1,4 @@
-import { Clock, Scissors, User as UserIcon, ChevronLeft, ChevronRight, DollarSign } from "lucide-react";
+import { Clock, Scissors, User as UserIcon, ChevronLeft, ChevronRight, DollarSign, Calendar } from "lucide-react";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import Link from "next/link";
@@ -39,6 +39,7 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
     });
     
     const tenantId = userWithUnits?.units[0]?.unit?.tenantId;
+    const currentUnitId = userWithUnits?.units[0]?.unitId;
 
     const tenant = tenantId ? await db.tenant.findUnique({ 
       where: { id: tenantId },
@@ -99,8 +100,6 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
       cancellation: tenantTemplates?.cancellation || systemTemplates?.cancellation || "Olá {cliente}, informamos que seu agendamento na {barbearia} foi cancelado. Acesse nosso link para remarcar!"
     };
 
-
-
     // Se for OWNER ou SUPER_ADMIN, buscar todos os agendamentos da unidade
     // Se for BARBER, buscar apenas os seus.
     const whereClause: any = {
@@ -142,6 +141,46 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
       totalCommissions = sales.reduce((acc, s) => acc + Number(s.barber_commission), 0);
     }
 
+    // Buscar lista de barbeiros para a visão de multi-colunas
+    let barbersList: Array<{ id: string; name: string; avatar_url: string | null; role: string }> = [];
+
+    if (tenantId) {
+      if (isOwner) {
+        const teamUnits = await db.barberUnit.findMany({
+          where: {
+            unit: { tenantId }
+          },
+          include: {
+            barber: true
+          },
+          orderBy: [
+            { barber: { role: 'asc' } },
+            { barber: { name: 'asc' } }
+          ]
+        });
+
+        const seenBarbers = new Set<string>();
+        for (const item of teamUnits) {
+          if (item.barber && !seenBarbers.has(item.barber.id)) {
+            seenBarbers.add(item.barber.id);
+            barbersList.push({
+              id: item.barber.id,
+              name: item.barber.name,
+              avatar_url: item.barber.avatar_url,
+              role: item.barber.role
+            });
+          }
+        }
+      } else if (session?.user?.id) {
+        barbersList = [{
+          id: session.user.id,
+          name: session.user.name || "Meu Perfil",
+          avatar_url: session.user.image || null,
+          role: session.user.role || "BARBER"
+        }];
+      }
+    }
+
     const dbAppointments = await db.appointment.findMany({
       where: whereClause,
       include: {
@@ -165,13 +204,30 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
         clientPhone: app.client.phone,
         service: app.service.name,
         servicePrice: Number(app.service.price),
+        barberId: app.barberId,
         barberName: app.barber.name,
         status: app.status
       };
     });
 
-    // Horários de funcionamento (Ex: 09:00 às 18:00)
-    const hours = Array.from({ length: 10 }, (_, i) => i + 9);
+    // Se a lista de barbeiros estiver vazia mas tiver agendamentos, derive dos agendamentos
+    if (barbersList.length === 0) {
+      const barberMap = new Map<string, string>();
+      appointments.forEach(a => {
+        if (a.barberId && a.barberName) {
+          barberMap.set(a.barberId, a.barberName);
+        }
+      });
+      barbersList = Array.from(barberMap.entries()).map(([id, name]) => ({
+        id,
+        name,
+        avatar_url: null,
+        role: "BARBER"
+      }));
+    }
+
+    // Horários de funcionamento (Ex: 08:00 às 21:00)
+    const hours = Array.from({ length: 14 }, (_, i) => i + 8);
     
     // Buscar Produtos para o PDV
     const productsRaw = await db.product.findMany({
@@ -184,72 +240,93 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
     }));
 
     return (
-      <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
+      <div className="space-y-8 animate-fade-in max-w-7xl mx-auto w-full pb-16">
         
         {/* Header com os Resumos Rápidos */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
           <div>
-            <h1 className="text-3xl font-display font-bold text-text-primary">Agenda</h1>
-            <div className="flex items-center gap-4 mt-2">
-              <Link href={`/dashboard?date=${prevDateStr}`} className="p-1 hover:bg-secondary rounded-lg transition-colors text-text-secondary hover:text-text-primary">
-                <ChevronLeft size={20} />
+            <h1 className="text-3xl font-display font-bold text-text-primary flex items-center gap-3">
+              <span className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20">
+                <Calendar size={26} />
+              </span>
+              Agenda & Atendimentos
+            </h1>
+            <div className="flex items-center gap-3 mt-3">
+              <Link
+                href={`/dashboard?date=${prevDateStr}`}
+                className="p-2 bg-surface hover:bg-surface-hover border border-secondary rounded-xl transition-all text-text-secondary hover:text-text-primary"
+                title="Dia Anterior"
+              >
+                <ChevronLeft size={18} />
               </Link>
-              <p className="text-text-primary font-bold">{selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-              <Link href={`/dashboard?date=${nextDateStr}`} className="p-1 hover:bg-secondary rounded-lg transition-colors text-text-secondary hover:text-text-primary">
-                <ChevronRight size={20} />
+              <div className="px-4 py-2 bg-surface border border-secondary rounded-xl font-bold text-text-primary text-sm flex items-center gap-2">
+                <Clock size={16} className="text-primary" />
+                <span className="capitalize">
+                  {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+              </div>
+              <Link
+                href={`/dashboard?date=${nextDateStr}`}
+                className="p-2 bg-surface hover:bg-surface-hover border border-secondary rounded-xl transition-all text-text-secondary hover:text-text-primary"
+                title="Próximo Dia"
+              >
+                <ChevronRight size={18} />
               </Link>
             </div>
           </div>
           
           <div className="flex flex-wrap gap-4 items-center">
             {!isOwner && (
-              <div className="bg-surface border border-secondary px-6 py-3 rounded-xl flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <DollarSign className="text-success" size={20} />
+              <div className="bg-surface border border-secondary px-5 py-3 rounded-2xl flex items-center gap-3 shadow-sm">
+                <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                  <DollarSign size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-text-secondary uppercase font-bold">Minha Comissão Hoje</p>
-                  <p className="text-lg font-bold text-success">R$ {totalCommissions.toFixed(2)}</p>
+                  <p className="text-[11px] text-text-secondary uppercase font-bold tracking-wider">Minha Comissão Hoje</p>
+                  <p className="text-lg font-bold text-emerald-400">R$ {totalCommissions.toFixed(2)}</p>
                 </div>
               </div>
             )}
             {isOwner && (
-              <div className="bg-surface border border-secondary px-6 py-3 rounded-xl flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <DollarSign className="text-success" size={20} />
+              <div className="bg-surface border border-secondary px-5 py-3 rounded-2xl flex items-center gap-3 shadow-sm">
+                <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                  <DollarSign size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-text-secondary uppercase font-bold">Caixa Hoje</p>
-                  <p className="text-lg font-bold text-success">R$ {totalRevenue.toFixed(2)}</p>
+                  <p className="text-[11px] text-text-secondary uppercase font-bold tracking-wider">Caixa Hoje</p>
+                  <p className="text-lg font-bold text-emerald-400">R$ {totalRevenue.toFixed(2)}</p>
                 </div>
               </div>
             )}
 
-            <Link href="/dashboard/encaixe" className="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary-hover hover:scale-105 transition-all shadow-lg shadow-primary/30 flex items-center justify-center">
-              + Encaixe
+            <Link href="/dashboard/encaixe" className="bg-primary hover:bg-primary-hover text-white font-bold px-6 py-3.5 rounded-2xl transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]">
+              <span>+ Encaixe Rápido</span>
             </Link>
           </div>
         </div>
 
-
-
-        {/* O componente Timeline recebe os horários, os agendamentos e agora os produtos para o checkout */}
+        {/* O componente Timeline com visualização em Colunas por Barbeiro e Lista */}
         <Timeline 
           hours={hours} 
           appointments={appointments} 
+          barbers={barbersList}
           products={products}
-          isOwner={session?.user?.role !== 'BARBER'} 
+          isOwner={isOwner} 
           whatsappTemplates={finalTemplates}
+          selectedDateFormatted={selectedDate.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
         />
       </div>
     );
   } catch (error: any) {
     return (
-      <div className="p-8 text-danger bg-danger/10 rounded-lg border border-danger/20 font-mono text-sm max-w-5xl mx-auto overflow-auto">
-        <h1 className="text-xl font-bold mb-4">CRASH NO DASHBOARD</h1>
-        <pre>{error.message}</pre>
-        <pre className="mt-4 opacity-70">{error.stack}</pre>
+      <div className="p-8 text-danger bg-danger/10 rounded-2xl border border-danger/20 font-mono text-sm max-w-5xl mx-auto overflow-auto shadow-xl">
+        <h1 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <span>⚠️</span> CRASH NO DASHBOARD
+        </h1>
+        <pre className="text-xs bg-black/40 p-4 rounded-xl mb-4 overflow-x-auto">{error.message}</pre>
+        <pre className="text-xs opacity-70 bg-black/20 p-4 rounded-xl overflow-x-auto">{error.stack}</pre>
       </div>
     );
   }
 }
+

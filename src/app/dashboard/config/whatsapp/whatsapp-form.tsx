@@ -80,54 +80,61 @@ export function WhatsappForm({ tenantId, defaultValues, hasWhatsappSdr = false }
         </div>
       )}
 
-      <div className="space-y-6">
-        {/* Lembrete */}
-        <div className="p-4 rounded-xl bg-background/40 border border-secondary/60">
-          <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
-            <BellRing size={16} className="text-primary" /> Lembrete de Agendamento
-          </label>
-          <textarea
-            name="reminder"
-            defaultValue={defaultValues?.reminder || "Olá {cliente}, seu horário em {barbearia} está confirmado para {hora} com {barbeiro}."}
-            rows={3}
-            className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-y"
-            placeholder="Olá {cliente}, seu horário em {barbearia} está confirmado para {hora} com {barbeiro}."
-          />
+      {/* Grid de 3 Colunas para os Modelos de Mensagem */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+        {/* Coluna 1: Lembrete */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-background/50 border border-secondary flex flex-col justify-between shadow-sm">
+          <div>
+            <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
+              <BellRing size={16} className="text-primary" /> Lembrete de Agendamento
+            </label>
+            <textarea
+              name="reminder"
+              defaultValue={defaultValues?.reminder || "Olá {cliente}, seu horário em {barbearia} está confirmado para {hora} com {barbeiro}."}
+              rows={4}
+              className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-text-primary text-xs sm:text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none leading-relaxed"
+              placeholder="Olá {cliente}, seu horário em {barbearia} está confirmado para {hora} com {barbeiro}."
+            />
+          </div>
           {variablesHelper}
         </div>
 
-        {/* Avaliação */}
-        <div className="p-4 rounded-xl bg-background/40 border border-secondary/60">
-          <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
-            <Star size={16} className="text-amber-400" /> Pedido de Avaliação Pós-Corte
-          </label>
-          <textarea
-            name="review"
-            defaultValue={defaultValues?.review || "E aí {cliente}, o que achou do atendimento com {barbeiro}? Avalie no link: {link}"}
-            rows={3}
-            className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-y"
-            placeholder="E aí {cliente}, o que achou do atendimento com {barbeiro}? Avalie no link: {link}"
-          />
+        {/* Coluna 2: Avaliação */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-background/50 border border-secondary flex flex-col justify-between shadow-sm">
+          <div>
+            <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
+              <Star size={16} className="text-amber-400" /> Pedido de Avaliação Pós-Corte
+            </label>
+            <textarea
+              name="review"
+              defaultValue={defaultValues?.review || "E aí {cliente}, o que achou do atendimento com {barbeiro}? Avalie no link: {link}"}
+              rows={4}
+              className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-text-primary text-xs sm:text-sm focus:border-amber-400 focus:ring-1 focus:ring-amber-400 focus:outline-none resize-none leading-relaxed"
+              placeholder="E aí {cliente}, o que achou do atendimento com {barbeiro}? Avalie no link: {link}"
+            />
+          </div>
           {variablesHelper}
         </div>
 
-        {/* Cancelamento */}
-        <div className="p-4 rounded-xl bg-background/40 border border-secondary/60">
-          <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
-            <MessageSquareText size={16} className="text-rose-400" /> Aviso de Cancelamento
-          </label>
-          <textarea
-            name="cancellation"
-            defaultValue={defaultValues?.cancellation || "Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado. Se desejar reagendar, acesse: {link}"}
-            rows={3}
-            className="w-full bg-background border border-secondary rounded-xl px-4 py-3 text-text-primary text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-y"
-            placeholder="Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado. Se desejar reagendar, acesse: {link}"
-          />
+        {/* Coluna 3: Cancelamento */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-background/50 border border-secondary flex flex-col justify-between shadow-sm">
+          <div>
+            <label className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
+              <MessageSquareText size={16} className="text-rose-400" /> Aviso de Cancelamento
+            </label>
+            <textarea
+              name="cancellation"
+              defaultValue={defaultValues?.cancellation || "Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado. Se desejar reagendar, acesse: {link}"}
+              rows={4}
+              className="w-full bg-background border border-secondary rounded-xl px-3.5 py-2.5 text-text-primary text-xs sm:text-sm focus:border-rose-400 focus:ring-1 focus:ring-rose-400 focus:outline-none resize-none leading-relaxed"
+              placeholder="Olá {cliente}, seu agendamento em {barbearia} às {hora} foi cancelado. Se desejar reagendar, acesse: {link}"
+            />
+          </div>
           {variablesHelper}
         </div>
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-3 border-t border-secondary/50">
         <SubmitButton />
       </div>
     </form>

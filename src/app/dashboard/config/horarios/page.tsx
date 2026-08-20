@@ -56,7 +56,7 @@ export default async function WorkingHoursConfigPage() {
   const barberHours = (contract.working_hours as any) || {};
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-4xl mx-auto pb-12">
+    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>

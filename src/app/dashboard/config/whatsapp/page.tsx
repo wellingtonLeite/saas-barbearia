@@ -59,7 +59,7 @@ export default async function WhatsappConfigPage() {
   const templates = (tenant.whatsapp_templates as any) || {};
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto pb-16">
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto pb-16">
       {/* Header com Design Limpo */}
       <div className="flex items-center gap-3">
         <Link 

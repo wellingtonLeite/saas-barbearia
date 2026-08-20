@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveBarberWorkingHours, WorkingHoursActionState } from "@/app/actions/working-hours";
-import { Clock, Save, CheckCircle2, AlertCircle, Loader2, Utensils, Moon, AlertTriangle } from "lucide-react";
+import { Clock, Save, CheckCircle2, AlertCircle, Loader2, Utensils, Moon, Sparkles, Check } from "lucide-react";
 
 interface DayConfig {
   key: string;
@@ -28,7 +28,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+      className="inline-flex items-center justify-center gap-3 px-10 py-4 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/35 transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none cursor-pointer text-base"
     >
       {pending ? (
         <>
@@ -107,58 +107,103 @@ export function BarberHoursForm({ contractId, barberHours, unitHours }: BarberHo
   };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-8">
       <input type="hidden" name="contractId" value={contractId} />
 
-      {/* Alerta de Feedback em Verde (Sucesso) */}
+      {/* Alerta de Sucesso */}
       {state?.success === true && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-3 animate-fade-in shadow-lg shadow-emerald-500/10">
-          <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400">
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-3 animate-fade-in shadow-lg shadow-emerald-500/10">
+          <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-400">
             <CheckCircle2 size={22} />
           </div>
           <div>
-            <h4 className="font-bold text-sm text-emerald-200">Sucesso!</h4>
-            <p className="text-xs text-emerald-300">{state.message}</p>
+            <h4 className="font-bold text-sm text-emerald-200">Alterações salvas!</h4>
+            <p className="text-xs text-emerald-300/90">{state.message}</p>
           </div>
         </div>
       )}
 
-      {/* Alerta de Erro se houver */}
+      {/* Alerta de Erro */}
       {state?.success === false && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-3 animate-fade-in">
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-3 animate-fade-in shadow-lg shadow-rose-500/10">
           <AlertCircle size={22} className="shrink-0 text-rose-400" />
           <div>
             <h4 className="font-bold text-sm text-rose-200">Não foi possível salvar</h4>
-            <p className="text-xs text-rose-300">{state.error}</p>
+            <p className="text-xs text-rose-300/90">{state.error}</p>
           </div>
         </div>
       )}
 
-      {/* Lista de Dias */}
-      <div className="space-y-4">
+      {/* Grid de 7 Dias em Colunas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
         {DAYS_CONFIG.map((day) => {
           const uH = unitHours?.[day.key] || { active: true, start: "09:00", end: "20:00" };
           const isUnitOpen = !!uH.active;
-          const current = hoursState[day.key] || { active: false, start: "09:00", end: "20:00", lunch_active: false, lunch_start: "12:00", lunch_end: "13:00" };
+          const current = hoursState[day.key] || {
+            active: false,
+            start: "09:00",
+            end: "20:00",
+            lunch_active: false,
+            lunch_start: "12:00",
+            lunch_end: "13:00"
+          };
           const isBarberWorking = isUnitOpen && current.active;
           const hasLunch = current.lunch_active;
 
           return (
             <div
               key={day.key}
-              className={`rounded-2xl border transition-all duration-200 p-5 ${
+              className={`rounded-2xl border transition-all duration-200 p-5 flex flex-col justify-between relative overflow-hidden ${
                 !isUnitOpen
                   ? "bg-surface/30 border-secondary/30 opacity-50"
                   : isBarberWorking
-                  ? "bg-surface border-secondary/80 shadow-md hover:border-primary/40"
-                  : "bg-surface/50 border-secondary/40 opacity-75"
+                  ? "bg-surface border-secondary shadow-md hover:border-primary/50 shadow-black/20"
+                  : "bg-surface/40 border-secondary/40 opacity-75"
               }`}
             >
-              {/* Linha Principal do Dia */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                {/* Nome do Dia e Switcher */}
-                <div className="flex items-center gap-4 min-w-[240px]">
-                  <label className="relative inline-flex items-center cursor-pointer select-none">
+              {/* Barra de Acento Superior no Card */}
+              <div
+                className={`absolute top-0 left-0 right-0 h-1 transition-all ${
+                  !isUnitOpen
+                    ? "bg-slate-700/40"
+                    : isBarberWorking
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                    : "bg-slate-700/60"
+                }`}
+              />
+
+              <div>
+                {/* Cabeçalho do Card */}
+                <div className="flex items-center justify-between gap-3 pb-3 border-b border-secondary/40">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center font-bold text-xs text-text-secondary">
+                      {day.shortName}
+                    </span>
+                    <div>
+                      <h3 className="font-display font-bold text-base text-text-primary">
+                        {day.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {!isUnitOpen ? (
+                          <span className="text-[11px] font-semibold text-text-secondary flex items-center gap-1">
+                            <Moon size={11} /> Unidade Fechada
+                          </span>
+                        ) : isBarberWorking ? (
+                          <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Trabalhando
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-amber-400/90 flex items-center gap-1">
+                            <Moon size={11} /> Minha Folga
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Toggle Aberto / Fechado */}
+                  <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
                     <input
                       type="checkbox"
                       name={`day_${day.key}_active`}
@@ -167,126 +212,116 @@ export function BarberHoursForm({ contractId, barberHours, unitHours }: BarberHo
                       onChange={() => toggleDayActive(day.key)}
                       className="sr-only peer"
                     />
-                    <div className="w-12 h-6 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 peer-checked:border-emerald-400 peer-disabled:opacity-40 peer-disabled:cursor-not-allowed shadow-inner"></div>
+                    <div className="w-11 h-6 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 peer-checked:border-emerald-400 peer-disabled:opacity-40 peer-disabled:cursor-not-allowed shadow-inner"></div>
                   </label>
-
-                  <div>
-                    <span className="font-display font-bold text-base text-text-primary block">
-                      {day.name}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 mt-0.5 ${
-                        !isUnitOpen
-                          ? "text-text-secondary"
-                          : isBarberWorking
-                          ? "text-emerald-400"
-                          : "text-amber-400/80"
-                      }`}
-                    >
-                      {!isUnitOpen ? (
-                        <>
-                          <Moon size={12} /> Barbearia Fechada
-                        </>
-                      ) : isBarberWorking ? (
-                        <>
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          Trabalhando neste dia
-                        </>
-                      ) : (
-                        <>
-                          <Moon size={12} /> Minha Folga
-                        </>
-                      )}
-                    </span>
-                  </div>
                 </div>
 
-                {/* Janela de Horário */}
-                {!isUnitOpen ? (
-                  <div className="text-xs text-text-secondary italic py-2">
-                    A barbearia não abre aos {day.name.toLowerCase()}s.
-                  </div>
-                ) : isBarberWorking ? (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2 bg-background/80 border border-secondary px-3 py-2 rounded-xl">
-                      <Clock size={16} className="text-primary shrink-0" />
-                      <span className="text-xs text-text-secondary font-medium">Entrada:</span>
-                      <input
-                        type="time"
-                        name={`day_${day.key}_start`}
-                        defaultValue={current.start || uH.start}
-                        className="bg-transparent text-text-primary font-bold text-sm focus:outline-none cursor-pointer"
-                      />
+                {/* Conteúdo de Horários */}
+                <div className="py-4 space-y-4">
+                  {!isUnitOpen ? (
+                    <div className="py-4 text-center">
+                      <p className="text-xs text-text-secondary italic">
+                        A barbearia não abre aos {day.name.toLowerCase()}s.
+                      </p>
                     </div>
+                  ) : isBarberWorking ? (
+                    <>
+                      {/* Horário de Entrada e Saída Lado a Lado */}
+                      <div>
+                        <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider block mb-2">
+                          Expediente
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-background/90 border border-secondary rounded-xl p-2 flex flex-col focus-within:border-primary/60 transition-colors">
+                            <span className="text-[10px] text-text-secondary font-medium">Entrada</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Clock size={13} className="text-emerald-400 shrink-0" />
+                              <input
+                                type="time"
+                                name={`day_${day.key}_start`}
+                                defaultValue={current.start || uH.start}
+                                className="bg-transparent text-text-primary font-bold text-sm focus:outline-none w-full cursor-pointer"
+                              />
+                            </div>
+                          </div>
 
-                    <span className="text-text-secondary text-sm font-bold">às</span>
+                          <div className="bg-background/90 border border-secondary rounded-xl p-2 flex flex-col focus-within:border-primary/60 transition-colors">
+                            <span className="text-[10px] text-text-secondary font-medium">Saída</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Clock size={13} className="text-emerald-400 shrink-0" />
+                              <input
+                                type="time"
+                                name={`day_${day.key}_end`}
+                                defaultValue={current.end || uH.end}
+                                className="bg-transparent text-text-primary font-bold text-sm focus:outline-none w-full cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="flex items-center gap-2 bg-background/80 border border-secondary px-3 py-2 rounded-xl">
-                      <Clock size={16} className="text-primary shrink-0" />
-                      <span className="text-xs text-text-secondary font-medium">Saída:</span>
-                      <input
-                        type="time"
-                        name={`day_${day.key}_end`}
-                        defaultValue={current.end || uH.end}
-                        className="bg-transparent text-text-primary font-bold text-sm focus:outline-none cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-xs text-text-secondary italic py-2">
-                    Você definiu folga neste dia. Nenhum cliente poderá agendar horários com você.
-                  </div>
-                )}
-              </div>
+                      {/* Pausa de Almoço */}
+                      <div className="pt-3 border-t border-secondary/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
+                            <Utensils size={13} className={hasLunch ? "text-amber-400" : "text-text-secondary"} />
+                            Pausa de Almoço
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              name={`day_${day.key}_lunch_active`}
+                              checked={hasLunch}
+                              onChange={() => toggleLunchActive(day.key)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-8 h-4.5 bg-slate-800 border border-slate-700 rounded-full peer peer-checked:after:translate-x-3.5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:border-slate-600 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 peer-checked:border-amber-400 shadow-inner"></div>
+                          </label>
+                        </div>
 
-              {/* Sub-seção de Intervalo de Almoço */}
-              {isBarberWorking && (
-                <div className="mt-4 pt-4 border-t border-secondary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <label className="relative inline-flex items-center cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        name={`day_${day.key}_lunch_active`}
-                        checked={hasLunch}
-                        onChange={() => toggleLunchActive(day.key)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-slate-800 border border-slate-700 rounded-full peer peer-checked:after:translate-x-4 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 peer-checked:border-amber-400 shadow-inner"></div>
-                    </label>
-                    <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                      <Utensils size={14} className={hasLunch ? "text-amber-400" : "text-text-secondary"} />
-                      Minha Pausa de Almoço
-                    </span>
-                  </div>
-
-                  {hasLunch && (
-                    <div className="flex items-center gap-2 animate-fade-in">
-                      <input
-                        type="time"
-                        name={`day_${day.key}_lunch_start`}
-                        defaultValue={current.lunch_start || "12:00"}
-                        className="bg-background border border-secondary rounded-lg px-2.5 py-1.5 text-xs text-text-primary font-semibold focus:border-amber-400 focus:outline-none cursor-pointer"
-                      />
-                      <span className="text-xs text-text-secondary">até</span>
-                      <input
-                        type="time"
-                        name={`day_${day.key}_lunch_end`}
-                        defaultValue={current.lunch_end || "13:00"}
-                        className="bg-background border border-secondary rounded-lg px-2.5 py-1.5 text-xs text-text-primary font-semibold focus:border-amber-400 focus:outline-none cursor-pointer"
-                      />
+                        {hasLunch && (
+                          <div className="grid grid-cols-2 gap-2 animate-fade-in">
+                            <div className="bg-background/90 border border-secondary rounded-xl p-1.5 flex flex-col focus-within:border-amber-400/60 transition-colors">
+                              <span className="text-[9px] text-text-secondary font-medium">Início Pausa</span>
+                              <input
+                                type="time"
+                                name={`day_${day.key}_lunch_start`}
+                                defaultValue={current.lunch_start || "12:00"}
+                                className="bg-transparent text-text-primary font-bold text-xs focus:outline-none cursor-pointer mt-0.5"
+                              />
+                            </div>
+                            <div className="bg-background/90 border border-secondary rounded-xl p-1.5 flex flex-col focus-within:border-amber-400/60 transition-colors">
+                              <span className="text-[9px] text-text-secondary font-medium">Fim Pausa</span>
+                              <input
+                                type="time"
+                                name={`day_${day.key}_lunch_end`}
+                                defaultValue={current.lunch_end || "13:00"}
+                                className="bg-transparent text-text-primary font-bold text-xs focus:outline-none cursor-pointer mt-0.5"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-4 text-center">
+                      <p className="text-xs text-text-secondary/80 italic">
+                        Dia de folga selecionado. Nenhum agendamento será disponibilizado.
+                      </p>
                     </div>
                   )}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Botão de Salvar */}
-      <div className="pt-6 border-t border-secondary/60 flex justify-end">
+      {/* Botão de Salvar Centralizado no Rodapé */}
+      <div className="pt-6 border-t border-secondary/60 flex items-center justify-center">
         <SubmitButton />
       </div>
     </form>
   );
 }
+
