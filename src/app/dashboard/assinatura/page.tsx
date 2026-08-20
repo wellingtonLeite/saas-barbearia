@@ -243,9 +243,9 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
                   <CheckCircle2 size={16} className="text-success" />
                   Gestão de Ganhos e Extrato
                 </li>
-                <li className={`flex items-center gap-2 text-sm ${p.has_whatsapp ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
-                  <CheckCircle2 size={16} className={p.has_whatsapp ? "text-success" : "text-secondary"} />
-                  Mensagens via WhatsApp
+                <li className={`flex items-center gap-2 text-sm ${(p as any).has_whatsapp_sdr ? 'text-emerald-400 font-bold' : 'text-text-secondary'}`}>
+                  <CheckCircle2 size={16} className={(p as any).has_whatsapp_sdr ? "text-emerald-400" : "text-success"} />
+                  {(p as any).has_whatsapp_sdr ? "Agente IA SDR no WhatsApp (Robô Automático)" : "WhatsApp (Notificações Manuais)"}
                 </li>
                 <li className={`flex items-center gap-2 text-sm ${p.has_financial_module ? 'text-text-secondary' : 'text-text-secondary/50 line-through'}`}>
                   <CheckCircle2 size={16} className={p.has_financial_module ? "text-success" : "text-secondary"} />
