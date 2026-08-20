@@ -1,12 +1,12 @@
 {
-  "name": "SDR 88barber - Agente IA com Áudio (Whisper Groq + LLaMA + Edge TTS)",
+  "name": "SDR 88barber - Agente IA com Áudio (Whisper Groq + LLaMA + Google TTS)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "evolution-webhook",
         "options": {},
-        "responseMode": "responseNode"
+        "responseMode": "onReceived"
       },
       "id": "webhook-evolution",
       "name": "Webhook Evolution",
@@ -268,7 +268,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  text: $json.output || $('Agente Groq (Llama)').item.json.output,\n  voice: \"pt-BR-AntonioNeural\"\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  text: $json.output || $('Agente Groq (Llama)').item.json.output,\n  lang: \"pt\"\n}) }}",
         "options": {
           "response": {
             "response": {
@@ -278,7 +278,7 @@
         }
       },
       "id": "gerar-audio-tts",
-      "name": "Gerar Áudio de Resposta (Edge TTS)",
+      "name": "Gerar Áudio de Resposta (Google TTS)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [2200, 100]
@@ -338,28 +338,6 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [2200, 320]
-    },
-    {
-      "parameters": {
-        "respondWith": "noData",
-        "options": {}
-      },
-      "id": "respond-webhook",
-      "name": "Responder Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [2680, 200]
-    },
-    {
-      "parameters": {
-        "respondWith": "noData",
-        "options": {}
-      },
-      "id": "respond-webhook-ignore",
-      "name": "Ignorar (Responder 200)",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [820, 440]
     }
   ],
   "connections": {
@@ -390,13 +368,6 @@
         [
           {
             "node": "É Mensagem de Áudio?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Ignorar (Responder 200)",
             "type": "main",
             "index": 0
           }
@@ -502,7 +473,7 @@
       "main": [
         [
           {
-            "node": "Gerar Áudio de Resposta (Edge TTS)",
+            "node": "Gerar Áudio de Resposta (Google TTS)",
             "type": "main",
             "index": 0
           }
@@ -516,33 +487,11 @@
         ]
       ]
     },
-    "Gerar Áudio de Resposta (Edge TTS)": {
+    "Gerar Áudio de Resposta (Google TTS)": {
       "main": [
         [
           {
             "node": "Enviar Áudio WhatsApp",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Enviar Áudio WhatsApp": {
-      "main": [
-        [
-          {
-            "node": "Responder Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Enviar Resposta (Texto)": {
-      "main": [
-        [
-          {
-            "node": "Responder Webhook",
             "type": "main",
             "index": 0
           }

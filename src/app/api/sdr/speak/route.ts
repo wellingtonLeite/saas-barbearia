@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { EdgeTTS } from "@travisvn/edge-tts";
+import * as googleTTS from "google-tts-api";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -23,6 +23,8 @@ function cleanTextForSpeech(input: string): string {
     .replace(/^\s*[-*•+]\s+/gm, "")
     // Substitui quebras de linha múltiplas por ponto ou pausa
     .replace(/\n+/g, ". ")
+    // Remove emojis e caracteres especiais que possam atrapalhar a síntese
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
     // Remove espaços extras
     .replace(/\s{2,}/g, " ")
     .trim();
@@ -33,7 +35,7 @@ function cleanTextForSpeech(input: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { text, voice = "pt-BR-AntonioNeural" } = body;
+    const { text, lang = "pt" } = body;
 
     if (!text || typeof text !== "string" || !text.trim()) {
       return NextResponse.json(
@@ -51,31 +53,35 @@ export async function POST(request: Request) {
       );
     }
 
-    // Instancia o EdgeTTS com a voz selecionada
-    const tts = new EdgeTTS(spokenText, voice, {
-      rate: "+0%",
-      pitch: "+0Hz",
-      volume: "+0%"
+    // Gera os pedaços de áudio em base64 usando Google TTS API
+    const results = await googleTTS.getAllAudioBase64(spokenText, {
+      lang: lang || "pt",
+      slow: false,
+      timeout: 10000,
     });
 
-    const result = await tts.synthesize();
-    const arrayBuffer = await result.audio.arrayBuffer();
-    const audioBuffer = Buffer.from(arrayBuffer);
-    const base64Audio = audioBuffer.toString("base64");
+    if (!results || results.length === 0) {
+      throw new Error("Nenhum áudio foi gerado pelo serviço de TTS.");
+    }
+
+    // Concatena todos os buffers de áudio em um único buffer MP3
+    const audioBuffers = results.map((item) => Buffer.from(item.base64, "base64"));
+    const combinedBuffer = Buffer.concat(audioBuffers);
+    const base64Audio = combinedBuffer.toString("base64");
 
     return NextResponse.json({
       success: true,
       base64: base64Audio,
       mimetype: "audio/mp3",
-      byteLength: audioBuffer.length,
-      voice,
+      byteLength: combinedBuffer.length,
+      lang: lang || "pt",
       textSpoken: spokenText
     });
   } catch (error: any) {
-    console.error("[SDR /speak] Erro na síntese de voz gratuita:", error);
+    console.error("[SDR /speak] Erro na síntese de voz (Google TTS):", error);
     return NextResponse.json(
       {
-        error: "Falha na síntese de voz gratuita (Edge TTS)",
+        error: "Falha na síntese de voz (Google TTS)",
         details: error.message || String(error)
       },
       { status: 500 }
