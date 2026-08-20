@@ -5,11 +5,7 @@ import { addTeamMember } from "@/app/actions/team";
 import { auth } from "@/auth";
 import Link from "next/link";
 import { BarberActiveToggle } from "./barber-active-toggle";
-
-async function onAddTeamMember(formData: FormData) {
-  "use server";
-  await addTeamMember(formData);
-}
+import { AddBarberForm } from "./add-barber-form";
 
 export default async function TeamPage() {
   const session = await auth();
@@ -145,95 +141,7 @@ export default async function TeamPage() {
 
         {/* Formulário Novo Membro */}
         <div>
-          <div className="bg-surface border border-secondary rounded-xl p-6 sticky top-6">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <UserPlus className="text-primary" /> Adicionar Barbeiro
-            </h2>
-
-            <div className="bg-primary/10 border border-primary/30 p-4 rounded-lg mb-6 text-sm text-text-secondary">
-              <p><strong>Acesso do Funcionário:</strong></p>
-              <p className="mt-1">
-                Após cadastrar, passe o E-mail e a Senha Provisória para o barbeiro. Ele utilizará a <strong>mesma tela de login do sistema</strong> (<span className="text-primary font-medium">/login</span>) para acessar sua própria agenda restrita.
-              </p>
-            </div>
-            
-            <form action={onAddTeamMember} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
-                <input 
-                  type="text" 
-                  name="name"
-                  required
-                  placeholder="Ex: Carlos Oliveira"
-                  className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">E-mail (Login)</label>
-                <input 
-                  type="email" 
-                  name="email"
-                  required
-                  placeholder="carlos@barbearia.com"
-                  className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Telefone / WhatsApp</label>
-                <input 
-                  type="tel" 
-                  name="phone"
-                  placeholder="(11) 99999-9999"
-                  className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Senha de Acesso</label>
-                <input 
-                  type="password" 
-                  name="password"
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Tipo Contrato</label>
-                  <select 
-                    name="employment_type"
-                    className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
-                  >
-                    <option value="COMMISSION_ONLY">Comissão</option>
-                    <option value="CLT">CLT</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Comissão Serviços (%)</label>
-                  <input 
-                    type="number" 
-                    name="service_commission_rate"
-                    defaultValue="50"
-                    min="0"
-                    max="100"
-                    className="w-full bg-background border border-secondary rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-              </div>
-
-              <button 
-                type="submit"
-                className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-hover transition-colors mt-2"
-              >
-                Cadastrar Barbeiro
-              </button>
-            </form>
-          </div>
+          <AddBarberForm />
         </div>
 
       </div>

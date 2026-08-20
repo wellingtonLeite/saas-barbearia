@@ -49,7 +49,11 @@ export async function addTeamMember(formData: FormData) {
         },
         units: {
           include: {
-            barbers: true
+            barbers: {
+              include: {
+                barber: true
+              }
+            }
           }
         }
       }
@@ -57,11 +61,15 @@ export async function addTeamMember(formData: FormData) {
 
     if (tenant?.subscription?.plan) {
       const plan = tenant.subscription.plan;
-      const totalBarbers = tenant.units.reduce((acc, unit) => acc + unit.barbers.length, 0);
+      // Contabiliza apenas barbeiros contratados (role BARBER)
+      const hiredBarbers = tenant.units.reduce((acc, unit) => {
+        const count = unit.barbers.filter((b: any) => b.barber?.role === 'BARBER').length;
+        return acc + count;
+      }, 0);
       
-      if (plan.max_barbers !== null && totalBarbers >= plan.max_barbers) {
+      if (plan.max_barbers !== null && hiredBarbers >= plan.max_barbers) {
         return { 
-          error: `Limite de barbeiros atingido para o plano ${plan.name} (Máx: ${plan.max_barbers}). Faça upgrade para adicionar mais profissionais.` 
+          error: `Limite de barbeiros atingido para o plano ${plan.name} (Máx: ${plan.max_barbers} barbeiros contratados). Faça upgrade para adicionar mais profissionais.` 
         };
       }
     }

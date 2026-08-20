@@ -85,8 +85,11 @@ export async function registerTenant(formData: FormData) {
         }
       });
       
-      // 6. Vincular um plano inicial
-      const defaultPlan = await tx.plan.findFirst({ where: { name: "Plano VIP" } }) || await tx.plan.findFirst();
+      // 6. Vincular um plano inicial (Barber VIP com limite alto de barbeiros)
+      const defaultPlan = await tx.plan.findFirst({ 
+        where: { name: { contains: "VIP", mode: "insensitive" } } 
+      }) || await tx.plan.findFirst({ orderBy: { base_price: 'desc' } });
+
       if (defaultPlan) {
         await tx.subscription.create({
           data: {
