@@ -58,48 +58,85 @@ export async function addTeamMember(formData: FormData) {
     if (tenant?.subscription?.plan) {
       const plan = tenant.subscription.plan;
       const totalBarbers = tenant.units.reduce((acc, unit) => acc + unit.barbers.length, 0);
-      if (totalBarbers >= plan.max_barbers) {
-        return { error: `Limite atingido: O seu plano (${plan.name}) permite no máximo ${plan.max_barbers} barbeiros. Faça um upgrade para adicionar mais profissionais.` };
+      
+      if (plan.max_barbers !== null && totalBarbers >= plan.max_barbers) {
+        return { 
+          error: `Limite de barbeiros atingido para o plano ${plan.name} (Máx: ${plan.max_barbers}). Faça upgrade para adicionar mais profissionais.` 
+        };
       }
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.$transaction(async (tx) => {
-      const newBarber = await tx.user.create({
+      // 1. Criar o Usuário com role BARBER
+      const newUser = await tx.user.create({
         data: {
           name,
           email,
-          phone: phone || null,
-          password_hash,
+          phone,
+          password_hash: hashedPassword,
           role: "BARBER"
         }
       });
 
+      // 2. Vincular o Barbeiro à Unidade
       await tx.barberUnit.create({
         data: {
-          barberId: newBarber.id,
-          unitId
+          barberId: newUser.id,
+          unitId,
+          is_active: true
         }
       });
 
+      // 3. Criar Contrato com regras de comissão
       await tx.barberContract.create({
         data: {
-          barberId: newBarber.id,
+          barberId: newUser.id,
           unitId,
-          employment_type,
-          fixed_salary,
-          service_commission_rate,
-          product_commission_rate
+          employment_type: employment_type || "COMMISSION_ONLY",
+          fixed_salary: fixed_salary || 0,
+          service_commission_rate: service_commission_rate || 0,
+          product_commission_rate: product_commission_rate || 0
         }
       });
     });
 
     revalidatePath("/dashboard/equipe");
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao adicionar membro:", error);
-    return { error: "Erro ao adicionar membro" };
+    return { error: "Erro ao cadastrar novo barbeiro. Tente novamente." };
+  }
+}
+
+export async function toggleBarberActive(barberId: string, unitId: string, isActive: boolean) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Não autorizado" };
+
+  try {
+    const { getUserTenant } = await import("@/lib/tenant");
+    const currentTenant = await getUserTenant(session.user.id);
+    if (!currentTenant) return { error: "Não autorizado" };
+
+    await db.barberUnit.update({
+      where: {
+        barberId_unitId: {
+          barberId,
+          unitId
+        }
+      },
+      data: {
+        is_active: isActive
+      }
+    });
+
+    revalidatePath("/dashboard/equipe");
+    revalidatePath("/[slug]/agendar");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erro ao alterar status do barbeiro:", error);
+    return { error: "Erro ao alterar status na agenda." };
   }
 }
 
@@ -118,7 +155,7 @@ export async function updateTeamMember(formData: FormData) {
   const product_commission_rate = parseFloat((formData.get("product_commission_rate") as string) || "0");
 
   if (!barberId || !name || !email) {
-    return { error: "Preencha todos os campos obrigatórios" };
+    return { error: "Preencha os campos obrigatórios." };
   }
 
   try {
@@ -126,26 +163,23 @@ export async function updateTeamMember(formData: FormData) {
     const currentTenant = await getUserTenant(session.user.id);
     if (!currentTenant) return { error: "Não autorizado" };
 
-    // Verificar se o e-mail já pertence a outro usuário
-    const existingWithEmail = await db.user.findFirst({
+    // Verificar se o email já está em uso por outro usuário
+    const existing = await db.user.findFirst({
       where: {
         email,
-        NOT: { id: barberId }
+        id: { not: barberId }
       }
     });
-
-    if (existingWithEmail) {
+    if (existing) {
       return { error: "Este e-mail já está sendo utilizado por outro usuário." };
     }
 
-    // Preparar dados do usuário
     const userDataToUpdate: any = {
       name,
       email,
-      phone: phone || null,
+      phone
     };
 
-    // Se informou nova senha, atualiza o hash
     if (password && password.trim().length > 0) {
       userDataToUpdate.password_hash = await bcrypt.hash(password, 10);
     }

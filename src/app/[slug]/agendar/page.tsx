@@ -23,13 +23,18 @@ export default async function BookingPage({ params }: { params: Promise<{ slug: 
 
   const primaryUnitId = tenant.units[0].id;
 
-  // Buscar barbeiros disponíveis nesta unidade
-  const barberContracts = await db.barberContract.findMany({
-    where: { unitId: primaryUnitId },
-    include: { barber: true }
+  // Buscar apenas barbeiros com status ATIVO nesta unidade
+  const barberUnits = await db.barberUnit.findMany({
+    where: { 
+      unitId: primaryUnitId,
+      is_active: true
+    },
+    include: { 
+      barber: true 
+    }
   });
   
-  const barbers = barberContracts.map(bc => bc.barber);
+  const barbers = barberUnits.map(bu => bu.barber);
 
   return (
     <div className="space-y-8 animate-fade-in">

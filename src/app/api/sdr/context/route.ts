@@ -45,6 +45,7 @@ export async function GET(request: Request) {
           }
         },
         barbers: {
+          where: { is_active: true }, // Apenas barbeiros com switcher ATIVO
           include: {
             barber: {
               select: { id: true, name: true, avatar_url: true }
@@ -72,7 +73,13 @@ export async function GET(request: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://88barber.top";
     const bookingUrl = `${appUrl}/${unit.tenant.slug}/agendar`;
-    const barbersList = unit.barbers.map((b: any) => b.barber.name).filter(Boolean).join(", ") || "Profissionais da casa";
+    
+    // Lista apenas os barbeiros ativos
+    const barbersList = unit.barbers
+      .map((b: any) => b.barber.name)
+      .filter(Boolean)
+      .join(", ") || "Profissionais da casa";
+
     const servicesList = unit.tenant.services
       .map((s: any) => `• ${s.name}: R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)`)
       .join("\n") || "• Corte Tradicional: R$ 40,00\n• Barba Terapia: R$ 30,00";
@@ -90,7 +97,7 @@ Endereço: ${unit.address || "Consulte endereço no link de agendamento"}
 Telefone / WhatsApp: ${unit.phone || searchTerm}
 Horário de Atendimento: ${workingHours}
 
-PROFISSIONAIS / BARBEIROS:
+PROFISSIONAIS / BARBEIROS DISPONÍVEIS:
 ${barbersList}
 
 SERVIÇOS E TABELA DE PREÇOS:

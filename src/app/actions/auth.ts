@@ -65,62 +65,82 @@ export async function registerTenant(formData: FormData) {
         }
       });
 
-      // 4. Vincular o Dono à Unidade (Ele também atua como barbeiro inicialmente)
+      // 4. Vincular o Dono à Unidade
       await tx.barberUnit.create({
         data: {
           barberId: owner.id,
           unitId: unit.id,
+          is_active: true,
+        }
+      });
+
+      // 5. Criar Contrato de Trabalho para o Proprietário
+      await tx.barberContract.create({
+        data: {
+          barberId: owner.id,
+          unitId: unit.id,
+          employment_type: "COMMISSION_ONLY",
+          service_commission_rate: 100,
+          product_commission_rate: 100,
         }
       });
       
-      // 5. Vincular um plano grátis / trial temporário
-      const trialPlan = await tx.plan.findFirst({ where: { name: "Starter" } });
-      if (trialPlan) {
+      // 6. Vincular um plano inicial
+      const defaultPlan = await tx.plan.findFirst({ where: { name: "Plano VIP" } }) || await tx.plan.findFirst();
+      if (defaultPlan) {
         await tx.subscription.create({
           data: {
             tenantId: tenant.id,
-            planId: trialPlan.id,
-            status: "TRIAL",
-            current_period_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias de Trial
+            planId: defaultPlan.id,
+            status: "ACTIVE",
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           }
         });
       }
     });
 
-    // Se chegou até aqui, sucesso total! Redireciona de forma segura
-  } catch (error) {
-    console.error("ERRO NO CADASTRO:", error);
-    return { error: "Erro ao criar conta. Tente novamente." };
+    // Login automático pós-registro
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+    } catch (e) {
+      console.log("Auto-login post register:", e);
+    }
+
+  } catch (error: any) {
+    console.error("Erro no cadastro:", error);
+    return { error: error.message || "Erro ao criar conta." };
   }
 
-  // Redireciona fora do try-catch para evitar engolir o NEXT_REDIRECT
-  redirect("/login");
+  redirect("/dashboard");
 }
 
-// Server action para Login
-export async function authenticate(prevState: string | undefined, formData: FormData) {
-  try {
-    const email = formData.get("email") as string;
-    const user = await db.user.findUnique({ where: { email } });
-    const redirectTo = user?.role === "SUPER_ADMIN" ? "/super-admin" : "/dashboard";
+export async function loginUser(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
-    await signIn('credentials', {
-      ...Object.fromEntries(formData),
-      redirectTo
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/dashboard",
     });
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
-        case 'CredentialsSignin':
-          return 'E-mail ou senha inválidos.';
+        case "CredentialsSignin":
+          return { error: "Credenciais inválidas." };
         default:
-          return 'Algo deu errado no login.';
+          return { error: "Algo deu errado no login." };
       }
     }
     throw error;
   }
 }
 
-export async function doLogout() {
-  await signOut({ redirectTo: "/" });
+export async function logoutUser() {
+  await signOut({ redirectTo: "/login" });
 }
