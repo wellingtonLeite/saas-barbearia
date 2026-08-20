@@ -1,5 +1,5 @@
 {
-  "name": "SDR 88Barber - Agente IA WhatsApp Multi-Tenant (Groq Whisper + LLaMA)",
+  "name": "SDR 88Barber - Agente IA WhatsApp Multi-Tenant (Evolution API Native Node)",
   "nodes": [
     {
       "parameters": {
@@ -159,9 +159,9 @@
     },
     {
       "parameters": {
-        "model": "openai/gpt-oss-120b",
+        "model": "llama-3.3-70b-versatile",
         "options": {
-          "temperature": 0.5
+          "temperature": 0.4
         }
       },
       "id": "groq-chat-model",
@@ -171,8 +171,8 @@
       "position": [1600, 520],
       "credentials": {
         "groqApi": {
-          "id": "NEt69xAc9NgeNmfp",
-          "name": "Groq account"
+          "id": "groq-credentials-sdr",
+          "name": "Groq API Account"
         }
       }
     },
@@ -227,31 +227,27 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "88barber-evolution-pbzJxGX3Ih2OHMKo"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  text: $json.output || $('Agente Groq (Llama)').first().json.output\n}) }}",
-        "options": {}
+        "resource": "messages",
+        "operation": "sendText",
+        "instanceName": "={{ $('Processar e Validar Mensagem').first().json.instance }}",
+        "number": "={{ $('Processar e Validar Mensagem').first().json.phone }}",
+        "text": "={{ $json.output || $('Agente Groq (Llama)').first().json.output }}",
+        "options": {
+          "delay": 1200,
+          "presence": "composing"
+        }
       },
-      "id": "enviar-resposta-texto",
-      "name": "Enviar Resposta (Texto)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [2060, 300]
+      "id": "evolution-send-text",
+      "name": "Evolution API - Enviar Resposta",
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [2060, 300],
+      "credentials": {
+        "evolutionApi": {
+          "id": "evolution-api-88barber",
+          "name": "Evolution API - 88Barber"
+        }
+      }
     }
   ],
   "connections": {
@@ -376,7 +372,7 @@
       "main": [
         [
           {
-            "node": "Enviar Resposta (Texto)",
+            "node": "Evolution API - Enviar Resposta",
             "type": "main",
             "index": 0
           }
