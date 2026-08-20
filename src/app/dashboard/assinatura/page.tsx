@@ -115,33 +115,35 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
               <div className="bg-background/50 p-4 rounded-xl border border-secondary">
                 <p className="text-text-secondary text-xs uppercase tracking-wider font-bold mb-1 flex items-center gap-2">
-                  <CalendarDays size={14} /> Ciclo Atual
+                  <CalendarDays size={14} /> Ciclo da Assinatura
                 </p>
-                <p className="text-lg font-medium text-text-primary">
+                <p className="text-base sm:text-lg font-medium text-text-primary">
                   Início: <span className="font-bold">{formatDate(subscription?.createdAt)}</span>
                 </p>
               </div>
               <div className="bg-background/50 p-4 rounded-xl border border-secondary">
                 <p className="text-text-secondary text-xs uppercase tracking-wider font-bold mb-1 flex items-center gap-2">
-                  <AlertTriangle size={14} /> Vencimento
+                  <AlertTriangle size={14} /> Vencimento / Renovação
                 </p>
-                <p className="text-lg font-medium text-text-primary">
-                  Termina em: <span className="font-bold text-primary">{formatDate(subscription?.current_period_end)}</span>
+                <p className="text-base sm:text-lg font-medium text-text-primary">
+                  {Number(plan?.base_price || 0) === 0 ? (
+                    <span className="font-bold text-emerald-400">Gratuito Permanente</span>
+                  ) : (
+                    <span>Termina em: <strong className="text-primary">{formatDate(subscription?.current_period_end)}</strong></span>
+                  )}
                 </p>
               </div>
             </div>
 
             {Number(plan?.base_price) === 0 ? (
               <a 
-                href={`https://wa.me/5511999999999?text=Olá, sou da barbearia ${tenant.name} e gostaria de consultar as condições do ${plan?.name}.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+                href="#opcoes-upgrade"
+                className="w-full bg-gradient-to-r from-primary to-purple-600 text-white font-bold py-4 rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25 text-sm"
               >
-                <MessageCircle size={20} /> Falar com Consultor (Sob Consulta)
+                <Zap size={18} /> Ver Opções de Upgrade para Barber Pro & VIP
               </a>
             ) : (
               <form action={createCheckoutSession} className="flex flex-col sm:flex-row gap-4">
@@ -150,10 +152,10 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
                 <button 
                   type="submit"
                   disabled={!plan}
-                  className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                  className="flex-1 bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 cursor-pointer text-sm"
                 >
-                  <CreditCard size={20} />
-                  Pagar com Mercado Pago
+                  <CreditCard size={18} />
+                  Renovar / Pagar Mensalidade com Mercado Pago
                 </button>
               </form>
             )}
@@ -213,7 +215,7 @@ export default async function AssinaturaPage({ searchParams }: { searchParams: P
         </div>
       </div>
 
-      <div className="mt-16 mb-8">
+      <div id="opcoes-upgrade" className="mt-16 mb-8 scroll-mt-6">
         <h2 className="text-2xl font-display font-bold text-text-primary mb-2">Opções de Upgrade</h2>
         <p className="text-text-secondary">Faça o upgrade para liberar mais recursos e expandir sua barbearia.</p>
       </div>
