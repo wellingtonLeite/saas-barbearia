@@ -85,18 +85,24 @@ export async function registerTenant(formData: FormData) {
         }
       });
       
-      // 6. Vincular um plano inicial (Barber VIP com limite alto de barbeiros)
-      const defaultPlan = await tx.plan.findFirst({ 
-        where: { name: { contains: "VIP", mode: "insensitive" } } 
-      }) || await tx.plan.findFirst({ orderBy: { base_price: 'desc' } });
+      // 6. Vincular SEMPRE ao Plano Gratuito no cadastro inicial
+      const freePlan = await tx.plan.findFirst({ 
+        where: { 
+          OR: [
+            { name: { contains: "Gratuito", mode: "insensitive" } },
+            { base_price: 0 }
+          ]
+        },
+        orderBy: { base_price: 'asc' }
+      }) || await tx.plan.findFirst({ orderBy: { base_price: 'asc' } });
 
-      if (defaultPlan) {
+      if (freePlan) {
         await tx.subscription.create({
           data: {
             tenantId: tenant.id,
-            planId: defaultPlan.id,
+            planId: freePlan.id,
             status: "ACTIVE",
-            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           }
         });
       }
@@ -107,7 +113,7 @@ export async function registerTenant(formData: FormData) {
       await signIn("credentials", {
         email,
         password,
-        redirect: false,
+        redirectTo: "/dashboard",
       });
     } catch (e) {
       console.log("Auto-login post register:", e);
@@ -122,8 +128,15 @@ export async function registerTenant(formData: FormData) {
 }
 
 export async function authenticate(_prevState: string | undefined, formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
   try {
-    await signIn("credentials", formData);
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/dashboard",
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
