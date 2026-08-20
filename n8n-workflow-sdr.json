@@ -1,5 +1,5 @@
 {
-  "name": "SDR 88barber - Agente IA com Áudio (Whisper Groq + LLaMA)",
+  "name": "SDR 88barber - Agente IA com Áudio (Whisper Groq + LLaMA + Edge TTS)",
   "nodes": [
     {
       "parameters": {
@@ -227,6 +227,92 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-is-audio-reply",
+              "leftValue": "={{ $('Processar e Validar Mensagem').first().json.isAudio }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "verificar-audio-resposta",
+      "name": "É Mensagem de Áudio? (Resposta)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1960, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://88barber.top/api/sdr/speak",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  text: $json.output || $('Agente Groq (Llama)').item.json.output,\n  voice: \"pt-BR-AntonioNeural\"\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "gerar-audio-tts",
+      "name": "Gerar Áudio de Resposta (Edge TTS)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.88barber.top/message/sendWhatsAppAudio/{{ $('Processar e Validar Mensagem').first().json.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "88barber-evolution-pbzJxGX3Ih2OHMKo"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  audio: $json.base64\n}) }}",
+        "options": {}
+      },
+      "id": "enviar-audio-whatsapp",
+      "name": "Enviar Áudio WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2440, 100]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
         "sendHeaders": true,
@@ -247,11 +333,11 @@
         "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  text: $json.output || $('Agente Groq (Llama)').item.json.output\n}) }}",
         "options": {}
       },
-      "id": "enviar-resposta",
-      "name": "Enviar Resposta",
+      "id": "enviar-resposta-texto",
+      "name": "Enviar Resposta (Texto)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2020, 200]
+      "position": [2200, 320]
     },
     {
       "parameters": {
@@ -262,7 +348,7 @@
       "name": "Responder Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2260, 200]
+      "position": [2680, 200]
     },
     {
       "parameters": {
@@ -405,14 +491,54 @@
       "main": [
         [
           {
-            "node": "Enviar Resposta",
+            "node": "É Mensagem de Áudio? (Resposta)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Enviar Resposta": {
+    "É Mensagem de Áudio? (Resposta)": {
+      "main": [
+        [
+          {
+            "node": "Gerar Áudio de Resposta (Edge TTS)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Resposta (Texto)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Áudio de Resposta (Edge TTS)": {
+      "main": [
+        [
+          {
+            "node": "Enviar Áudio WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Áudio WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta (Texto)": {
       "main": [
         [
           {
