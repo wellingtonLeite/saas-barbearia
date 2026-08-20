@@ -1,72 +1,186 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-function authSDR(request: Request) {
-  const key = request.headers.get("x-sdr-key");
-  const expected = process.env.SDR_INTERNAL_KEY;
-  if (!expected || key !== expected) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
-}
-
 /**
  * POST /api/sdr/book
- * Cria um agendamento a partir do agente SDR.
- * Body: { unitId, barberId, serviceId, clientPhone, clientName, date, time }
+ * Cria automaticamente o agendamento real na agenda da barbearia a partir da confirmação do SDR.
+ * Aceita tanto IDs exatos quanto nomes amigáveis (barberName, serviceName, instance, etc).
  */
 export async function POST(request: Request) {
-  const authError = authSDR(request);
-  if (authError) return authError;
-
   try {
     const body = await request.json();
-    const { unitId, barberId, serviceId, clientPhone, clientName, date, time } = body;
+    let { 
+      instance, 
+      slug, 
+      unitId, 
+      tenantId, 
+      barberId, 
+      barberName, 
+      serviceId, 
+      serviceName, 
+      clientPhone, 
+      clientName, 
+      date, 
+      time 
+    } = body;
 
-    if (!unitId || !barberId || !serviceId || !clientPhone || !date || !time) {
+    const identifier = instance || slug || unitId || tenantId;
+    if (!identifier) {
       return NextResponse.json(
-        { error: "Missing required fields: unitId, barberId, serviceId, clientPhone, date, time" },
+        { error: "Identificador da barbearia é obrigatório (instance, slug ou unitId)" },
         { status: 400 }
       );
     }
 
-    const service = await db.service.findUnique({ where: { id: serviceId } });
-    if (!service) return NextResponse.json({ error: "Service not found" }, { status: 404 });
+    if (!clientPhone || !time) {
+      return NextResponse.json(
+        { error: "Telefone do cliente (clientPhone) e horário (time) são obrigatórios" },
+        { status: 400 }
+      );
+    }
 
-    const unit = await db.unit.findUnique({
-      where: { id: unitId },
-      include: { tenant: true }
+    // 1. Localizar Unidade e Barbearia (Tenant)
+    const cleanDigits = identifier.replace(/\D/g, "");
+    const unit = await db.unit.findFirst({
+      where: {
+        OR: [
+          { id: identifier },
+          { tenantId: identifier },
+          { tenant: { slug: identifier } },
+          { phone: identifier },
+          cleanDigits ? { phone: { contains: cleanDigits } } : {},
+        ].filter(Boolean) as any,
+      },
+      include: {
+        tenant: {
+          include: {
+            services: true
+          }
+        },
+        barbers: {
+          include: {
+            barber: true
+          }
+        }
+      }
     });
-    if (!unit) return NextResponse.json({ error: "Unit not found" }, { status: 404 });
 
-    // Busca ou cria o cliente pelo telefone
+    if (!unit) {
+      return NextResponse.json(
+        { error: `Barbearia não encontrada para: ${identifier}` },
+        { status: 404 }
+      );
+    }
+
+    // 2. Identificar o Barbeiro
+    let selectedBarber: any = null;
+    if (barberId) {
+      const found = unit.barbers.find(b => b.barber.id === barberId);
+      if (found) selectedBarber = found.barber;
+    }
+
+    if (!selectedBarber && barberName) {
+      const term = barberName.toLowerCase().trim();
+      const found = unit.barbers.find(b => 
+        b.barber.name.toLowerCase().includes(term) ||
+        term.includes(b.barber.name.toLowerCase())
+      );
+      if (found) selectedBarber = found.barber;
+    }
+
+    // Fallback: se nenhum barbeiro específico foi achado, usa o primeiro disponível da equipe
+    if (!selectedBarber && unit.barbers.length > 0) {
+      selectedBarber = unit.barbers[0].barber;
+    }
+
+    if (!selectedBarber) {
+      return NextResponse.json(
+        { error: "Nenhum profissional disponível encontrado na barbearia" },
+        { status: 404 }
+      );
+    }
+
+    // 3. Identificar o Serviço
+    let selectedService: any = null;
+    if (serviceId) {
+      selectedService = unit.tenant.services.find(s => s.id === serviceId);
+    }
+
+    if (!selectedService && serviceName) {
+      const term = serviceName.toLowerCase().trim();
+      selectedService = unit.tenant.services.find(s => 
+        s.name.toLowerCase().includes(term) ||
+        term.includes(s.name.toLowerCase())
+      );
+    }
+
+    // Fallback: se não achar serviço específico, pega o primeiro serviço cadastrado (ex: corte)
+    if (!selectedService && unit.tenant.services.length > 0) {
+      selectedService = unit.tenant.services[0];
+    }
+
+    if (!selectedService) {
+      return NextResponse.json(
+        { error: "Nenhum serviço cadastrado na barbearia" },
+        { status: 404 }
+      );
+    }
+
+    // 4. Localizar ou Criar o Cliente
+    const cleanClientPhone = clientPhone.replace(/\D/g, "");
     let client = await db.user.findFirst({
-      where: { phone: clientPhone, role: "CLIENT" }
+      where: {
+        OR: [
+          { phone: cleanClientPhone },
+          { phone: clientPhone },
+          { email: `${cleanClientPhone}@temp.com` }
+        ]
+      }
     });
 
     if (!client) {
       client = await db.user.create({
         data: {
-          phone: clientPhone,
           name: clientName || "Cliente WhatsApp",
+          phone: cleanClientPhone,
+          email: `${cleanClientPhone}@temp.com`,
           role: "CLIENT",
-          email: `whatsapp_${clientPhone}@88barber.app`,
-          password_hash: "whatsapp_client_no_password"
+          password_hash: "whatsapp_client_sdr_auto"
         }
+      });
+    } else if (clientName && client.name === "Cliente WhatsApp") {
+      await db.user.update({
+        where: { id: client.id },
+        data: { name: clientName }
       });
     }
 
-    // Montar data/hora do agendamento
-    const [hours, minutes] = time.split(":").map(Number);
-    const startTime = new Date(`${date}T00:00:00`);
-    startTime.setHours(hours, minutes, 0, 0);
-    const endTime = new Date(startTime.getTime() + service.duration_minutes * 60 * 1000);
+    // 5. Montar Data e Horário
+    // Normalizar horário (ex: "10:15", "10h15", "10")
+    const cleanTime = time.replace("h", ":").trim();
+    const [hStr, mStr] = cleanTime.split(":");
+    const hours = parseInt(hStr, 10) || 10;
+    const minutes = parseInt(mStr, 10) || 0;
 
-    // Verificar se o horário ainda está disponível (evitar duplo agendamento)
+    // Normalizar data (formato YYYY-MM-DD ou data atual)
+    let appointmentDate: Date;
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      appointmentDate = new Date(`${date}T00:00:00`);
+    } else {
+      appointmentDate = new Date();
+    }
+
+    const startTime = new Date(appointmentDate);
+    startTime.setHours(hours, minutes, 0, 0);
+
+    const duration = selectedService.duration_minutes || 30;
+    const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+    // 6. Verificar Conflito de Horário
     const conflict = await db.appointment.findFirst({
       where: {
-        barberId,
-        unitId,
+        barberId: selectedBarber.id,
+        unitId: unit.id,
         status: { in: ["PENDING", "CONFIRMED", "IN_PROGRESS"] },
         OR: [
           { start_time: { gte: startTime, lt: endTime } },
@@ -78,47 +192,59 @@ export async function POST(request: Request) {
 
     if (conflict) {
       return NextResponse.json(
-        { error: "Horário não disponível — já foi reservado", conflict: true },
+        { 
+          error: "O horário escolhido já está ocupado com este profissional.",
+          conflict: true,
+          barber: selectedBarber.name,
+          time: cleanTime
+        },
         { status: 409 }
       );
     }
 
-    // Criar o agendamento
+    // 7. Criar Agendamento Oficial no Banco de Dados
     const appointment = await db.appointment.create({
       data: {
         clientId: client.id,
-        barberId,
-        unitId,
-        serviceId,
+        barberId: selectedBarber.id,
+        unitId: unit.id,
+        serviceId: selectedService.id,
         tenantId: unit.tenantId,
         start_time: startTime,
         end_time: endTime,
         status: "CONFIRMED"
       },
       include: {
-        service: true,
         barber: true,
-        unit: true
+        service: true,
+        unit: true,
+        tenant: true
       }
     });
 
     return NextResponse.json({
       success: true,
+      message: "Agendamento criado com sucesso!",
       appointment: {
         id: appointment.id,
         clientName: client.name,
-        clientPhone,
-        service: appointment.service?.name,
-        barber: appointment.barber?.name,
-        unit: appointment.unit?.name,
-        address: appointment.unit?.address,
-        date,
-        time,
+        clientPhone: client.phone,
+        barberName: appointment.barber.name,
+        serviceName: appointment.service.name,
+        price: Number(appointment.service.price),
+        date: startTime.toLocaleDateString("pt-BR"),
+        time: startTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        unitName: appointment.unit.name,
+        address: appointment.unit.address,
         status: appointment.status
       }
     });
-  } catch (error) {
-    console.error("[SDR /book]", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+
+  } catch (error: any) {
+    console.error("[SDR /book Error]", error);
+    return NextResponse.json(
+      { error: "Erro interno ao registrar agendamento", details: error.message },
+      { status: 500 }
+    );
   }
 }
