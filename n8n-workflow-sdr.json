@@ -149,13 +149,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://evolution.88barber.top/message/sendText/{{ $('Processar e Validar Mensagem').item.json.instance }}",
+        "url": "={{ $('Processar e Validar Mensagem').first().json.serverUrl || 'https://evolution.88barber.top' }}/message/sendText/{{ $('Processar e Validar Mensagem').first().json.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "88barber-evolution-pbzJxGX3Ih2OHMKo"
+              "value": "={{ $('Processar e Validar Mensagem').first().json.apiKey || '88barber-evolution-pbzJxGX3Ih2OHMKo' }}"
             },
             {
               "name": "Content-Type",
@@ -165,7 +165,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').item.json.remoteJid,\n  text: $json.output || $('Agente Groq (Llama)').item.json.output\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  number: $('Processar e Validar Mensagem').first().json.phone,\n  text: $json.output || $('Agente Groq (Llama)').item.json.output\n}) }}",
         "options": {}
       },
       "id": "enviar-resposta",
