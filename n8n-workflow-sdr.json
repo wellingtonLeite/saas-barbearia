@@ -104,13 +104,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const original = $('Processar e Validar Mensagem').first().json;\nconst transcribedText = $json.text || '';\n\nreturn {\n  ...original,\n  userMessage: transcribedText,\n  transcription: transcribedText\n};"
+        "jsCode": "const original = $('Processar e Validar Mensagem').first().json;\nconst messageText = $json.text || original.userMessage || $json.userMessage || '';\n\nreturn {\n  ...original,\n  userMessage: messageText,\n  transcription: messageText\n};"
       },
       "id": "definir-texto-transcrito",
       "name": "Definir Texto Transcrito",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1260, 180]
+      "position": [1260, 300]
     },
     {
       "parameters": {
@@ -146,7 +146,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $('Definir Texto Transcrito').item?.json?.userMessage || $('Processar e Validar Mensagem').first().json.userMessage }}",
+        "text": "={{ $('Definir Texto Transcrito').first().json.userMessage }}",
         "options": {
           "systemMessage": "={{ $json.data?.context || $json.context || '' }}\n\n## INSTRUÇÕES DE AGENDAMENTO AUTÔNOMO:\n1. Você é o recepcionista da barbearia. Seja amigável, direto e use gírias leves (\"meu parceiro\", \"irmão\", \"chefe\").\n2. Quando o cliente solicitar horário (por texto ou áudio), verifique o serviço, barbeiro de preferência e horário.\n3. Quando o cliente CONFIRMAR o agendamento (ex: \"pode sim\", \"confirma\", \"fechado\", \"quero esse horário\"), você DEVE EXECUTAR A FERRAMENTA `criar_agendamento` para gravar o agendamento no sistema oficial da barbearia.\n4. Para a ferramenta `criar_agendamento`, você deve fornecer apenas:\n   - barberName: nome do barbeiro combinado\n   - serviceName: nome do serviço combinado\n   - time: horário combinado (ex: \"10:15\")\n   - date: data combinada (ex: \"2026-08-20\" ou omita se for hoje)\n5. Após executar a ferramenta, envie a confirmação final calorosa dizendo que já está garantido na agenda do barbeiro!\n6. Responda sempre em no máximo 3-4 frases curtas."
         }
@@ -295,7 +295,7 @@
         ],
         [
           {
-            "node": "Buscar Contexto Barbearia",
+            "node": "Definir Texto Transcrito",
             "type": "main",
             "index": 0
           }
