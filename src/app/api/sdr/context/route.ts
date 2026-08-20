@@ -71,7 +71,7 @@ export async function GET(request: Request) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://88barber.top";
-    const bookingUrl = `${appUrl}/agendamento/${unit.tenant.slug || unit.id}`;
+    const bookingUrl = `${appUrl}/${unit.tenant.slug}/agendar`;
     const barbersList = unit.barbers.map((b: any) => b.barber.name).filter(Boolean).join(", ") || "Profissionais da casa";
     const servicesList = unit.tenant.services
       .map((s: any) => `• ${s.name}: R$ ${Number(s.price).toFixed(2)} (${s.duration_minutes} min)`)

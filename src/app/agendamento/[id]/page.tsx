@@ -1,14 +1,15 @@
 import { db } from "@/lib/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Calendar, Clock, Scissors, User as UserIcon, X, CalendarDays, MapPin } from "lucide-react";
 import Link from "next/link";
 import { cancelAppointment } from "@/app/actions/client-appointment";
 
 export default async function ClientAppointmentPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
+  const paramId = resolvedParams.id;
   
   const appointment = await db.appointment.findUnique({
-    where: { id: resolvedParams.id },
+    where: { id: paramId },
     include: {
       tenant: true,
       unit: true,
@@ -18,7 +19,23 @@ export default async function ClientAppointmentPage({ params }: { params: Promis
     }
   });
 
-  if (!appointment) notFound();
+  // Se não encontrou o agendamento pelo ID, verifica se o parâmetro é o slug de uma barbearia
+  if (!appointment) {
+    const tenant = await db.tenant.findFirst({
+      where: {
+        OR: [
+          { slug: paramId },
+          { id: paramId }
+        ]
+      }
+    });
+
+    if (tenant) {
+      redirect(`/${tenant.slug}/agendar`);
+    }
+
+    notFound();
+  }
 
   const isCancellable = appointment.status === 'PENDING' || appointment.status === 'CONFIRMED';
   
@@ -60,81 +77,70 @@ export default async function ClientAppointmentPage({ params }: { params: Promis
             {getStatusDisplay(appointment.status)}
           </div>
 
-          <div className="bg-background rounded-xl p-6 border border-secondary space-y-4">
-            <div className="flex items-center gap-4 text-text-primary">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Calendar size={20} />
-              </div>
-              <div>
-                <p className="text-sm text-text-secondary">Data e Hora</p>
-                <p className="font-bold">
-                  {appointment.start_time.toLocaleDateString('pt-BR')} às {appointment.start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
+          <div className="bg-background border border-secondary rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-3 text-text-secondary text-sm">
+              <Scissors size={18} className="text-primary" />
+              <span>Serviço: <strong className="text-text-primary">{appointment.service.name}</strong></span>
+            </div>
+            
+            <div className="flex items-center gap-3 text-text-secondary text-sm">
+              <UserIcon size={18} className="text-primary" />
+              <span>Profissional: <strong className="text-text-primary">{appointment.barber.name}</strong></span>
             </div>
 
-            <div className="flex items-center gap-4 text-text-primary">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Scissors size={20} />
-              </div>
-              <div>
-                <p className="text-sm text-text-secondary">Serviço</p>
-                <p className="font-bold">{appointment.service.name}</p>
-              </div>
+            <div className="flex items-center gap-3 text-text-secondary text-sm">
+              <CalendarDays size={18} className="text-primary" />
+              <span>Data: <strong className="text-text-primary">{appointment.start_time.toLocaleDateString('pt-BR')}</strong></span>
             </div>
 
-            <div className="flex items-center gap-4 text-text-primary">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <UserIcon size={20} />
-              </div>
-              <div>
-                <p className="text-sm text-text-secondary">Profissional</p>
-                <p className="font-bold">{appointment.barber.name}</p>
-              </div>
+            <div className="flex items-center gap-3 text-text-secondary text-sm">
+              <Clock size={18} className="text-primary" />
+              <span>Horário: <strong className="text-text-primary">{appointment.start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong></span>
             </div>
 
-            <div className="flex items-center gap-4 text-text-primary">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <MapPin size={20} />
+            {appointment.unit?.address && (
+              <div className="flex items-center gap-3 text-text-secondary text-sm">
+                <MapPin size={18} className="text-primary" />
+                <span>Local: <strong className="text-text-primary">{appointment.unit.address}</strong></span>
               </div>
-              <div>
-                <p className="text-sm text-text-secondary">Local</p>
-                <p className="font-bold text-sm">{appointment.unit.name} - {appointment.unit.address || "Endereço não cadastrado"}</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {isCancellable && (
-            <div className="pt-4 space-y-4">
-              <p className="text-sm text-center text-text-secondary">Precisa mudar os planos?</p>
-              
-              <div className="grid grid-cols-1 gap-4">
-                <Link 
-                  href={`/${appointment.tenant.slug}/agendar`}
-                  className="w-full py-4 bg-primary text-black font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-hover transition-colors"
+            <div className="space-y-4">
+              <form action={async () => {
+                "use server";
+                await cancelAppointment(appointment.id);
+              }}>
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
-                  <CalendarDays size={20} /> Fazer Novo Agendamento
-                </Link>
-                
-                {canCancelWithoutPenalty ? (
-                  <form action={async (formData) => { await cancelAppointment(formData); }}>
-                    <input type="hidden" name="appointmentId" value={appointment.id} />
-                    <button 
-                      type="submit"
-                      className="w-full py-4 bg-transparent border-2 border-danger text-danger font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-danger/10 transition-colors"
-                    >
-                      <X size={20} /> Cancelar este Horário
-                    </button>
-                  </form>
-                ) : (
-                  <div className="text-center p-4 bg-danger/10 border border-danger/30 rounded-xl">
-                    <p className="text-sm text-danger font-medium">Cancelamentos só podem ser feitos com mais de 2h de antecedência. Entre em contato diretamente com a barbearia.</p>
-                  </div>
-                )}
-              </div>
+                  <X size={20} /> Cancelar Agendamento
+                </button>
+              </form>
+              
+              {!canCancelWithoutPenalty && (
+                <p className="text-xs text-text-secondary text-center">
+                  * Atenção: Cancelamentos com menos de 2 horas de antecedência podem estar sujeitos a taxas de acordo com a política da barbearia.
+                </p>
+              )}
             </div>
           )}
+
+          {!isCancellable && (
+            <div className="text-center">
+              <Link 
+                href={`/${appointment.tenant.slug}/agendar`}
+                className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors inline-block"
+              >
+                Fazer Novo Agendamento
+              </Link>
+            </div>
+          )}
+
         </div>
+
       </div>
     </div>
   );

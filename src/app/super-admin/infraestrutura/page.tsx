@@ -106,9 +106,8 @@ export default async function InfraPage() {
   
   // Score de saúde do sistema (0-100)
   const healthScore = Math.min(100, Math.round(
-    (activeTenants / Math.max(totalTenants, 1)) * 40 +
-    (last7Days > 0 ? 30 : 0) +
-    (tenantsAtRisk === 0 ? 30 : Math.max(0, 30 - tenantsAtRisk * 5))
+    (activeTenants / Math.max(totalTenants, 1)) * 50 +
+    (tenantsAtRisk === 0 ? 50 : Math.max(0, 50 - tenantsAtRisk * 10))
   ));
 
   const healthColor = healthScore >= 80 ? "text-green-400" : healthScore >= 60 ? "text-yellow-400" : "text-red-400";
