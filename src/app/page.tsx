@@ -55,7 +55,7 @@ export default function LandingPage() {
             O 88barber não é apenas uma agenda. É um ecossistema completo onde um <strong>Agente SDR com Inteligência Artificial</strong> atende seus clientes no WhatsApp 24h por dia, enquanto o sistema cuida do financeiro, das comissões e das comandas.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-full font-bold text-lg hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(139,92,246,0.5)]">
+            <Link href="/checkout?plan=gratuito" className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-full font-bold text-lg hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(139,92,246,0.5)]">
               Começar Teste Grátis <ArrowRight size={20} />
             </Link>
             <a href="#como-funciona" className="w-full sm:w-auto px-8 py-4 bg-white/5 text-white rounded-full font-bold text-lg hover:bg-white/10 transition-colors border border-white/10">
@@ -225,7 +225,7 @@ export default function LandingPage() {
                 <li className="flex gap-3 text-sm opacity-40"><CheckCircle2 className="text-white/10 shrink-0" size={20} /> Sem Financeiro / PDV</li>
                 <li className="flex gap-3 text-sm opacity-40"><CheckCircle2 className="text-white/10 shrink-0" size={20} /> Sem WhatsApp IA</li>
               </ul>
-              <Link href="/register" className="w-full py-3 rounded-xl border border-white/10 font-bold text-center hover:bg-white/5 transition-colors">Testar Grátis</Link>
+              <Link href="/checkout?plan=gratuito" className="w-full py-3 rounded-xl border border-white/10 font-bold text-center hover:bg-white/5 transition-colors">Testar Grátis</Link>
             </div>
 
             {/* BARBER PRO */}
@@ -240,7 +240,7 @@ export default function LandingPage() {
                 <li className="flex gap-3 text-sm"><CheckCircle2 className="text-success shrink-0" size={20} /> Comandas, PDV e Estoque</li>
                 <li className="flex gap-3 text-sm"><CheckCircle2 className="text-success shrink-0" size={20} /> Relatórios e Comissões</li>
               </ul>
-              <Link href="/register" className="w-full py-3 rounded-xl bg-white/10 text-white font-bold text-center hover:bg-white/20 transition-colors">Assinar Barber Pro</Link>
+              <Link href="/checkout?plan=barber-pro" className="w-full py-3 rounded-xl bg-white/10 text-white font-bold text-center hover:bg-white/20 transition-colors">Assinar Barber Pro</Link>
             </div>
 
             {/* BARBER VIP - DESTAQUE */}
@@ -258,7 +258,7 @@ export default function LandingPage() {
                 <li className="flex gap-3 text-sm"><CheckCircle2 className="text-primary shrink-0" size={20} /> Programa de Fidelidade e VIP</li>
                 <li className="flex gap-3 text-sm"><CheckCircle2 className="text-primary shrink-0" size={20} /> Suporte Prioritário 24/7</li>
               </ul>
-              <Link href="/register" className="w-full py-3 rounded-xl bg-primary text-white font-bold text-center hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20">Assinar Barber VIP</Link>
+              <Link href="/checkout?plan=barber-vip" className="w-full py-3 rounded-xl bg-primary text-white font-bold text-center hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20">Assinar Barber VIP</Link>
             </div>
 
           </div>
