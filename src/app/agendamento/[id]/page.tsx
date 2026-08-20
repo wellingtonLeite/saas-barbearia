@@ -108,10 +108,8 @@ export default async function ClientAppointmentPage({ params }: { params: Promis
 
           {isCancellable && (
             <div className="space-y-4">
-              <form action={async () => {
-                "use server";
-                await cancelAppointment(appointment.id);
-              }}>
+              <form action={cancelAppointment}>
+                <input type="hidden" name="appointmentId" value={appointment.id} />
                 <button
                   type="submit"
                   className="w-full py-4 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"

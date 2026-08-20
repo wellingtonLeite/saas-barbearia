@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function cancelAppointment(formData: FormData) {
+export async function cancelAppointment(formData: FormData): Promise<void> {
   const appointmentId = formData.get("appointmentId") as string;
 
   if (!appointmentId) return;
@@ -17,14 +17,14 @@ export async function cancelAppointment(formData: FormData) {
 
     // Apenas PENDING ou CONFIRMED podem ser cancelados pelo cliente
     if (appointment.status !== 'PENDING' && appointment.status !== 'CONFIRMED') {
-      return { error: "Este agendamento não pode mais ser cancelado." };
+      return;
     }
 
     // Apenas se faltar mais de 2 horas (Regra de Negócio)
     const now = new Date();
     const hoursUntil = (appointment.start_time.getTime() - now.getTime()) / (1000 * 60 * 60);
     if (hoursUntil <= 2) {
-      return { error: "Cancelamento não permitido com menos de 2 horas de antecedência." };
+      return;
     }
 
     await db.appointment.update({

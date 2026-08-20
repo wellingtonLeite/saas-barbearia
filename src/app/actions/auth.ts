@@ -65,7 +65,7 @@ export async function registerTenant(formData: FormData) {
         }
       });
 
-      // 4. Vincular o Dono à Unidade
+      // 4. Vincular o Dono à Unidade (Ativo como Barbeiro inicialmente)
       await tx.barberUnit.create({
         data: {
           barberId: owner.id,
@@ -118,6 +118,22 @@ export async function registerTenant(formData: FormData) {
   redirect("/dashboard");
 }
 
+export async function authenticate(_prevState: string | undefined, formData: FormData) {
+  try {
+    await signIn("credentials", formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return "Credenciais inválidas. Verifique seu e-mail e senha.";
+        default:
+          return "Algo deu errado no login. Tente novamente.";
+      }
+    }
+    throw error;
+  }
+}
+
 export async function loginUser(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -139,6 +155,10 @@ export async function loginUser(formData: FormData) {
     }
     throw error;
   }
+}
+
+export async function doLogout() {
+  await signOut({ redirectTo: "/login" });
 }
 
 export async function logoutUser() {

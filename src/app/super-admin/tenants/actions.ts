@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SubscriptionStatus } from "@/generated/prisma/enums";
 
-export async function toggleTenantStatusAction(formData: FormData) {
+export async function toggleTenantStatusAction(formData: FormData): Promise<void> {
   const session = await auth();
   if (session?.user?.role !== "SUPER_ADMIN") throw new Error("Não autorizado");
 
@@ -19,7 +19,6 @@ export async function toggleTenantStatusAction(formData: FormData) {
   });
 
   revalidatePath("/super-admin/tenants");
-  return { success: true };
 }
 
 export async function updateSubscriptionAction(formData: FormData) {
