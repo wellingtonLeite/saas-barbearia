@@ -7,14 +7,15 @@ import React, {
   useState,
   useRef,
   useCallback,
+  useMemo,
 } from "react";
 import type { Notification } from "@/generated/prisma/client";
-import { UrgentAppointmentModal } from "./UrgentAppointmentModal";
+import { UrgentAppointmentModal, type UrgentAppointmentItem } from "./UrgentAppointmentModal";
 
 type NotificationContextType = {
   notifications: Notification[];
   unreadCount: number;
-  unreadAppointments: Notification[];
+  unreadAppointments: UrgentAppointmentItem[];
   markAsRead: (ids: string[]) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   stopSoundLoop: () => void;
@@ -249,10 +250,29 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [notifications, markAsRead, stopSoundLoop]);
 
-  // Lista de agendamentos pendentes de confirmação
-  const unreadAppointments = notifications.filter(
-    (n) => !n.is_read && n.type === "NEW_APPOINTMENT"
-  );
+  // Lista de agendamentos pendentes de confirmação com deduplicação inteligente por mensagem/conteúdo
+  const unreadAppointments = useMemo<UrgentAppointmentItem[]>(() => {
+    const rawUnread = notifications.filter(
+      (n) => !n.is_read && n.type === "NEW_APPOINTMENT"
+    );
+
+    const map = new Map<string, UrgentAppointmentItem>();
+    for (const notif of rawUnread) {
+      // Normalização da chave de agrupamento por título e mensagem
+      const key = `${notif.title || ""}_${notif.message || ""}`.trim().toLowerCase();
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...notif, allIds: [notif.id] });
+      } else {
+        if (!existing.allIds) {
+          existing.allIds = [existing.id];
+        }
+        existing.allIds.push(notif.id);
+      }
+    }
+
+    return Array.from(map.values());
+  }, [notifications]);
 
   // Inicialização de áudio e desbloqueio por interação do usuário
   useEffect(() => {
@@ -304,7 +324,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     >
       {children}
 
-      {/* Modal Urgente de Novo Agendamento (visível em qualquer tela do dashboard) */}
+      {/* Floating Island / Toast Urgente de Novo Agendamento (não intrusivo, canto superior direito) */}
       {unreadAppointments.length > 0 && (
         <UrgentAppointmentModal
           notifications={unreadAppointments}
