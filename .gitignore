@@ -42,3 +42,8 @@ next-env.d.ts
 
 /src/generated/prisma
 graphify-out/
+
+# Local scripts & tokens
+deploy-to-coolify.js
+scratch/
+*.local.js
