@@ -54,9 +54,27 @@ export async function getMeiThresholdAnalysis(): Promise<MeiThresholdResponse> {
       },
     });
 
-    const unit = userWithUnits?.units[0]?.unit;
-    const tenantId = unit?.tenantId;
-    if (!tenantId || !unit) throw new Error("Barbearia não encontrada");
+    let unit = userWithUnits?.units[0]?.unit;
+    let tenantId = unit?.tenantId;
+
+    if (!tenantId || !unit) {
+      const { getUserTenant } = await import("@/lib/tenant");
+      const tenant = await getUserTenant(userId);
+      if (!tenant) throw new Error("Barbearia não encontrada");
+      tenantId = tenant.id;
+      const foundUnit = await db.unit.findFirst({
+        where: { tenantId },
+        include: {
+          barbers: {
+            where: { is_active: true },
+            include: { barber: true },
+          },
+        },
+      });
+      if (foundUnit) {
+        unit = foundUnit;
+      }
+    }
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -89,7 +107,7 @@ export async function getMeiThresholdAnalysis(): Promise<MeiThresholdResponse> {
       }),
     ]);
 
-    const activeBarbers = unit.barbers;
+    const activeBarbers = unit?.barbers || [];
 
     const barbersMei: BarberMeiStatus[] = activeBarbers.map((bUnit) => {
       const barber = bUnit.barber;

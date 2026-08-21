@@ -131,11 +131,23 @@ export async function authenticate(_prevState: string | undefined, formData: For
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
+  if (!email || !password) {
+    return "Preencha todos os campos.";
+  }
+
   try {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await db.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { role: true },
+    });
+
+    const targetRedirect = user?.role === "SUPER_ADMIN" ? "/super-admin" : "/dashboard";
+
     await signIn("credentials", {
-      email,
+      email: normalizedEmail,
       password,
-      redirectTo: "/dashboard",
+      redirectTo: targetRedirect,
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -154,11 +166,23 @@ export async function loginUser(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
+  if (!email || !password) {
+    return { error: "Preencha todos os campos." };
+  }
+
   try {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await db.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { role: true },
+    });
+
+    const targetRedirect = user?.role === "SUPER_ADMIN" ? "/super-admin" : "/dashboard";
+
     await signIn("credentials", {
-      email,
+      email: normalizedEmail,
       password,
-      redirectTo: "/dashboard",
+      redirectTo: targetRedirect,
     });
   } catch (error) {
     if (error instanceof AuthError) {

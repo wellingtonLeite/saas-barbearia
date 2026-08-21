@@ -80,10 +80,51 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
       },
     });
 
-    const unit = userWithUnits?.units[0]?.unit;
-    const tenantId = unit?.tenantId;
+    let unit = userWithUnits?.units[0]?.unit;
+    let tenantId = unit?.tenantId;
 
     if (!tenantId || !unit) {
+      const { getUserTenant } = await import("@/lib/tenant");
+      const tenant = await getUserTenant(userId);
+      if (!tenant) {
+        return {
+          success: false,
+          totalFixedExpenses: 0,
+          activeChairsCount: 0,
+          fixedCostPerChair: 0,
+          tenantTargetCount: 0,
+          tenantCurrentCount: 0,
+          tenantProgressPercent: 0,
+          tenantIsProfitable: false,
+          barbers: [],
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+          error: "Barbearia não encontrada",
+        };
+      }
+      tenantId = tenant.id;
+      const foundUnit = await db.unit.findFirst({
+        where: { tenantId },
+        include: {
+          tenant: true,
+          barbers: {
+            where: { is_active: true },
+            include: {
+              barber: {
+                include: {
+                  contracts: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      if (foundUnit) {
+        unit = foundUnit;
+      }
+    }
+
+    if (!tenantId) {
       return {
         success: false,
         totalFixedExpenses: 0,
@@ -130,7 +171,7 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
     }
 
     // 2. Barbeiros ativos (cadeiras operacionais)
-    const activeBarbers = unit.barbers;
+    const activeBarbers = unit?.barbers || [];
     const activeChairsCount = Math.max(1, activeBarbers.length);
 
     // Custo Fixo Unitário por Cadeira (CF_c)
@@ -168,7 +209,7 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
 
     const barbersData: BarberBreakEvenData[] = activeBarbers.map((bUnit) => {
       const barber = bUnit.barber;
-      const contract = barber.contracts?.find((c) => c.unitId === unit.id);
+      const contract = barber.contracts?.find((c) => c.unitId === unit?.id);
 
       // Comissão padrão de 50% caso não configurada
       const commissionRate = contract?.service_commission_rate
@@ -231,6 +272,12 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
         marginPerService,
       };
     });
+
+    if (barbersData.length === 0) {
+      const defaultMargin = Math.max(5, avgServicePrice * (1 - 0.5 - 0.10) - 2.0);
+      tenantTotalTarget = Math.ceil(totalFixedExpenses / defaultMargin);
+      tenantTotalCompleted = appointmentsMonth.length;
+    }
 
     const tenantProgressPercent =
       tenantTotalTarget > 0

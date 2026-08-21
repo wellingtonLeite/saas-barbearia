@@ -21,12 +21,16 @@ import {
   Bot,
   MessageSquare,
   Calculator,
-  Target
+  Target,
+  Crown,
+  ShieldAlert,
+  ChevronRight
 } from "lucide-react";
 import { useMobileSidebar } from "./layouts/MobileSidebarWrapper";
 
 type Props = {
   isOwnerOrAdmin: boolean;
+  isSuperAdmin?: boolean;
   hasAccountsPayable?: boolean;
   hasGrowthDashboard?: boolean;
 };
@@ -38,7 +42,12 @@ type NavItem = {
   badge?: string;
 };
 
-export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false, hasGrowthDashboard = false }: Props) {
+export default function SidebarNav({ 
+  isOwnerOrAdmin, 
+  isSuperAdmin = false, 
+  hasAccountsPayable = false, 
+  hasGrowthDashboard = false 
+}: Props) {
   const { closeSidebar } = useMobileSidebar();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -66,6 +75,41 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
 
   return (
     <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
+      {/* SEÇÃO SUPER ADMIN - Destaque Máximo */}
+      {isSuperAdmin && (
+        <div className="mb-4 p-3 rounded-2xl bg-gradient-to-br from-red-950/60 via-amber-950/40 to-slate-900 border border-amber-500/40 shadow-lg shadow-red-950/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <Crown size={13} className="text-amber-400 fill-amber-400" />
+              SaaS Master
+            </span>
+            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-amber-600 text-white tracking-widest shadow-sm border border-amber-400/40">
+              SUPER ADMIN
+            </span>
+          </div>
+
+          <Link
+            href="/super-admin"
+            onClick={closeSidebar}
+            className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-amber-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-red-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] group"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <ShieldAlert size={16} className="text-white shrink-0 group-hover:rotate-12 transition-transform" />
+              <span className="truncate">Painel Super Admin</span>
+            </div>
+            <ChevronRight size={14} className="shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+          <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Ambiente:</span>
+            <span className="text-emerald-400 font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Gestão Barbearia
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Agenda sempre primeiro */}
       {allItems.filter(i => i.href === "/dashboard").map(item => {
         const isActive = pathname === item.href;

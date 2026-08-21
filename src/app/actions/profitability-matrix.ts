@@ -43,8 +43,13 @@ export async function getProfitabilityMatrix(): Promise<ProfitabilityMatrixRespo
       },
     });
 
-    const tenantId = userWithUnits?.units[0]?.unit?.tenantId;
-    if (!tenantId) throw new Error("Barbearia não encontrada");
+    let tenantId = userWithUnits?.units[0]?.unit?.tenantId;
+    if (!tenantId) {
+      const { getUserTenant } = await import("@/lib/tenant");
+      const tenant = await getUserTenant(userId);
+      if (!tenant) throw new Error("Barbearia não encontrada");
+      tenantId = tenant.id;
+    }
 
     // Buscar serviços da barbearia
     const services = await db.service.findMany({

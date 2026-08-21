@@ -48,8 +48,13 @@ export async function getAntiChurnClients(): Promise<AntiChurnSummaryResponse> {
       },
     });
 
-    const tenantId = userWithUnits?.units[0]?.unit?.tenantId;
-    if (!tenantId) throw new Error("Barbearia não encontrada");
+    let tenantId = userWithUnits?.units[0]?.unit?.tenantId;
+    if (!tenantId) {
+      const { getUserTenant } = await import("@/lib/tenant");
+      const tenant = await getUserTenant(userId);
+      if (!tenant) throw new Error("Barbearia não encontrada");
+      tenantId = tenant.id;
+    }
 
     // Buscar clientes que já tiveram agendamentos concluídos na barbearia
     const appointments = await db.appointment.findMany({
@@ -65,10 +70,12 @@ export async function getAntiChurnClients(): Promise<AntiChurnSummaryResponse> {
       orderBy: { start_time: "asc" },
     });
 
+    type ApptItem = typeof appointments[number];
+
     const now = new Date();
 
     // Agrupar agendamentos por cliente
-    const clientMap = new Map<string, any[]>();
+    const clientMap = new Map<string, ApptItem[]>();
     appointments.forEach((appt) => {
       if (!appt.client) return;
       const cId = appt.client.id;
@@ -83,11 +90,13 @@ export async function getAntiChurnClients(): Promise<AntiChurnSummaryResponse> {
     let rescuedRevenue = 0;
     let totalRiskRevenue = 0;
 
-    for (const [clientId, appts] of clientMap.entries()) {
+    for (const [, appts] of clientMap.entries()) {
       const client = appts[0].client;
+      if (!client) continue;
+
       const completedAppts = appts
-        .filter((a: any) => a.status === "COMPLETED")
-        .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+        .filter((a) => a.status === "COMPLETED")
+        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
       // Se tiver pelo menos 2 visitas concluídas, podemos calcular o ciclo
       if (completedAppts.length >= 2) {
@@ -113,14 +122,14 @@ export async function getAntiChurnClients(): Promise<AntiChurnSummaryResponse> {
 
         // Verificar se o cliente tem agendamento futuro marcado
         const hasFutureAppt = appts.some(
-          (a: any) =>
+          (a) =>
             (a.status === "CONFIRMED" || a.status === "PENDING") &&
             new Date(a.start_time) > now
         );
 
         // Identificar barbeiro preferido (mais frequente)
         const barberCounts: Record<string, { count: number; name: string; id: string }> = {};
-        completedAppts.forEach((a: any) => {
+        completedAppts.forEach((a) => {
           if (!a.barber) return;
           if (!barberCounts[a.barber.id]) {
             barberCounts[a.barber.id] = { count: 0, name: a.barber.name, id: a.barber.id };
@@ -134,7 +143,7 @@ export async function getAntiChurnClients(): Promise<AntiChurnSummaryResponse> {
 
         // Ticket médio do cliente
         const avgTicket =
-          completedAppts.reduce((acc: number, a: any) => acc + Number(a.service?.price || 40), 0) /
+          completedAppts.reduce((acc, a) => acc + Number(a.service?.price || 40), 0) /
           completedAppts.length;
 
         // Se tem agendamento futuro marcado, consideramos recuperado
@@ -213,8 +222,13 @@ export async function sendAntiChurnWhatsApp(
       },
     });
 
-    const unit = userWithUnits?.units[0]?.unit;
-    const instance = unit?.tenant?.slug || "ms-barber";
+    let unit = userWithUnits?.units[0]?.unit;
+    let instance = unit?.tenant?.slug;
+    if (!instance) {
+      const { getUserTenant } = await import("@/lib/tenant");
+      const tenant = await getUserTenant(session.user.id);
+      instance = tenant?.slug || "ms-barber";
+    }
 
     const evolutionUrl = process.env.EVOLUTION_API_URL;
     const evolutionKey = process.env.EVOLUTION_API_KEY;

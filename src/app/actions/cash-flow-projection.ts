@@ -73,9 +73,14 @@ export async function getCashFlowProjection(): Promise<CashFlowProjectionRespons
       },
     });
 
-    const tenantId = userWithUnits?.units[0]?.unit?.tenantId;
+    let tenantId = userWithUnits?.units[0]?.unit?.tenantId;
     if (!tenantId) {
-      throw new Error("Barbearia não encontrada");
+      const { getUserTenant } = await import("@/lib/tenant");
+      const tenant = await getUserTenant(userId);
+      if (!tenant) {
+        throw new Error("Barbearia não encontrada");
+      }
+      tenantId = tenant.id;
     }
 
     // 1. Saldo de caixa atual estimado (Receitas passadas - Despesas pagas)
@@ -103,11 +108,7 @@ export async function getCashFlowProjection(): Promise<CashFlowProjectionRespons
         }),
         db.clientSubscription.findMany({
           where: {
-            client: {
-              client_appointments: {
-                some: { tenantId },
-              },
-            },
+            plan: { tenantId },
             status: "ACTIVE",
           },
           include: { plan: true },
