@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import Link from "next/link";
 import Timeline from "@/components/Timeline";
+import { BreakEvenThermometer } from "@/components/dashboard/BreakEvenThermometer";
 
 export default async function BarberDashboard({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   try {
@@ -304,6 +305,9 @@ export default async function BarberDashboard({ searchParams }: { searchParams: 
             </Link>
           </div>
         </div>
+
+        {/* Termômetro de Ponto de Equilíbrio (Break-Even) em Tempo Real */}
+        {isOwner && <BreakEvenThermometer />}
 
         {/* O componente Timeline com visualização em Colunas por Barbeiro e Lista */}
         <Timeline 

@@ -19,7 +19,9 @@ import {
   ShoppingBag,
   Gift,
   Bot,
-  MessageSquare
+  MessageSquare,
+  Calculator,
+  Target
 } from "lucide-react";
 import { useMobileSidebar } from "./layouts/MobileSidebarWrapper";
 
@@ -112,11 +114,47 @@ export default function SidebarNav({ isOwnerOrAdmin, hasAccountsPayable = false,
               onClick={closeSidebar}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                 pathname === "/dashboard/financeiro"
-                  ? "text-white font-medium"
+                  ? "text-white font-medium bg-slate-800"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
               <BarChart2 size={15} /> Extrato / Visão Geral
+            </Link>
+
+            <Link
+              href="/dashboard/financeiro/projecao"
+              onClick={closeSidebar}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                pathname === "/dashboard/financeiro/projecao"
+                  ? "text-emerald-400 font-medium bg-slate-800"
+                  : "text-slate-400 hover:text-emerald-400 hover:bg-slate-800"
+              }`}
+            >
+              <TrendingUp size={15} className="text-emerald-400" /> Projeção de Caixa
+            </Link>
+
+            <Link
+              href="/dashboard/financeiro/rentabilidade"
+              onClick={closeSidebar}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                pathname === "/dashboard/financeiro/rentabilidade"
+                  ? "text-amber-400 font-medium bg-slate-800"
+                  : "text-slate-400 hover:text-amber-400 hover:bg-slate-800"
+              }`}
+            >
+              <Target size={15} className="text-amber-400" /> Rentabilidade / BCG
+            </Link>
+
+            <Link
+              href="/dashboard/financeiro/dre"
+              onClick={closeSidebar}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                pathname === "/dashboard/financeiro/dre"
+                  ? "text-primary font-medium bg-slate-800"
+                  : "text-slate-400 hover:text-primary hover:bg-slate-800"
+              }`}
+            >
+              <Calculator size={15} className="text-primary" /> DRE Gerencial
             </Link>
 
             {hasAccountsPayable ? (

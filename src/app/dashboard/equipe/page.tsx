@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import { BarberActiveToggle } from "./barber-active-toggle";
 import { AddBarberForm } from "./add-barber-form";
+import { MeiThresholdCard } from "@/components/dashboard/MeiThresholdCard";
 
 export const metadata = {
   title: "Gestão de Equipe | 88Barber",
@@ -99,6 +100,9 @@ export default async function TeamPage() {
           </Link>
         </div>
       </div>
+
+      {/* Monitor de Teto MEI para Barbeiros Parceiros (Lei Salão Parceiro) */}
+      <MeiThresholdCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         

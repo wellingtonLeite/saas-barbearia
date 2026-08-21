@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { UpgradeCard } from "@/components/dashboard/UpgradeCard";
-import { Calculator } from "lucide-react";
+import { Calculator, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function DREPage({ searchParams }: { searchParams: Promise<{ month?: string, year?: string }> }) {
   const session = await auth();
@@ -75,25 +76,39 @@ export default async function DREPage({ searchParams }: { searchParams: Promise<
   const result = totalRevenue - totalExpense;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-3xl font-display font-bold text-text-primary flex items-center gap-3">
-          <Calculator className="text-primary" size={32} />
-          DRE - Demonstração de Resultados
-        </h1>
+    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in p-2 sm:p-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/financeiro"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border border-slate-700/50"
+            title="Voltar para o Financeiro"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-text-primary flex items-center gap-2">
+              <Calculator className="text-primary" size={24} />
+              DRE Gerencial
+            </h1>
+            <p className="text-xs text-text-secondary">
+              Demonstração do Resultado do Exercício e Lucro Líquido Real
+            </p>
+          </div>
+        </div>
         
-        <form className="flex gap-2 bg-surface p-2 rounded-xl border border-secondary">
-          <select name="month" defaultValue={currentMonth} className="bg-background border border-secondary rounded-lg px-3 py-2 text-text-primary outline-none focus:border-primary">
+        <form className="flex gap-2 bg-surface p-2 rounded-xl border border-secondary self-stretch sm:self-auto">
+          <select name="month" defaultValue={currentMonth} className="bg-background border border-secondary rounded-lg px-3 py-2 text-text-primary text-sm outline-none focus:border-primary">
             {Array.from({ length: 12 }).map((_, i) => (
               <option key={i+1} value={i+1}>{new Date(2000, i, 1).toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase()}</option>
             ))}
           </select>
-          <select name="year" defaultValue={currentYear} className="bg-background border border-secondary rounded-lg px-3 py-2 text-text-primary outline-none focus:border-primary">
+          <select name="year" defaultValue={currentYear} className="bg-background border border-secondary rounded-lg px-3 py-2 text-text-primary text-sm outline-none focus:border-primary">
             {[currentYear - 1, currentYear, currentYear + 1].map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
-          <button type="submit" className="bg-primary text-white font-bold px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors">
+          <button type="submit" className="bg-primary text-white font-bold px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors text-sm">
             Filtrar
           </button>
         </form>
