@@ -213,6 +213,19 @@ Para garantir validade jurídica e afastar qualquer risco de vínculo empregatí
 - Responsabilidade do salão pela manutenção das instalações físicas gerais e responsabilidade do profissional pelos seus instrumentos individuais de trabalho (tesouras, máquinas, navalhas).
 - Obrigatoriedade de homologação no sindicato da categoria profissional ou órgão competente quando exigido pela legislação local.
 
+### 4.5. Monitor de Teto MEI dos Barbeiros Parceiros (Regra R$ 81.000,00/ano)
+
+Para proteger o profissional parceiro contra o risco de desenquadramento retroativo da Receita Federal com autuações e multas, o 88Barber monitora o faturamento acumulado no ano fiscal (YTD - *Year to Date*):
+
+#### 1. Cálculo da Projeção de Faturamento MEI ($F_{\text{proj}}$):
+$$F_{\text{proj}} = F_{\text{acumulado\_ano}} + \left( \frac{F_{\text{acumulado\_ano}}}{D_{\text{decorridos}}} \times D_{\text{restantes\_ano}} \right)$$
+
+#### 2. Réguas de Alertas Preventivos:
+* **Faixa Verde (0% a 69% do teto — até R$ 55.890,00)**: Operação regular, sem alertas.
+* **Faixa Amarela (70% a 84% do teto — R$ 55.890,00 a R$ 68.850,00)**: Notificação no dashboard do barbeiro com dicas de planejamento financeiro.
+* **Faixa Laranja (85% a 94% do teto — R$ 68.850,00 a R$ 76.950,00)**: Alerta no WhatsApp do profissional e aviso ao gestor do salão recomendando consulta contábil para transição planejada para Microempresa (ME / SLU).
+* **Faixa Vermelha (≥ 95% do teto — R$ 76.950,00 a R$ 81.000,00)**: Alerta crítico diário com checklist de desenquadramento voluntário para evitar multas de 20% a 75% da Receita Federal.
+
 ---
 
 ## 5. Inteligência Financeira, FP&A & Métricas SaaS
@@ -248,38 +261,70 @@ O 88Barber gera a DRE Gerencial em tempo real para o dono da barbearia, aplicand
 (=) RESULTADO LÍQUIDO DO EXERCÍCIO (LUCRO LÍQUIDO REAL)
 ```
 
-### 5.2. Metodologia de Ponto de Equilíbrio (*Break-Even*) por Cadeira / Barbeiro
+### 5.2. Termômetro de Ponto de Equilíbrio (*Break-Even*) por Cadeira em Tempo Real
 
-Permite ao proprietário avaliar a rentabilidade individual de cada posto de atendimento e cadeira física na barbearia.
+Permite ao proprietário acompanhar ao longo do mês o momento exato em que cada cadeira física e profissional cobriu seus custos fixos operacionais e passou a gerar lucro líquido real.
 
 #### 1. Custo Fixo Unitário por Cadeira ($CF_c$):
 $$CF_c = \frac{\sum \text{Despesas Fixas Mensais Totais}}{\text{Número Total de Cadeiras em Operação}}$$
 
-#### 2. Margem de Contribuição Média Retida por Serviço ($MC_s$):
+#### 2. Margem de Contribuição Média Retida por Atendimento ($MC_s$):
 $$MC_s = \overline{P_{\text{serviço}}} \times (1 - \%_{\text{repasse\_barbeiro}} - \%_{\text{taxa\_gateway}} - \%_{\text{imposto\_simples}}) - C_{\text{insumo\_direto}}$$
 
 #### 3. Quantidade Mínima de Atendimentos para Ponto de Equilíbrio da Cadeira ($Q_{\text{break-even}}$):
 $$Q_{\text{break-even}} = \left\lceil \frac{CF_c}{MC_s} \right\rceil$$
 
-#### Exemplo Prático de Aplicação:
-- Despesa Fixa da Barbearia: R$ 6.000,00/mês | 4 cadeiras ativas $\implies CF_c = \text{R\$ } 1.500,00/\text{mês}$.
-- Preço Médio do Corte: R$ 50,00 | Retenção Salão: 50% = R$ 25,00.
-- Dedução de Imposto + Gateway (8%) + Insumo (R$ 2,00) $\implies MC_s = \text{R\$ } 19,00$.
-- **Ponto de Equilíbrio da Cadeira**: $1500 / 19 \approx \mathbf{79\text{ cortes/mês}}$ (ou seja, $\approx 3,3$ atendimentos/dia para a cadeira começar a dar lucro líquido).
+#### 4. Velocímetro Visual & Dia de Virada para o Lucro:
+* O sistema exibe um velocímetro percentual no dashboard:
+  $$\%_{\text{progresso\_break-even}} = \min\left(100\%, \frac{\text{Atendimentos Realizados no Mês}}{Q_{\text{break-even}}} \times 100\right)$$
+* Quando $\% \ge 100\%$, o sistema marca a data e horário exatos: *"No dia 14 às 16:30, a Cadeira do Lucas atingiu o Break-Even. A partir deste momento, cada novo corte gera Lucro Líquido Real para o estabelecimento!"*
 
-### 5.3. Fluxo de Caixa Projetado & Split de Pagamento
-- **Módulo de Contas (`AccountEntry`)**: Registro automático de contas a pagar (`PAYABLE`) e a receber (`RECEIVABLE`) com classificação por status (`PENDING`, `PAID`, `OVERDUE`, `CANCELLED`).
-- **Previsibilidade Financeira por Meio de Pagamento**:
-  - Pix: Disponibilidade imediata (D+0).
-  - Cartão de Débito: Liquidação em D+1.
-  - Cartão de Crédito: Liquidação padrão em D+30 ou antecipação conforme configuração do gateway.
-- **Split Automático de Pagamento**:
-  Na liquidação do pagamento pelo gateway parceiro (Mercado Pago / Asaas), o valor é dividido no ato da transação:
-  - Cota-parte do Salão $\to$ Conta bancária do Tenant.
-  - Cota-parte do Barbeiro $\to$ Conta bancária/Chave Pix do Barbeiro Parceiro.
-  - Taxa do SaaS 88Barber $\to$ Conta do SaaS (quando operando em modelo de split de take-rate).
+### 5.3. Fluxo de Caixa Projetado Dinâmico (30, 60 e 90 Dias)
 
-### 5.4. Métricas SaaS do Ecossistema 88Barber (B2B KPIs)
+Algoritmo preditivo e prescritivo que antecipa a saúde financeira da barbearia, prevenindo quebras de caixa e evitando juros de cheque especial:
+
+#### 1. Variáveis Preditivas Computadas:
+* **Entradas Projetadas ($E_p$)**:
+  $$E_p(t) = \text{Receita de Assinaturas VIP Recorrentes} + \text{Agendamentos Futuros Confirmados} + \text{Média Histórica de Atendimentos Avulsos} + \text{Contas a Receber (D+30 Cartão)}$$
+* **Saídas Projetadas ($S_p$)**:
+  $$S_p(t) = \text{Contas a Pagar Agendadas (Aluguel, Luz, Fornecedores)} + \text{Previsão de Repasse de Comissões} + \text{DAS Simples Nacional Estimado}$$
+* **Saldo Projetado Diário ($SD(t)$)**:
+  $$SD(t) = SD(t-1) + E_p(t) - S_p(t)$$
+
+#### 2. Alertas de Quebra de Caixa e Ações Prescritivas:
+* Se $SD(t) < 0$ em qualquer data futura dentro de 90 dias:
+  * Alerta de risco exibido com 15 a 20 dias de antecedência: *"Atenção: Projeção de saldo negativo de -R$ 1.850,00 no dia 10 devido à concentração de boletos"*.
+  * Sugestão de Ação Automática em 1 clique: *"Lançar Campanha Relâmpago de Recorrência VIP via SDR WhatsApp com desconto promocional no pagamento antecipado"*.
+
+### 5.4. Matriz de Rentabilidade e Lucro/Hora por Cadeira (Yield Management & Matriz BCG)
+
+Identifica a eficiência real de cada minuto de cadeira ocupada, separando os serviços que realmente enriquecem a barbearia daqueles que consomem tempo excessivo e insumos caros com baixa margem:
+
+#### 1. Cálculo da Lucratividade por Minuto ($\text{Lucro/Minuto}$):
+$$\text{Lucro/Minuto} = \frac{\text{Preço do Serviço} - \text{Comissão Repassada} - \text{Taxa de Cartão} - \text{Custo de Cosméticos/Insumos}}{\text{Duração Real do Serviço em Minutos}}$$
+
+#### 2. Classificação na Matriz BCG da Barbearia:
+* 🌟 **Serviços Estrela** (Alta Lucratividade/Minuto + Alta Procura): Ex: Corte Degradê / Barba Express. *Estratégia: Priorizar na agenda e destacar no app.*
+* 🐮 **Vacas Leiteiras** (Lucratividade Média + Altíssimo Volume Recorrente): Ex: Corte Tradicional / Planos VIP. *Estratégia: Base estável do faturamento.*
+* ❓ **Pontos de Interrogação** (Alta Lucratividade/Minuto + Baixa Procura): Ex: Tonalização de Barba / Limpeza de Pele Facial. *Estratégia: Treinar equipe para cross-sell.*
+* 🍍 **Serviços Abacaxi** (Baixa Lucratividade/Minuto + Longa Duração): Ex: Procedimentos químicos complexos de 2 horas com preço defasado. *Estratégia: Reajustar preço ou eliminar do catálogo.*
+
+### 5.5. Motor de Retenção Anti-Churn de Clientes Finais com SDR WhatsApp Autônomo
+
+Calcula o ciclo individual de retorno de cada cliente e age proativamente antes que o cliente mude para a concorrência:
+
+#### 1. Cálculo do Intervalo Médio de Visita Individual ($IMV_i$):
+$$IMV_i = \frac{\sum_{k=1}^{n-1} (\text{Data Visita}_{k+1} - \text{Data Visita}_k)}{n - 1}$$
+*(Exemplo: Cliente corta cabelo a cada 18 dias).*
+
+#### 2. Gatilho de Risco de Evasão (Churn Trigger):
+* Se $\text{Dias desde a última visita} \ge IMV_i + 3 \text{ dias}$ e o cliente **não possui agendamento futuro marcado**:
+  * O motor classifica o cliente como **Status: RISCO DE CHURN**.
+  * Aciona automaticamente o **SDR WhatsApp com IA (Mateus Silveira)**.
+  * O bot envia mensagem personalizada com tom amigável: *"Fala Bruno! Notei que já faz 3 semanas do seu último corte com o Lucas. Ele tem horário hoje às 17h30 ou amanhã às 10h. Quer que eu já garanta a sua vaga?"*.
+  * Permite ao cliente responder *"Pode ser hoje 17h30"* e o SDR já fecha o agendamento no banco instantaneamente.
+
+### 5.6. Métricas SaaS do Ecossistema 88Barber (B2B KPIs)
 
 O painel `/super-admin` monitora a saúde econômico-financeira do ecossistema SaaS:
 
