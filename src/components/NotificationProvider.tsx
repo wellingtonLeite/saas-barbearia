@@ -118,19 +118,33 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Iniciar reprodução de alarme contínuo em loop
   const playSoundLoop = useCallback(() => {
-    if (isAlarmPlayingRef.current) return;
     isAlarmPlayingRef.current = true;
 
-    // Tentar tocar arquivo mp3
+    // 1. Tentar desbloquear e resumir AudioContext imediatamente
+    try {
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioCtxRef.current && AudioCtxClass) {
+        audioCtxRef.current = new AudioCtxClass();
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume().catch(() => {});
+      }
+    } catch (e) {
+      console.warn("[NotificationProvider] Falha ao inicializar AudioContext:", e);
+    }
+
+    // 2. Tocar arquivo de áudio principal (/sounds/appointment.mp3)
     if (audioApptRef.current) {
       audioApptRef.current.loop = true;
-      audioApptRef.current.volume = 0.9;
+      audioApptRef.current.volume = 1.0;
       
       const playPromise = audioApptRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          console.warn("[NotificationProvider] Autoplay bloqueado ou falha no mp3, ativando WebAudio synth:", err);
-          // Fallback para sintetizador Web Audio com repetição a cada 2.5s
+          console.warn("[NotificationProvider] Autoplay mp3 bloqueado, acionando sintetizador Web Audio imediato:", err);
+          // Aciona imediatamente o chime harmônico sintetizado
           playSynthChime();
           if (!synthIntervalRef.current) {
             synthIntervalRef.current = setInterval(() => {
@@ -142,7 +156,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         });
       }
     } else {
-      // Fallback puro sintetizador
+      // Fallback para sintetizador puro
       playSynthChime();
       if (!synthIntervalRef.current) {
         synthIntervalRef.current = setInterval(() => {
@@ -186,7 +200,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         (n) => n.type === "NEW_APPOINTMENT"
       );
 
-      // Se há novos agendamentos não lidos, aciona o som contínuo
+      // Se há novos agendamentos não lidos, aciona o som contínuo imediatamente
       if (unreadAppointmentsList.length > 0) {
         playSoundLoop();
       } else {
@@ -274,27 +288,64 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return Array.from(map.values());
   }, [notifications]);
 
-  // Inicialização de áudio e desbloqueio por interação do usuário
+  // Inicialização de áudio e desbloqueio pró-ativo por qualquer interação do usuário
   useEffect(() => {
     if (typeof window !== "undefined") {
-      audioNotifRef.current = new Audio("/sounds/notification.mp3");
-      audioApptRef.current = new Audio("/sounds/appointment.mp3");
+      const notifAudio = new Audio("/sounds/notification.mp3");
+      notifAudio.preload = "auto";
+      audioNotifRef.current = notifAudio;
 
-      // Listener para desbloquear WebAudio e retomar áudio se necessário
-      const handleUserInteraction = () => {
+      const apptAudio = new Audio("/sounds/appointment.mp3");
+      apptAudio.preload = "auto";
+      apptAudio.loop = true;
+      audioApptRef.current = apptAudio;
+
+      // Listener amplo para desbloquear WebAudio e HTMLAudioElement na primeira micro-interação
+      const unlockAudio = () => {
         userInteractedRef.current = true;
+
+        if (!audioCtxRef.current) {
+          const AudioCtxClass =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          if (AudioCtxClass) {
+            audioCtxRef.current = new AudioCtxClass();
+          }
+        }
         if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
           audioCtxRef.current.resume().catch(() => {});
         }
-        // Se havia um alarme pendente bloqueado, tocar agora
-        if (isAlarmPlayingRef.current && audioApptRef.current && audioApptRef.current.paused) {
+
+        // Se o alarme deve estar tocando agora, reproduz imediatamente com loop
+        if (isAlarmPlayingRef.current && audioApptRef.current) {
+          audioApptRef.current.loop = true;
+          audioApptRef.current.volume = 1.0;
           audioApptRef.current.play().catch(() => {});
+        } else if (audioApptRef.current) {
+          // Desbloqueio pró-ativo silencioso
+          audioApptRef.current.play().then(() => {
+            if (!isAlarmPlayingRef.current && audioApptRef.current) {
+              audioApptRef.current.pause();
+              audioApptRef.current.currentTime = 0;
+            }
+          }).catch(() => {});
         }
       };
 
-      window.addEventListener("click", handleUserInteraction, { passive: true });
-      window.addEventListener("keydown", handleUserInteraction, { passive: true });
-      window.addEventListener("touchstart", handleUserInteraction, { passive: true });
+      const INTERACTION_EVENTS = [
+        "pointerdown",
+        "mousedown",
+        "keydown",
+        "touchstart",
+        "scroll",
+        "wheel",
+        "focus",
+        "click",
+      ] as const;
+
+      INTERACTION_EVENTS.forEach((evt) => {
+        window.addEventListener(evt, unlockAudio, { passive: true, capture: true });
+      });
 
       // Polling rápido: 4 segundos (para tempo real com SDR)
       fetchNotifications();
@@ -302,9 +353,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       return () => {
         clearInterval(interval);
-        window.removeEventListener("click", handleUserInteraction);
-        window.removeEventListener("keydown", handleUserInteraction);
-        window.removeEventListener("touchstart", handleUserInteraction);
+        INTERACTION_EVENTS.forEach((evt) => {
+          window.removeEventListener(evt, unlockAudio, { capture: true });
+        });
         stopSoundLoop();
       };
     }

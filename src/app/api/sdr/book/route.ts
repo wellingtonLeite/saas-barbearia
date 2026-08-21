@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 /**
  * POST /api/sdr/book
@@ -274,6 +275,14 @@ export async function POST(request: Request) {
       }
     } catch (notifError) {
       console.warn("[SDR /book] Falha não-crítica ao criar notificações:", notifError);
+    }
+
+    // 8. Revalidar rotas do dashboard para atualização instantânea na tela
+    try {
+      revalidatePath("/dashboard");
+      revalidatePath("/[slug]", "layout");
+    } catch (revalError) {
+      console.warn("[SDR /book] Revalidação não-crítica:", revalError);
     }
 
     return NextResponse.json({

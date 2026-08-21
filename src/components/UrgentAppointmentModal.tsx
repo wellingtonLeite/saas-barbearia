@@ -2,12 +2,7 @@
 
 import React, { useState } from "react";
 import { 
-  BellRing, 
   CheckCircle2, 
-  User, 
-  Scissors, 
-  Clock, 
-  Sparkles, 
   Volume2, 
   ChevronRight, 
   ChevronLeft,
@@ -79,7 +74,7 @@ export function parseAppointmentDetails(message: string, createdAt?: Date | stri
 
   // 4. Fallback se for mensagem livre/teste
   return {
-    clientName: message.length > 40 ? `${message.substring(0, 40)}...` : message,
+    clientName: message.length > 35 ? `${message.substring(0, 35)}...` : message,
     serviceName,
     barberName,
     dateTime,
@@ -140,149 +135,129 @@ export function UrgentAppointmentModal({
 
   return (
     <aside
+      role="alert"
+      aria-live="assertive"
       aria-label="Alerta de Novo Agendamento SDR"
-      className="fixed top-4 right-4 sm:top-5 sm:right-5 z-[9999] max-w-md w-[calc(100vw-2rem)] sm:w-[400px] pointer-events-auto"
+      className="fixed top-4 right-4 z-[9999] max-w-[340px] sm:max-w-[360px] w-[calc(100vw-2rem)] pointer-events-auto"
     >
-      {/* Floating Island Card */}
-      <div className="relative bg-[#111318]/95 backdrop-blur-xl border border-emerald-500/50 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_20px_rgba(16,185,129,0.25)] rounded-2xl p-4 text-white animate-in slide-in-from-top-4 duration-300 transition-all">
-        {/* Subtle Top Glowing Line */}
-        <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 rounded-full mb-3 shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
+      {/* Micro-Card Ultra Compacto e Discreto (Dynamic Island Style) */}
+      <div className="relative bg-zinc-950/95 backdrop-blur-xl border border-emerald-500/50 shadow-[0_12px_36px_rgba(0,0,0,0.85),0_0_20px_rgba(16,185,129,0.25)] rounded-2xl p-3.5 text-zinc-100 animate-in slide-in-from-top-3 fade-in duration-200">
+        {/* Glow Superior Elegante */}
+        <div className="absolute top-0 left-3 right-3 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
 
-        {/* Card Header */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Neon Point + Bell Icon + Title */}
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        {/* Linha 1: Título & Status de Som */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            <div className="p-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
-              <BellRing size={14} className="animate-pulse" />
-            </div>
-            <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight flex items-center gap-1 font-display">
-              <span>🚨</span>
-              <span>Novo Agendamento SDR</span>
-            </h3>
+            <span className="text-xs shrink-0">🚨</span>
+            <h4 className="text-xs font-bold text-white tracking-tight truncate">
+              Novo Agendamento SDR
+            </h4>
           </div>
 
-          {/* Sound Active Indicator */}
-          <div className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-amber-400 font-semibold bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full animate-pulse shrink-0">
-            <Volume2 size={11} className="animate-bounce shrink-0" />
-            <span>Som Ativo</span>
+          <div className="flex items-center gap-1 shrink-0">
+            {totalCount > 1 && (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                {safeIndex + 1}/{totalCount}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onStopSound}
+              title="Silenciar som"
+              className="inline-flex items-center gap-1 text-[10px] text-amber-400 font-semibold bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 px-1.5 py-0.5 rounded-full animate-pulse transition-colors cursor-pointer"
+            >
+              <Volume2 size={10} className="animate-bounce shrink-0" />
+              <span>Som Ativo</span>
+            </button>
           </div>
         </div>
 
-        {/* Multiple Appointments Compact Counter */}
-        {totalCount > 1 && (
-          <div className="mt-2.5 flex items-center justify-between bg-slate-900/90 border border-slate-800 rounded-lg px-2.5 py-1 text-[11px] text-slate-300">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>
-                <strong className="text-emerald-400">{safeIndex + 1}</strong> de <strong>{totalCount}</strong> pendentes
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-                disabled={safeIndex === 0}
-                aria-label="Agendamento anterior"
-                className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={13} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentIndex((prev) => Math.min(totalCount - 1, prev + 1))}
-                disabled={safeIndex === totalCount - 1}
-                aria-label="Próximo agendamento"
-                className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Clean and Compact Details Card */}
-        <div className="mt-2.5 bg-[#161a22]/90 border border-slate-800/80 rounded-xl p-2.5 sm:p-3 space-y-1.5 text-xs">
-          {/* Cliente */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-slate-400 font-medium shrink-0">
-              <User size={13} className="text-slate-400" />
-              <span>Cliente:</span>
-            </div>
-            <span className="font-bold text-white truncate max-w-[210px] text-right">
+        {/* Linhas 2 e 3 em Caixa de Conteúdo Ultra Limpa */}
+        <div className="mt-2 py-1.5 px-2.5 bg-zinc-900/90 border border-zinc-800/80 rounded-xl space-y-1 text-xs">
+          {/* Linha 2: Cliente • Serviço */}
+          <div className="flex items-center gap-1.5 text-zinc-300 truncate">
+            <span className="shrink-0 text-[11px]">👤</span>
+            <span className="font-bold text-white truncate max-w-[130px] sm:max-w-[150px]">
               {details.clientName}
             </span>
-          </div>
-
-          {/* Serviço */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-slate-400 font-medium shrink-0">
-              <Scissors size={13} className="text-emerald-400" />
-              <span>Serviço:</span>
-            </div>
-            <span className="font-bold text-emerald-400 truncate max-w-[210px] text-right">
+            <span className="text-zinc-600 text-[10px]">•</span>
+            <span className="shrink-0 text-[11px]">✂️</span>
+            <span className="font-semibold text-emerald-400 truncate flex-1">
               {details.serviceName}
             </span>
           </div>
 
-          {/* Barbeiro & Horário */}
-          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-800/80 text-[11px]">
-            <div className="flex items-center gap-1 text-slate-300 truncate max-w-[150px]">
-              <Sparkles size={11} className="text-amber-400 shrink-0" />
-              <span className="truncate">{details.barberName}</span>
-            </div>
-            <div className="flex items-center gap-1 text-cyan-300 font-medium shrink-0">
-              <Clock size={11} className="text-cyan-400 shrink-0" />
-              <span>{details.dateTime}</span>
-            </div>
+          {/* Linha 3: Barbeiro • Data às Horário */}
+          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 truncate">
+            <span className="shrink-0 text-[11px]">💈</span>
+            <span className="text-zinc-300 truncate max-w-[110px] sm:max-w-[130px]">
+              {details.barberName}
+            </span>
+            <span className="text-zinc-600 text-[10px]">•</span>
+            <span className="shrink-0 text-[11px]">🕒</span>
+            <span className="font-medium text-cyan-300 truncate">
+              {details.dateTime}
+            </span>
           </div>
         </div>
 
-        {/* Actions Footer */}
-        <div className="mt-3 space-y-2">
-          {/* Primary Action Button */}
+        {/* Botões de Ação Compactos */}
+        <div className="mt-2.5 flex items-center gap-1.5">
           <button
             type="button"
             onClick={handleConfirmSingle}
             disabled={isProcessing}
-            className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.7)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="flex-1 h-8 px-3 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {isProcessing ? (
-              <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <CheckCircle2 size={16} className="stroke-[2.5]" />
+                <CheckCircle2 size={14} className="stroke-[2.5]" />
                 <span>Estou Ciente</span>
               </>
             )}
           </button>
 
-          {/* Confirm All Button if Multiple */}
           {totalCount > 1 && (
             <button
               type="button"
               onClick={handleConfirmAll}
               disabled={isProcessing}
-              className="w-full py-1.5 px-3 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title={`Confirmar todos os ${totalCount} agendamentos`}
+              className="h-8 px-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-[11px] font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 shrink-0"
             >
-              <CheckCheck size={14} className="text-emerald-400" />
-              <span>Confirmar todos ({totalCount})</span>
+              <CheckCheck size={13} className="text-emerald-400" />
+              <span>Todos ({totalCount})</span>
             </button>
           )}
 
-          {/* Quick Mute helper */}
-          <div className="flex items-center justify-center pt-0.5">
-            <button
-              type="button"
-              onClick={() => onStopSound()}
-              className="text-[10px] text-slate-500 hover:text-slate-400 transition-colors underline underline-offset-2 cursor-pointer"
-            >
-              Silenciar som
-            </button>
-          </div>
+          {totalCount > 1 && (
+            <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                disabled={safeIndex === 0}
+                aria-label="Anterior"
+                className="h-8 w-6 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentIndex((prev) => Math.min(totalCount - 1, prev + 1))}
+                disabled={safeIndex === totalCount - 1}
+                aria-label="Próximo"
+                className="h-8 w-6 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronRight size={12} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>
