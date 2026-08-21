@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 
 export interface BarberBreakEvenData {
   barberId: string;
@@ -30,6 +31,7 @@ export interface BreakEvenResponse {
   barbers: BarberBreakEvenData[];
   month: number;
   year: number;
+  configuredFixedCost?: number;
   error?: string;
 }
 
@@ -148,26 +150,40 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
     const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
     const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
 
-    // 1. Buscar despesas operacionais fixas do mês em AccountEntry (PAYABLE)
-    const fixedExpensesEntries = await db.accountEntry.findMany({
-      where: {
-        tenantId,
-        type: "PAYABLE",
-        due_date: {
-          gte: startOfMonth,
-          lte: endOfMonth,
-        },
-      },
+    // 1. Obter registro do Tenant para verificar se possui fixed_cost_monthly configurado
+    const tenantRecord = await db.tenant.findUnique({
+      where: { id: tenantId },
+      select: { fixed_cost_monthly: true },
     });
+    const tenantConfiguredFixedCost = Number(tenantRecord?.fixed_cost_monthly || 0);
 
-    let totalFixedExpenses = fixedExpensesEntries.reduce(
-      (acc, curr) => acc + Number(curr.amount),
-      0
-    );
+    let totalFixedExpenses = 0;
 
-    // Se a barbearia ainda não cadastrou despesas no mês, adota benchmark operacional padrão R$ 4.500,00
-    if (totalFixedExpenses <= 0) {
-      totalFixedExpenses = 4500;
+    // Se o dono configurou explicitamente o custo fixo mensal nas configurações/modal (maior que 0), prioriza
+    if (tenantConfiguredFixedCost > 0) {
+      totalFixedExpenses = tenantConfiguredFixedCost;
+    } else {
+      // Caso contrário, buscar despesas operacionais fixas do mês em AccountEntry (PAYABLE)
+      const fixedExpensesEntries = await db.accountEntry.findMany({
+        where: {
+          tenantId,
+          type: "PAYABLE",
+          due_date: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+      });
+
+      totalFixedExpenses = fixedExpensesEntries.reduce(
+        (acc, curr) => acc + Number(curr.amount),
+        0
+      );
+
+      // Se a barbearia ainda não cadastrou despesas no mês nem configurou fixed_cost, adota benchmark operacional padrão R$ 4.500,00
+      if (totalFixedExpenses <= 0) {
+        totalFixedExpenses = 4500;
+      }
     }
 
     // 2. Barbeiros ativos (cadeiras operacionais)
@@ -296,6 +312,7 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
       barbers: barbersData,
       month: currentMonth,
       year: currentYear,
+      configuredFixedCost: tenantConfiguredFixedCost,
     };
   } catch (error: any) {
     console.error("[getBreakEvenAnalysis Error]", error);
@@ -314,4 +331,41 @@ export async function getBreakEvenAnalysis(): Promise<BreakEvenResponse> {
       error: error.message,
     };
   }
+}
+
+export async function updateBreakEvenFixedCost(fixedCost: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return { success: false, error: "Não autorizado" };
+
+    const { getUserTenant } = await import("@/lib/tenant");
+    const tenant = await getUserTenant(userId);
+    if (!tenant) return { success: false, error: "Barbearia não encontrada" };
+
+    const amount = Number(fixedCost);
+    if (isNaN(amount) || amount < 0) {
+      return { success: false, error: "Valor de custo fixo inválido" };
+    }
+
+    await db.tenant.update({
+      where: { id: tenant.id },
+      data: {
+        fixed_cost_monthly: amount,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/financeiro");
+    revalidatePath("/dashboard/config");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erro ao atualizar custo fixo mensal:", error);
+    return { success: false, error: error.message || "Erro ao atualizar custo fixo" };
+  }
+}
+
+// Alias para manter compatibilidade com componentes existentes
+export async function updateMonthlyFixedCost(amount: number): Promise<{ success: boolean; error?: string }> {
+  return updateBreakEvenFixedCost(amount);
 }

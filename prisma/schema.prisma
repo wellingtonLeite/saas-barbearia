@@ -150,6 +150,10 @@ model Tenant {
   amenities          Json?
   gallery_urls       Json?
   whatsapp_templates Json?
+  instagram_url      String?
+  facebook_url       String?
+  tiktok_url         String?
+  fixed_cost_monthly Decimal? @default(0)
   active             Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
