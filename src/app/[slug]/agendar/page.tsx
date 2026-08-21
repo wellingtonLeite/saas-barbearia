@@ -9,12 +9,12 @@ export default async function BookingPage({
   searchParams 
 }: { 
   params: Promise<{ slug: string }>,
-  searchParams?: Promise<{ serviceId?: string }>
+  searchParams?: Promise<{ serviceId?: string; barberId?: string }>
 }) {
   const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   
-  if (/\\.(json|ico|xml|png|jpg|jpeg|svg|txt|webmanifest)$/i.test(resolvedParams.slug)) {
+  if (/\.(json|ico|xml|png|jpg|jpeg|svg|txt|webmanifest)$/i.test(resolvedParams.slug)) {
     notFound();
   }
 
@@ -88,6 +88,7 @@ export default async function BookingPage({
         barbers={barbers}
         unitId={primaryUnitId}
         initialServiceId={resolvedSearchParams?.serviceId}
+        initialBarberId={resolvedSearchParams?.barberId}
       />
     </div>
   );

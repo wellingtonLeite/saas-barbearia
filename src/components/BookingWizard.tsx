@@ -10,18 +10,24 @@ export default function BookingWizard({
   services, 
   barbers, 
   unitId,
-  initialServiceId
+  initialServiceId,
+  initialBarberId
 }: { 
   tenant: any, 
   services: any[], 
   barbers: any[], 
   unitId: string,
-  initialServiceId?: string
+  initialServiceId?: string,
+  initialBarberId?: string
 }) {
   const initialService = initialServiceId ? services.find(s => s.id === initialServiceId) : null;
-  const [step, setStep] = useState(initialService ? 2 : 1);
+  const initialBarber = initialBarberId ? barbers.find(b => b.id === initialBarberId) : null;
+  
+  const initialStep = (initialService && initialBarber) ? 3 : (initialService ? 2 : 1);
+
+  const [step, setStep] = useState(initialStep);
   const [selectedService, setSelectedService] = useState<any>(initialService || null);
-  const [selectedBarber, setSelectedBarber] = useState<any>(null);
+  const [selectedBarber, setSelectedBarber] = useState<any>(initialBarber || null);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   
@@ -151,11 +157,26 @@ export default function BookingWizard({
         {/* Passo 1: Serviços com Cards Ricos e Fotos em Alta Definição */}
         {step === 1 && (
           <div className="space-y-6 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl sm:text-2xl font-bold text-text-primary flex items-center gap-2.5">
-                <Scissors className="text-primary" /> Escolha o Serviço ou Corte
-              </h3>
-              <span className="text-xs text-text-secondary">{services.length} opções disponíveis</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold text-text-primary flex items-center gap-2.5">
+                  <Scissors className="text-primary" /> Escolha o Serviço ou Corte
+                </h3>
+                <p className="text-xs text-text-secondary mt-0.5">{services.length} opções disponíveis</p>
+              </div>
+              {selectedBarber && (
+                <div className="flex items-center gap-2 bg-surface-hover border border-secondary px-3 py-1.5 rounded-full w-fit">
+                  <span className="text-xs text-text-secondary">Barbeiro:</span>
+                  <span className="text-xs font-bold text-primary">{selectedBarber.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedBarber(null); }}
+                    className="text-[10px] text-text-secondary hover:text-white underline ml-1"
+                  >
+                    Trocar
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,7 +185,14 @@ export default function BookingWizard({
                 return (
                   <div 
                     key={service.id} 
-                    onClick={() => { setSelectedService(service); setStep(2); }}
+                    onClick={() => { 
+                      setSelectedService(service); 
+                      if (selectedBarber) {
+                        setStep(3);
+                      } else {
+                        setStep(2);
+                      }
+                    }}
                     className={`rounded-2xl border transition-all cursor-pointer overflow-hidden flex flex-col group ${
                       isSelected 
                         ? "border-primary bg-primary/10 ring-2 ring-primary/40 shadow-xl" 
