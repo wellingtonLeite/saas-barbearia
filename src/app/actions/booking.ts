@@ -91,14 +91,20 @@ export async function createBooking(data: {
       });
       owners.forEach(owner => usersToNotify.add(owner.id));
 
+      const barberUser = await db.user.findUnique({ where: { id: data.barberId }, select: { name: true } });
+      const barberName = barberUser?.name || "Profissional";
+      const formattedDate = start_time.toLocaleDateString('pt-BR');
+      const formattedTime = start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const notifMessage = `Cliente: ${client.name} | Serviço: ${service.name} | Barbeiro: ${barberName} | Horário: ${formattedDate} às ${formattedTime}`;
+
       for (const userId of Array.from(usersToNotify)) {
         await db.notification.create({
           data: {
             userId: userId,
             tenantId: data.tenantId,
             type: "NEW_APPOINTMENT",
-            title: "Novo Agendamento",
-            message: `${client.name} agendou para ${start_time.toLocaleDateString('pt-BR')} às ${start_time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+            title: "🚨 Novo Agendamento Recebido!",
+            message: notifMessage
           }
         });
       }

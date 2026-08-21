@@ -222,6 +222,60 @@ export async function POST(request: Request) {
       }
     });
 
+    const dateStr = startTime.toLocaleDateString("pt-BR");
+    const timeStr = startTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+    // 8. Criar Notificações na tabela Notification (Barbeiro + Donos/Admins)
+    try {
+      const usersToNotify = new Set<string>();
+      if (appointment.barberId) {
+        usersToNotify.add(appointment.barberId);
+      }
+
+      const ownersAndAdmins = await db.user.findMany({
+        where: {
+          OR: [
+            {
+              role: "OWNER",
+              units: {
+                some: {
+                  unit: {
+                    tenantId: appointment.tenantId
+                  }
+                }
+              }
+            },
+            {
+              role: "SUPER_ADMIN"
+            }
+          ]
+        },
+        select: { id: true }
+      });
+
+      ownersAndAdmins.forEach(owner => usersToNotify.add(owner.id));
+
+      const notificationTitle = "🚨 Novo Agendamento Recebido (SDR WhatsApp)!";
+      const notificationMessage = `Cliente: ${client.name} | Serviço: ${appointment.service.name} | Barbeiro: ${appointment.barber.name} | Horário: ${dateStr} às ${timeStr}`;
+
+      const notificationsData = Array.from(usersToNotify).map(userId => ({
+        userId,
+        tenantId: appointment.tenantId,
+        type: "NEW_APPOINTMENT" as const,
+        title: notificationTitle,
+        message: notificationMessage,
+        is_read: false
+      }));
+
+      if (notificationsData.length > 0) {
+        await db.notification.createMany({
+          data: notificationsData
+        });
+      }
+    } catch (notifError) {
+      console.warn("[SDR /book] Falha não-crítica ao criar notificações:", notifError);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Agendamento criado com sucesso!",
@@ -232,8 +286,8 @@ export async function POST(request: Request) {
         barberName: appointment.barber.name,
         serviceName: appointment.service.name,
         price: Number(appointment.service.price),
-        date: startTime.toLocaleDateString("pt-BR"),
-        time: startTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        date: dateStr,
+        time: timeStr,
         unitName: appointment.unit.name,
         address: appointment.unit.address,
         status: appointment.status

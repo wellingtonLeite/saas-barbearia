@@ -19,14 +19,18 @@ export async function GET() {
     return NextResponse.json({ error: "Owner not found." }, { status: 404 });
   }
 
-  // Insert two test notifications
+  // Insert test notification for new appointment
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
   await db.notification.create({
     data: {
       userId: user.id,
       tenantId: tenant.id,
       type: 'NEW_APPOINTMENT',
-      title: 'Teste: Novo Agendamento (Sons)',
-      message: 'Este é um teste. Você deve ouvir o som da caixa registradora!'
+      title: '🚨 NOVO AGENDAMENTO RECEBIDO!',
+      message: `Cliente: Gabriel Medina | Serviço: Barba & Cabelo VIP | Barbeiro: Marcos Barbeiro | Horário: ${dateStr} às ${timeStr}`
     }
   });
 
